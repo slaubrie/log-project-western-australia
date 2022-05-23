@@ -400,7 +400,7 @@ for details.
     ## 
     ## Model: rda(X = ass.rel.t0, Y = init, Z = block)
     ##          Df Variance      F Pr(>F)  
-    ## Model     1 0.036127 2.0657   0.06 .
+    ## Model     1 0.036127 2.0657  0.054 .
     ## Residual  6 0.104933                
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -413,9 +413,6 @@ composition.
 
 Let’s visualize the differences in the communities using an ordination
 plot:
-
-    ## Warning: Removed 22 rows containing missing values (geom_text_repel).
-
 ![](log-project-western-australia_files/figure-gfm/dissimilarity%20wrangling%20code%20part%202-1.png)<!-- -->
 </center>
 
