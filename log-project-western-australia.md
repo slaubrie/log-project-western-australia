@@ -400,7 +400,7 @@ for details.
     ## 
     ## Model: rda(X = ass.rel.t0, Y = init, Z = block)
     ##          Df Variance      F Pr(>F)  
-    ## Model     1 0.036127 2.0657  0.068 .
+    ## Model     1 0.036127 2.0657  0.058 .
     ## Residual  6 0.104933                
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
