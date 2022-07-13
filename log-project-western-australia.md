@@ -400,7 +400,7 @@ for details.
     ## 
     ## Model: rda(X = ass.rel.t0, Y = init, Z = block)
     ##          Df Variance      F Pr(>F)  
-    ## Model     1 0.036127 2.0657  0.058 .
+    ## Model     1 0.036127 2.0657   0.06 .
     ## Residual  6 0.104933                
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -422,11 +422,33 @@ species code and their position is not jittered. If there is a line
 attached to a species code, the other end of the line indicates where
 the actual location is in the ordination.
 
-Two things to note here: there were 22 species that didn’t have loadings
-in the nmds, perhaps because they were too rare (*note: still need to
-look into this*). In this initial analysis, we can see that TROR falls
-out as a ‘log’ species, GORO as an ‘open’ species, and TRCY sits where
-the two groups overlap, so our intuition about these species was
+The most apparent result here is that there are two scales of spatial
+structure. The points from each block are close together in NMDS space,
+which indicates that a lot of the variation comes from large-scale
+variation between blocks, where different species are more abundant in
+different blocks. *question - hmmm, can i test this?*
+
+Within blocks, there is also a pattern: the ‘log’ points are
+consistently the same direction away from the ‘open’ points in all
+cases. In other words, log points are always lower on the x- and/or
+y-axes relative to the open points in the same blocks. I take this to
+mean that plant species common across all blocks are predictably ‘log’
+species or ‘open’ species, and so there is also predictable spatial
+structure of plant diversity within blocks, where there are more
+‘log-affiliated’ species and more ‘open-affiliated’ species.
+
+*note: in all blocks except 5 and 7, log points are loaded on lower
+values on the x- and y-axis as compared to open points; in block 5, the
+log point is loaded lower on the x axis and has approximately the same
+y-value as the open point; in block 7, the log point is loaded lower on
+the y axis only and has approximately the same x-value as the open
+point*
+
+A couple things to note here: there were 22 species that didn’t have
+loadings in the nmds, perhaps because they were too rare (*note: still
+need to look into this*). In this initial analysis, we can see that TROR
+falls out as a ‘log’ species, GORO as an ‘open’ species, and TRCY sits
+where the two groups overlap, so our intuition about these species was
 correct.
 
 ##### 2) Why are plant communities in fallen log patches different from patches in the open?
