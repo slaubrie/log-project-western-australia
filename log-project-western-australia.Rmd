@@ -382,7 +382,9 @@ ggplot()+
 </center>
 In this plot, the points represent blocks, and the colors represent log vs open initial treatment. Species are represented by a four letter species code and their position is not jittered. If there is a line attached to a species code, the other end of the line indicates where the actual location is in the ordination. 
 
-The most apparent result here is that there are two scales of spatial structure. The points from each block are close together in NMDS space, which indicates that a lot of the variation comes from large-scale variation between blocks, where different species are more abundant in different blocks. *question - hmmm, can i test this?*
+The most apparent result here is that there are two scales of spatial structure. The points from each block are close together in NMDS space, which indicates that a lot of the variation comes from large-scale variation between blocks, where different species are more abundant in different blocks. 
+
+*question - hmmm, can i test this?*
 
 Within blocks, there is also a pattern: the 'log' points are consistently the same direction away from the 'open' points in all cases. In other words, log points are always lower on the x- and/or y-axes relative to the open points in the same blocks. I take this to mean that plant species common across all blocks are predictably 'log' species or 'open' species, and so there is also predictable spatial structure of plant diversity within blocks, where there are more 'log-affiliated' species and more 'open-affiliated' species. 
 

@@ -1,0 +1,225 @@
+﻿block,transect,initial,current_plot_type,dispersal_treatment,seeding_trt,ntrcy_germ,ngoro_germ,ntror_germ,tree fallen,tree cleared,notes,physical_barrier
+1,1.01,log,gap,after,1,1,1,3,yes,no,,0
+1,1.02,log,insitu_log,before,1,8,0,0,yes,yes,,1
+1,1.03,log,insitu_pvc,before,1,1,3,1,,,,1
+1,1.14,log,insitu_log,after,1,2,1,0,yes,no,,1
+1,1.17,open,open,NA,1,0,0,3,,,,0
+1,1.19,open,open,NA,1,1,0,0,,,,0
+1,1.21,open,open_with_pvc,before,1,1,1,2,,,,1
+1,1.22,open,open_with_log,before,1,1,3,2,,,,1
+1,1.23,open,open,NA,1,2,0,0,,,,0
+1,1.24,open,open_with_pvc,after,1,3,2,0,,,,1
+1,1.28,open,open_with_log,after,1,1,1,0,,,,1
+1,1.31,open,open,NA,1,0,0,1,,,,0
+1,1.4,log,gap,before,1,2,1,1,,,,0
+1,1.6,log,gap,before,1,2,0,1,,,,0
+1,1.8,log,gap,after,1,1,0,0,,,,0
+1,1.ten,log,insitu_pvc,after,1,0,2,1,,,,1
+2,2.01,log,gap,after,1,3,0,0,,,,0
+2,2.02,log,insitu_pvc,before,1,NA,0,2,,,,1
+2,2.12,log,gap,before,1,0,0,2,yes,no,,0
+2,2.15,log,insitu_log,after,1,1,0,0,,,,1
+2,2.17,open,open_with_log,after,1,0,0,5,,,,1
+2,2.19,open,open_with_pvc,before,1,3,1,6,,,,1
+2,2.21,open,open_with_pvc,after,1,1,1,2,,,,1
+2,2.25,open,open,NA,1,1,1,4,,,,0
+2,2.26,open,open_with_log,before,1,0,0,1,yes,yes,,1
+2,2.27,open,open,NA,1,0,2,0,,,pins missing so just did 20cm in the middle of 2 pintags in 2021 ,0
+2,2.31,open,open,NA,1,1,0,8,yes,yes,,0
+2,2.4,log,gap,after,1,4,0,0,,,,0
+2,2.6,log,insitu_pvc,after,1,0,1,3,,,,1
+2,2.7,log,insitu_log,before,1,4,0,6,,,,1
+2,2.ten,log,gap,before,1,0,0,4,yes,no,,0
+2,2.twenty,open,open,NA,1,0,0,0,,,,0
+3,3.01,log,gap,before,1,0,2,3,,,,0
+3,3.02,log,gap,after,1,0,1,2,,,approximately 2 meters west of 3.32,0
+3,3.12,log,insitu_pvc,after,1,0,0,0,,,,1
+3,3.17,open,open_with_pvc,before,1,0,1,0,yes,yes,,1
+3,3.18,open,open,NA,1,0,4,0,,,,0
+3,3.22,open,open,NA,1,0,NA,0,,,,0
+3,3.23,open,open_with_log,after,1,2,0,0,,,,1
+3,3.27,open,open_with_pvc,after,1,0,0,0,,,,1
+3,3.32,open,open_with_log,before,1,1,4,0,,,,1
+3,3.4,log,insitu_log,before,1,0,1,0,,,,1
+3,3.5,log,gap,before,1,1,5,0,,,,0
+3,3.6,log,gap,after,1,1,2,1,,,,0
+3,3.8,log,insitu_pvc,before,1,0,1,4,,,,1
+3,3.9,log,insitu_log,after,1,2,0,2,yes,yes,,1
+3,3.thirty,open,open,NA,1,0,0,0,,,,0
+3,3.twenty,open,open,NA,1,1,1,0,,,,0
+4,4.01,log,insitu_log,before,1,1,3,3,,,,1
+4,4.02,log,insitu_pvc,before,1,3,0,0,,,,1
+4,4.12,log,insitu_pvc,after,1,0,2,8,,,tree fallen right next to but not over transect/plot,1
+4,4.14,log,insitu_log,after,1,2,0,8,,,,1
+4,4.17,open,open_with_log,before,1,1,0,1,,,,1
+4,4.19,open,open,NA,1,0,0,1,,,,0
+4,4.21,open,open_with_pvc,NA,1,2,1,4,,,,1
+4,4.22,open,open_with_pvc,before,1,1,0,0,yes,yes,,1
+4,4.24,open,open_with_log,after,1,0,1,0,yes,yes,,1
+4,4.25,open,open_with_pvc,after,1,2,0,1,,,,1
+4,4.27,open,open,NA,1,0,0,0,,,tree fallen right next to but not over transect/plot,0
+4,4.29,open,open,NA,1,0,1,0,,,,0
+4,4.4,log,gap,before,1,3,0,1,,,,0
+4,4.5,log,gap,before,1,1,0,1,,,,0
+4,4.6,log,gap,after,1,0,1,0,yes,yes,nail miassing; assumed 20cm sample area,0
+4,4.7,log,gap,after,1,0,0,0,,,,0
+5,5.01,log,insitu_log,before,1,0,0,1,,,,1
+5,5.02,log,gap,before,1,3,1,0,,,,0
+5,5.13,log,gap,after,1,2,0,0,,,,0
+5,5.14,log,insitu_log,after,1,0,0,0,,,,1
+5,5.17,open,open_with_log,before,1,1,0,0,,,,1
+5,5.19,open,open,NA,1,0,0,0,,,,0
+5,5.21,open,open,NA,1,0,0,0,,,,0
+5,5.23,open,open,NA,1,0,2,0,,,,0
+5,5.24,open,open_with_pvc,before,1,0,0,0,,,,1
+5,5.27,open,open_with_log,after,1,0,2,0,,,,1
+5,5.28,open,open_with_pvc,after,1,0,0,1,,,,1
+5,5.31,open,open,NA,1,0,0,0,,,,0
+5,5.4,log,gap,before,1,1,1,NA,,,tree fallen over plot but not touching ground (~50cm above). Left as is. ,0
+5,5.7,log,gap,after,1,0,1,0,,,,0
+5,5.9,log,insitu_pvc,before,1,1,0,0,yes,yes,,1
+5,5.ten,log,insitu_pvc,after,1,0,0,0,,,,1
+6,6.01,log,gap,before,1,0,2,2,,,,0
+6,6.02,log,insitu_pvc,before,1,2,0,4,,,,1
+6,6.11,log,insitu_pvc,after,1,3,3,0,,,,1
+6,6.15,log,insitu_log,after,1,8,1,4,,,,1
+6,6.17,open,open,NA,1,4,0,5,,,,0
+6,6.18,open,open_with_log,before,1,2,2,4,,,,1
+6,6.21,open,open,NA,1,0,1,1,,,,0
+6,6.23,open,open_with_pvc,before,1,0,2,11,,,,1
+6,6.24,open,open_with_pvc,after,1,0,0,0,,,,1
+6,6.26,open,open,NA,1,NA,0,0,,,,0
+6,6.28,open,open_with_log,after,1,4,0,1,,,,1
+6,6.31,open,open,NA,1,0,NA,1,,,,0
+6,6.4,log,gap,after,1,0,2,3,,,tree fallen over plot but not touching ground (~50cm above). Left as is. ,0
+6,6.5,log,gap,before,1,1,3,1,yes,yes,,0
+6,6.7,log,gap,after,1,0,1,5,,,,0
+6,6.9,log,insitu_log,before,1,3,0,2,yes,yes,branch over plot removed,1
+7,7.01,log,insitu_log,before,1,0,0,8,yes,yes,,1
+7,7.02,log,gap,after,1,0,2,0,,,branches fallen near but not touching the plot,0
+7,7.11,log,insitu_pvc,after,1,3,4,1,,,,1
+7,7.13,log,insitu_pvc,after,1,NA,0,5,,,,1
+7,7.16,log,gap,before,1,4,0,8,yes,yes,,0
+7,7.17,open,open_with_log,after,1,0,0,0,,,approximately 1m north of 7.06,1
+7,7.18,open,open_with_log,before,1,0,0,0,,,,1
+7,7.22,open,open,NA,1,0,1,0,yes,yes,big tree over plot; branches removed. One nail moved/came out. Assumed 20cm,0
+7,7.24,open,open_with_pvc,before,1,3,0,1,,,,1
+7,7.26,open,open,NA,1,1,0,0,,,,0
+7,7.29,open,open,NA,1,2,0,5,,,,0
+7,7.31,open,open,NA,1,2,1,0,,,,0
+7,7.6,log,gap,after,1,0,0,0,,,,0
+7,7.8,log,gap,before,1,NA,3,0,yes,yes,toothpicks were missing. Branch over plot removed,0
+7,7.ten,log,insitu_pvc,before,1,0,1,3,,,,1
+7,7.twenty,open,open_with_pvc,after,1,3,0,1,,,,1
+1,1.11,log,gap,before,0,NA,NA,NA,,,,0
+1,1.12,log,insitu_pvc,after,0,NA,NA,NA,,,,1
+1,1.13,log,insitu_log,before,0,NA,NA,NA,,,,1
+1,1.15,log,insitu_pvc,before,0,NA,NA,NA,,,,1
+1,1.16,log,insitu_log,after,0,NA,NA,NA,,,,1
+1,1.18,open,open_with_log,after,0,NA,NA,NA,,,,1
+1,1.25,open,open,NA,0,NA,NA,NA,yes,no,,0
+1,1.26,open,open_with_pvc,before,0,NA,NA,NA,,,,1
+1,1.27,open,open_with_log,before,0,NA,NA,NA,,,,1
+1,1.29,open,open_with_pvc,after,0,NA,NA,NA,,,,1
+1,1.32,open,open,NA,0,NA,NA,NA,,,,0
+1,1.5,log,gap,after,0,NA,NA,NA,yes,yes,,0
+1,1.7,log,gap,before,0,NA,NA,NA,,,,0
+1,1.9,log,gap,after,0,NA,NA,NA,,,,0
+1,1.thirty,open,open,NA,0,NA,NA,NA,,,,0
+1,1.twenty,open,open,NA,0,NA,NA,NA,yes,yes,,0
+2,2.03,log,gap,after,0,NA,NA,NA,yes,no,,0
+2,2.11,log,gap,before,0,NA,NA,NA,,,,0
+2,2.13,log,gap,before,0,NA,NA,NA,,,,0
+2,2.14,log,insitu_pvc,before,0,NA,NA,NA,,,,1
+2,2.16,log,insitu_log,after,0,NA,NA,NA,yes,,,1
+2,2.18,open,open,NA,0,NA,NA,NA,,,,0
+2,2.22,open,open,NA,0,NA,NA,NA,,,,0
+2,2.23,open,open_with_pvc,after,0,NA,NA,NA,,,,1
+2,2.24,open,open_with_log,after,0,NA,NA,NA,yes,yes,,1
+2,2.28,open,open,NA,0,NA,NA,NA,,,,0
+2,2.29,open,open_with_log,before,0,NA,NA,NA,,,,1
+2,2.32,open,open,NA,0,NA,NA,NA,,,,0
+2,2.5,log,gap,after,0,NA,NA,NA,,,,0
+2,2.8,log,insitu_log,before,0,NA,NA,NA,,,,1
+2,2.9,log,insitu_pvc,after,0,NA,NA,NA,,,,1
+2,2.thirty,open,open_with_pvc,before,0,NA,NA,NA,,,,1
+3,3.03,log,gap,after,0,NA,NA,NA,,,,0
+3,3.11,log,insitu_log,before,0,NA,NA,NA,,,,1
+3,3.13,log,gap,before,0,NA,NA,NA,,,,0
+3,3.14,log,gap,before,0,NA,NA,NA,,,,0
+3,3.15,log,insitu_log,after,0,NA,NA,NA,,,,1
+3,3.16,log,insitu_pvc,before,0,NA,NA,NA,,,,1
+3,3.19,open,open,NA,0,NA,NA,NA,,,,0
+3,3.21,open,open,NA,0,NA,NA,NA,,,,0
+3,3.24,open,open_with_log,before,0,NA,NA,NA,,,,1
+3,3.25,open,open_with_pvc,before,0,NA,NA,NA,,,,1
+3,3.26,open,open,NA,0,NA,NA,NA,,,,0
+3,3.28,open,open_with_log,after,0,NA,NA,NA,,,,1
+3,3.29,open,open_with_pvc,after,0,NA,NA,NA,,,,1
+3,3.31,open,open,NA,0,NA,NA,NA,,,one nail missing so assumed 20cm based on remaining nail,0
+3,3.7,log,gap,after,0,NA,NA,NA,yes,yes,,0
+3,3.ten,log,insitu_pvc,after,0,NA,NA,NA,,,,1
+4,4.03,log,gap,after,0,NA,NA,NA,,,,0
+4,4.11,log,insitu_pvc,before,0,NA,NA,NA,,,branch over plot; PVC not secure and covered transect,1
+4,4.13,log,insitu_pvc,after,0,NA,NA,NA,,,,1
+4,4.15,log,gap,before,0,NA,NA,NA,,,,0
+4,4.16,log,insitu_log,after,0,NA,NA,NA,yes,yes,"not a tree, just lots of branches fallen and removed",1
+4,4.18,open,open_with_log,after,0,NA,NA,NA,yes,yes,,1
+4,4.23,open,open,NA,0,NA,NA,NA,yes,yes,"not a tree, just lots of branches fallen and removed",0
+4,4.26,open,open,NA,0,NA,NA,NA,yes,yes,,0
+4,4.28,open,open,NA,0,NA,NA,NA,,,,0
+4,4.31,open,open_with_log,before,0,NA,NA,NA,,,,1
+4,4.32,open,open_with_pvc,before,0,NA,NA,NA,,,,1
+4,4.8,log,gap,after,0,NA,NA,NA,,,,0
+4,4.9,log,gap,before,0,NA,NA,NA,,,,0
+4,4.ten,log,insitu_log,before,0,NA,NA,NA,,,,1
+4,4.thirty,open,open,NA,0,NA,NA,NA,,,,0
+4,4.twenty,open,open,before,0,NA,NA,NA,,,,0
+5,5.03,open,open,NA,0,NA,NA,NA,,,log moved slightly,0
+5,5.11,log,gap,before,0,NA,NA,NA,,,,0
+5,5.12,log,insitu_pvc,after,0,NA,NA,NA,,,branches fallen over plot but not on the ground (approx 1m above),1
+5,5.15,log,insitu_log,after,0,NA,NA,NA,,,,1
+5,5.16,log,insitu_pvc,before,0,NA,NA,NA,,,,1
+5,5.18,open,open_with_log,before,0,NA,NA,NA,yes,yes,small branch over plot removed. Nail missing assumed 20cm based on present nail. ,1
+5,5.22,open,open,NA,0,NA,NA,NA,,,,0
+5,5.25,open,open,NA,0,NA,NA,NA,,,,0
+5,5.26,open,open_with_pvc,before,0,NA,NA,NA,,,,1
+5,5.29,open,open_with_pvc,after,0,NA,NA,NA,,,,1
+5,5.32,open,open_with_log,after,0,NA,NA,NA,,,,1
+5,5.5,log,gap,before,0,NA,NA,NA,,,,0
+5,5.6,log,gap,after,0,NA,NA,NA,,,,0
+5,5.8,log,gap,after,0,NA,NA,NA,,,,0
+5,5.thirty,log,insitu_log,before,0,NA,NA,NA,,,,1
+5,5.twenty,open,open,NA,0,NA,NA,NA,,,,0
+6,6.03,log,gap,before,0,NA,NA,NA,,,,0
+6,6.12,log,insitu_log,before,0,NA,NA,NA,yes,yes?,branch over plot removed. Hiding behind big fallen tree.,1
+6,6.13,log,insitu_pvc,after,0,NA,NA,NA,yes,yes,,1
+6,6.14,log,insitu_pvc,before,0,NA,NA,NA,,,,1
+6,6.16,log,insitu_log,after,0,NA,NA,NA,,,,1
+6,6.19,open,open,NA,0,NA,NA,NA,yes,yes,,0
+6,6.22,open,open,NA,0,NA,NA,NA,,,,0
+6,6.25,open,open_with_pvc,before,0,NA,NA,NA,yes,yes,approximately 3 meters NE of plot 6.8,1
+6,6.27,open,open,NA,0,NA,NA,NA,yes,yes,branch over plot removed,0
+6,6.29,open,open_with_log,after,0,NA,NA,NA,,,,1
+6,6.32,open,open,NA,0,NA,NA,NA,,,,0
+6,6.6,log,gap,after,0,NA,NA,NA,,,,0
+6,6.8,log,gap,before,0,NA,NA,NA,,,,0
+6,6.ten,log,gap,after,0,NA,NA,NA,,,branch over plot but not touching; left as is. ,0
+6,6.thirty,open,open_with_pvc,after,0,NA,NA,NA,,,,1
+6,6.twenty,open,open_with_log,before,0,NA,NA,NA,,,,1
+7,7.03,log,insitu_pvc,before,0,NA,NA,NA,yes,no,tree fell but not actually touching plot,1
+7,7.12,log,insitu_log,after,0,NA,NA,NA,yes,yes,,1
+7,7.14,log,insitu_log,before,0,NA,NA,NA,,,,1
+7,7.15,log,insitu_log,after,0,NA,NA,NA,,,,1
+7,7.19,open,open_with_log,after,0,NA,NA,NA,,,,1
+7,7.21,open,open_with_pvc,after,0,NA,NA,NA,,,lots of leaf litter ,1
+7,7.23,open,open,NA,0,NA,NA,NA,,,,0
+7,7.25,open,open_with_pvc,before,0,NA,NA,NA,,,one nail super buried,1
+7,7.27,open,open_with_log,before,0,NA,NA,NA,,,"log moved slightly; put back in place. One nail missing, assumed 20cm",1
+7,7.28,open,open,NA,0,NA,NA,NA,,,,0
+7,7.32,open,open,NA,0,NA,NA,NA,yes,yes,branch over plot removed,0
+7,7.4,log,gap,after,0,NA,NA,NA,,,,0
+7,7.5,log,gap,before,0,NA,NA,NA,,,,0
+7,7.7,log,gap,after,0,NA,NA,NA,yes,yes,branch over plot removed,0
+7,7.9,log,gap,before,0,NA,NA,NA,yes,yes,,0
+7,7.thirty,open,open,NA,0,NA,NA,NA,,,,0
