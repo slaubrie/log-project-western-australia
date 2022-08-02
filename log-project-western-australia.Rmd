@@ -1,14 +1,12 @@
 ---
 title: "log-project-western-australia"
 output: github_document
-date: '2022-05-23'
+date: 'August 2022'
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-### Research Motivation
 Understanding how spatial variation is linked to diversity maintenance in natural communities is a pillar of plant community ecology. Theoretically, a variable landscape can maintain diversity via niche partitioning: different species can trade off in performing better or worse depending on the conditions of the patch they are growing in, and as a result, more species can sustainably coexist in a community than if it were spatially heterogeneous. In the hyperdiverse system of native annual plants in Western Australia, fallen logs may be one of the greatest contributors to generating spatial variation that could help maintain species diversity. Considerable anecdotal evidence suggests that fallen logs generate spatial variation, or patchiness, in the environment (Figure 1), and that species or assemblages of plants may respond differently depending on if they are near logs or not. Despite such anecdotal evidence, it is yet unknown if and how fallen logs contribute to maintaining species diversity in the native annual plant communities of the Western Australian wheat belt. 
 
 <center>
@@ -20,7 +18,7 @@ The project will address the following questions:
 
 **2) Why are plant communities in fallen log patches different from patches in the open?** 
 
-**3) Are plant species performances affected by proximity to fallen logs? ** 
+**3) Are plant species performances affected by proximity to fallen logs?** 
 
 ### Hypotheses
 The null hypothesis, H0, is that annual plants in fallen log patches are not different in diversity, abundance, or composition from open patches. 
@@ -396,4 +394,282 @@ A couple things to note here: there were 22 species that didn't have loadings in
 This can be answered by comparing community abundance, diversity, and dissimilarity among experimental treatments in 2021 and beyond. It can also be corroborated by looking at environmental correlates to the changes we observe among treatments as time goes on. I'm not quite sure how to do this at the moment.
 
 ##### 3) How is plant species performance affected by proximity to fallen logs? 
-This can be answered by comparing performance of sown plants among experimental treatments in 2021 and beyond.
+This can be answered by comparing performance of sown plants among experimental treatments in 2021 and beyond. 
+
+##### Data overview
+In 2021, we sowed 15 seeds of each species into all the different treatments. The data we collected was the following: 
+
+1. Number of sown individuals growing (out of 15) at peak biomass
+2. Total biomass of sown individuals growing at peak biomass 
+
+From these, we can also calculate:
+
+3. Per-capita biomass of sown individuals. 
+
+In 2022,  we sowed 15 seeds of each species into all the different treatments. The data we have collected so far is germination - i.e., the number of sown seedlings present in July 2022.
+
+##### Modeling
+*Response variables* 
+The data from 2021 and 2022 are different, but the analyses thus far are similar. I can model count data using a zero-inflated negative binomial model, which accounts for zero inflation to model total number of individuals in a given location. 
+
+I can also use hurdle models to model the *probability of occurrence each species* (which is binomial), and the *abundance of each species in the cases where they are present* (this is either a truncated poisson or truncated negative binomial distribution, so called because it doesn't model zeros). 
+
+In 2021, I model counts of individuals that both germinated and survived to flowering. In 2022, the I model the number of seedlings. 
+
+I also use generalized linear mixed effects models to model the total and per-capita biomass of sown individuals from 2021. This is a measure of performance that acts as proxy for fecundity.
+
+*Control Variables* 
+There are multiple control variables we can use to predict the presence and abundance of individuals. 
+
+1.  **Plot type**, which has seven levels and is the experimental treatment. \br
+2.  **Log legacy**, which has two levels and groups treatments according to the initial state of the plot before the experiment was installed - was it a plot that originally had a log, or was out in the open with no log? \br
+3.  **Physical barrier**, which has two levels. This groups treatments according to if the experimental treatment is either a physical barrier (pvc or log), or there is not (- either a 'gap' where the log has been removed, or open)
+
+##### 2021 
+<div class = "Box">
+###### Summary of 2021 statistically significant results 
+**Plot type analysis**  
+- GORO abundance is marginally significantly higher in open with pvc plots than insitu log plots  
+- The probability of TROR presence in insitu pvc plots is significantly higher than the probability of TROR presence in open plots  
+
+**Log legacy analysis**  
+- Count and total biomass of TRCY is marginally significantly higher in log-legacy plots as compared to open-legacy plots    
+
+**Physical barrier analysis**  
+- TROR and TRCY  are significantly more likely to occur where there is a physical barrier  
+- GORO has significantly higher per-capita biomass when there is a physical barrier  
+</div>
+
+###### Response of counts and biomass to plot type
+First we can look at the results from the zero-inflated model that predicts the *end-result, final counts of individuals in each plot type*. What we observe is **G. rosea counts are marginally singificantly higher in open with pvc plots than insitu log plots**
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+# packages 
+require(lme4)
+require(emmeans)
+require(pscl)
+require(glmmTMB)
+require(tidyr)
+require(DHARMa)
+
+############## 2021 data #############
+
+# read csv
+dat<-read.csv('nplants_data_2021_git.csv', header=T)
+dat1<-dat[which(dat$seeding_trt==1),]
+dat1$physical_barrier<-as.factor(dat1$physical_barrier)
+dat1$block<-as.factor(dat1$block)
+
+############# treatment response: do analysis for count by species ############# 
+
+dat2<-(dat1[c(1:4,7,11,15,22)])
+countdat<-as.data.frame(dat2 %>% pivot_longer(c(ntror, ngoro, ntrcy)))
+countdat$value2<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
+
+# zero-inflated model which just accounts for zeros in predicting total counts
+# using examples as presented here: https://www.biorxiv.org/content/biorxiv/suppl/2017/05/01/132753.DC1/132753-2.pdf 
+fit3<-glmmTMB(value~name*current_plot_type+(1|block), ziformula=~., family=nbinom2(), data=countdat)
+ sim3<-simulateResiduals(fit3)
+ plot(sim3)
+ testDispersion(sim3)
+ testZeroInflation(sim3)
+```
+
+```{r}
+# visualize
+emmip(fit3,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+
+# visualize
+est<-emmeans(fit3,~current_plot_type|name, type='response')
+pairs(est)
+```
+
+We can use the hurdle model up to look a presence/absence and abundance separately. What this will show is there is one statistically significant result- **The probability of TROR presence in insitu pvc plots is significantly higher than the probability of TROR presence in open plots**. TROR is also marginally significantly more likely to occur in open plots with pvc as compared to open plots. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+### zeros and ones 
+countdat$presence<-ifelse(countdat$value==0, 0, 1)
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=countdat)
+```
+
+```{r}
+#visualize
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+
+# show comparisons
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+
+pairs(est)
+```
+
+In the abundance analysis, there are no significant differences between plot types. However, we do see that goro tends to produce fewer plants in the insitu log plots than any other plot type. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+### abundance with a truncated negbinom 
+countdat$posicounts<-as.numeric(ifelse(countdat$value==0, "NA", countdat$value))
+countfit<-glmmTMB(posicounts~name*current_plot_type+(1 | block), family=truncated_nbinom2(), data=countdat)
+```
+```{r}
+#visualize
+emmip(countfit,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+*Not shown: Per-capita and total biomass of sown individuals at peak biomass did not significantly vary according to plot type* 
+
+###### Response of counts and biomass to log legacy
+
+Next we can look at the results from the zero-inflated model that predict the *end-result, final counts of individuals from initially log (log legacy) vs open plots*. **The main result is that the abundance of TRCY individuals is marginally significantly higher in log-legacy plots as compared to open-legacy plots**. This is driven by changes in abundance, not presence, where there were more TRCY individuals in log legacy plots than open legacy plots (analysis not shown). 
+
+```{r}
+fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=nbinom2(), data=countdat)
+
+## This stuff will just give you the end result counts with the zeros factored in...other code (not shown) demonstrates the results are coming from the abundance part of the model. Occurrence doesn't differ. 
+# summary(fit3_leg)
+
+# visualize 
+emmip(fit3_leg,~initial|name, type='response',CI=T)+
+  theme_bw()
+
+est<-emmeans(fit3_leg,~initial|name, type='response')
+
+pairs(est)
+```
+This result is recapitualted in the model of total biomass of individuals, where **total biomass of TRCY is marginally significantly higher in log-legacy plots as compared to open-legacy plots**. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+
+dat3<-(dat1[c(1:4,10,14,18,22)])
+totwtdat<-as.data.frame(dat3 %>% pivot_longer(c(wt_max15_goro, wt_max15_tror, wt_max15_trcy)))
+totwtdat$log_wt<-log(totwtdat$value) # log transform the weight data to get it normal looking
+
+# model
+totwtmod<-lmer(log_wt~name*current_plot_type+(1|block), data=totwtdat)
+```
+
+```{r}
+# weights
+totwtmod_leg<-lmer(log_wt~name*initial+(1|block), data=totwtdat)
+
+# model summary
+# summary(totwtmod_leg)
+
+# visaulise  
+emmip(totwtmod_leg,~initial|name,CI=T)+
+  theme_bw()
+
+# marginal means 
+est<-emmeans(totwtmod_leg,~initial|name, type='response')
+pairs(est)
+```
+*NB: In the biomass analysis, the trend is for goro to have biomass in open-legacy plots and the Trachymene species to have lower counts and weights in open-legacy plots.*
+
+###### Response of counts and biomass to physical barriers
+
+We can next look at the results from the physical barrier analyses to predict *counts of individuals from physical barrier vs no physical barrier plots*. **The main result is that *Trachymene* species are significantly more likely to occur where there is a physical barrier**. Abundance does not vary among species according to if there is a physical barrier or not.  
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+
+zerofit_phys<-glmmTMB(presence~name*physical_barrier+(1 | block), family=binomial, data=countdat)
+```
+```{r}
+#visualize
+emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)+
+  theme_bw()
+
+est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+```
+
+Finally, we can look at results from the physical barrier analyses to predict *total and per-capita biomass*. **The main result is that *Goodenia* has significantly higher per-capita biomass when there is a physical barrier**
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+
+dat4<-(dat1[c(1:4,9,13,17,22)])
+pcwtdat<-as.data.frame(dat4 %>% pivot_longer(c(wt_percapita_goro, wt_percapita_tror, wt_percapita_trcy)))
+pcwtdat$log_wt<-log(pcwtdat$value) # log transform the weight data to get it normal looking
+
+```
+```{r}
+# model
+pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat)
+
+# visualize
+emmip(pcwtmod_phys,~physical_barrier|name,CI=T)+
+  theme_bw()
+
+#test
+est<-emmeans(pcwtmod_phys,~physical_barrier|name, type='response')
+pairs(est)
+```
+
+##### 2022 
+###### Summary of 2022 statistically significant results 
+**Plot type analysis**  
+- The probability of TRCY occurring in insitu pvc plots is significantly higher than in open plots. 
+
+- The probability of TRCY occurring in in open with pvc is marginally significantly higher than in open plots.
+
+**Log legacy analysis**  
+- TRCY abundance is significantly higher in log legacy plots as compared to open legacy plots 
+
+**Physical barrier analysis**  
+-  TRCY and TROR are significantly more likely to occur in plots with physical barriers
+
+###### Response of germination to plot type
+The results from the hurdle model show that **the probability of TRCY occurring in insitu pvc plots is significantly higher than in open plots. It is also marginally more likely to be present in open with pvc than open plots.** Abundances do not differ for any species across any treatment.
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+
+# read csv
+dat<-read.csv('nplants_data_2022.csv', header=T)
+dat1<-dat[which(dat$seeding_trt==1),]
+dat1$physical_barrier<-as.factor(dat1$physical_barrier)
+dat1$block<-as.factor(dat1$block)
+dat2<-dat1[,c(1,3:4,7:9,13)]
+dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_germ, ngoro_germ, ntror_germ)))
+dat22$attempts<-rep(15, nrow(dat22))
+dat22$fails<-dat22$attempts-dat22$value
+dat22$presence<-ifelse(countdat$value==0, 0, 1)
+dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
+
+```
+
+```{r}
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=dat22)
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+pairs(est)
+```
+
+###### Response of germination to log legacy
+The results from the zero-inflated model show that **TRCY counts are significantly higher in log legacy plots as compared to open legacy plots.** This was driven more by differences in abundance rather than presence/absence (analysis not shown).
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+fit_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=poisson(), data=dat22)
+```
+
+```{r}
+emmip(fit_leg, ~initial|name, type='response', CI=T)+
+  theme_bw()
+est<-emmeans(fit_leg,~initial|name, type='response')
+pairs(est)
+```
+
+###### Response of germination to physical barriers
+The results from the hurdle model show that **TRCY and TROR occurrence is significantly higher plots with physical barriers.** This resulted in higher overall counts for TRCY, but not TROR, in the zero-inflated count model (analysis not shown).
+
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
+zerofit_phys<-glmmTMB(presence~name*physical_barrier+(1 | block), family=binomial, data=dat22)
+
+```
+```{r}
+emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)+
+  theme_bw()
+est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+```

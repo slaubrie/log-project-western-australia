@@ -225,21 +225,33 @@ dat22$presence<-ifelse(countdat$value==0, 0, 1)
 dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
 
 ############# treatment response: do analysis for germination by species ############# 
+# I think this doens't work because it's mostly zeros.
+# fit<-glmmTMB(value~name*current_plot_type+(1| block), ziformula=~., family=poisson(), data=dat22)
+#  sim<-simulateResiduals(fit)
+#  plot(sim)
+#  testDispersion(sim)
+#  testZeroInflation(sim)
+#  
+#  summary(fit)
+#  emmip(fit, ~current_plot_type|name, type='response', CI=T)
+#  est<-emmeans(fit,~current_plot_type|name, type='response')
+#  pairs(est)
 
-fit<-glmmTMB(value~name*current_plot_type+(1 | block), ziformula=~., family=truncated_poisson(), data=dat22)
- sim<-simulateResiduals(fit)
- plot(sim)
- testDispersion(sim)
- testZeroInflation(sim)
- 
- summary(fit)
- emmip(fit, ~current_plot_type|name, type='response', CI=T)
- est<-emmeans(fit,~current_plot_type|name, type='response')
- pairs(est)
+### zeros and ones 
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=dat22)
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countfit<-glmmTMB(posicounts~name*current_plot_type+(1 | block), family=truncated_nbinom2(), data=dat22)
+emmip(countfit,~current_plot_type|name, type='response',CI=T)
+est<-emmeans(countfit, ~current_plot_type|name, type='response')
+pairs(est)
  
 ######### What about the log legacy - initial treatment for 2022 #######
 
-fit_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=truncated_poisson(), data=dat22)
+fit_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=poisson(), data=dat22)
 sim<-simulateResiduals(fit_leg)
 plot(sim)
 testDispersion(sim)
@@ -265,7 +277,7 @@ pairs(est)
 
 ######### What about the physical barrier - initial treatment for 2022 #######
 
-fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=truncated_poisson(), data=dat22)
+fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=nbinom2(), data=dat22)
 sim<-simulateResiduals(fit_phys)
 plot(sim)
 testDispersion(sim)
@@ -279,12 +291,24 @@ pairs(est)
 # split up occurrence and abundance
 ### zeros and ones 
 zerofit_phys<-glmmTMB(presence~name*physical_barrier+(1 | block), family=binomial, data=dat22)
+
+sim<-simulateResiduals(zerofit_phys)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
 emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)
 est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
 pairs(est)
 
 ### abundance with a truncated negbinom 
 countfit_phys<-glmmTMB(posicounts~name*physical_barrier+(1 | block), family=truncated_nbinom2(), data=dat22)
+
+sim<-simulateResiduals(countfit_phys)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
 emmip(countfit_phys,~physical_barrier|name, type='response',CI=T)
 est<-emmeans(countfit_phys, ~physical_barrier|name, type='response')
 pairs(est)

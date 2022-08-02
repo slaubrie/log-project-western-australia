@@ -1,8 +1,8 @@
 log-project-western-australia
 ================
-2022-05-23
+July 2022
 
-### Research Motivation
+<div class="Box">
 
 Understanding how spatial variation is linked to diversity maintenance
 in natural communities is a pillar of plant community ecology.
@@ -20,6 +20,8 @@ respond differently depending on if they are near logs or not. Despite
 such anecdotal evidence, it is yet unknown if and how fallen logs
 contribute to maintaining species diversity in the native annual plant
 communities of the Western Australian wheat belt.
+
+</div>
 
 <center>
 
@@ -400,7 +402,7 @@ for details.
     ## 
     ## Model: rda(X = ass.rel.t0, Y = init, Z = block)
     ##          Df Variance      F Pr(>F)  
-    ## Model     1 0.036127 2.0657  0.055 .
+    ## Model     1 0.036127 2.0657   0.05 *
     ## Residual  6 0.104933                
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -517,6 +519,28 @@ predict the presence and abundance of individuals.
     log has been removed, or open)
 
 ##### 2021
+
+<div class="Box">
+
+###### Summary of 2021 statistically significant results
+
+**Plot type analysis**  
+- GORO abundance is marginally significantly higher in open with pvc
+plots than insitu log plots  
+- The probability of TROR presence in insitu pvc plots is significantly
+higher than the probability of TROR presence in open plots
+
+**Log legacy analysis**  
+- Count and total biomass of TRCY is marginally significantly higher in
+log-legacy plots as compared to open-legacy plots
+
+**Physical barrier analysis**  
+- TROR and TRCY are significantly more likely to occur where there is a
+physical barrier  
+- GORO has significantly higher per-capita biomass when there is a
+physical barrier
+
+</div>
 
 ###### Response of counts and biomass to plot type
 
@@ -850,20 +874,166 @@ pairs(est)
     ## 
     ## Degrees-of-freedom method: kenward-roger
 
-###### Summary of 2021 statistically significant results
+##### 2022
+
+###### Summary of 2022 statistically significant results
 
 **Plot type analysis**  
-- GORO abundance is marginally significantly higher in open with pvc
-plots than insitu log plots  
-- The probability of TROR presence in insitu pvc plots is significantly
-higher than the probability of TROR presence in open plots
+- The probability of TRCY occurring in insitu pvc plots is significantly
+higher than in open plots.
+
+-   The probability of TRCY occurring in in open with pvc is marginally
+    significantly higher than in open plots.
 
 **Log legacy analysis**  
-- Count and total biomass of TRCY is marginally significantly higher in
-log-legacy plots as compared to open-legacy plots
+- TRCY abundance is significantly higher in log legacy plots as compared
+to open legacy plots
 
 **Physical barrier analysis**  
-- TROR and TRCY are significantly more likely to occur where there is a
-physical barrier  
-- GORO has significantly higher per-capita biomass when there is a
-physical barrier
+- TRCY and TROR are significantly more likely to occur in plots with
+physical barriers
+
+###### Response of germination to plot type
+
+The results from the hurdle model show that **the probability of TRCY
+occurring in insitu pvc plots is significantly higher than in open
+plots. It is also marginally more likely to be present in open with pvc
+than open plots.** Abundances do not differ for any species across any
+treatment.
+
+``` r
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=dat22)
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+pairs(est)
+```
+
+    ## name = ngoro_germ:
+    ##  contrast                      odds.ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log                   1.175 0.808 317    1   0.235  0.9999
+    ##  gap / insitu_pvc                   0.656 0.434 317    1  -0.638  0.9881
+    ##  gap / open                         0.676 0.376 317    1  -0.705  0.9812
+    ##  gap / open_with_log                0.741 0.499 317    1  -0.446  0.9978
+    ##  gap / open_with_pvc                0.145 0.125 317    1  -2.246  0.2198
+    ##  insitu_log / insitu_pvc            0.558 0.437 317    1  -0.745  0.9761
+    ##  insitu_log / open                  0.575 0.400 317    1  -0.796  0.9681
+    ##  insitu_log / open_with_log         0.630 0.500 317    1  -0.582  0.9922
+    ##  insitu_log / open_with_pvc         0.123 0.118 317    1  -2.189  0.2460
+    ##  insitu_pvc / open                  1.030 0.690 317    1   0.045  1.0000
+    ##  insitu_pvc / open_with_log         1.130 0.870 317    1   0.159  1.0000
+    ##  insitu_pvc / open_with_pvc         0.221 0.207 317    1  -1.610  0.5927
+    ##  open / open_with_log               1.097 0.747 317    1   0.135  1.0000
+    ##  open / open_with_pvc               0.215 0.186 317    1  -1.777  0.4819
+    ##  open_with_log / open_with_pvc      0.196 0.185 317    1  -1.725  0.5159
+    ## 
+    ## name = ntrcy_germ:
+    ##  contrast                      odds.ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log                   1.211 0.848 317    1   0.273  0.9998
+    ##  gap / insitu_pvc                   0.360 0.245 317    1  -1.499  0.6654
+    ##  gap / open                         3.440 2.188 317    1   1.942  0.3785
+    ##  gap / open_with_log                1.000 0.675 317    1   0.000  1.0000
+    ##  gap / open_with_pvc                0.487 0.323 317    1  -1.083  0.8878
+    ##  insitu_log / insitu_pvc            0.298 0.240 317    1  -1.501  0.6640
+    ##  insitu_log / open                  2.841 2.185 317    1   1.358  0.7521
+    ##  insitu_log / open_with_log         0.826 0.662 317    1  -0.238  0.9999
+    ##  insitu_log / open_with_pvc         0.402 0.319 317    1  -1.149  0.8604
+    ##  insitu_pvc / open                  9.545 7.181 317    1   2.999  0.0344
+    ##  insitu_pvc / open_with_log         2.775 2.178 317    1   1.301  0.7845
+    ##  insitu_pvc / open_with_pvc         1.351 1.047 317    1   0.388  0.9988
+    ##  open / open_with_log               0.291 0.217 317    1  -1.656  0.5620
+    ##  open / open_with_pvc               0.142 0.104 317    1  -2.652  0.0880
+    ##  open_with_log / open_with_pvc      0.487 0.375 317    1  -0.934  0.9373
+    ## 
+    ## name = ntror_germ:
+    ##  contrast                      odds.ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log                   0.612 0.428 317    1  -0.702  0.9816
+    ##  gap / insitu_pvc                   0.350 0.248 317    1  -1.483  0.6756
+    ##  gap / open                         1.737 0.974 317    1   0.984  0.9227
+    ##  gap / open_with_log                1.000 0.668 317    1   0.000  1.0000
+    ##  gap / open_with_pvc                0.487 0.331 317    1  -1.059  0.8972
+    ##  insitu_log / insitu_pvc            0.571 0.475 317    1  -0.673  0.9848
+    ##  insitu_log / open                  2.837 2.017 317    1   1.467  0.6858
+    ##  insitu_log / open_with_log         1.633 1.304 317    1   0.614  0.9899
+    ##  insitu_log / open_with_pvc         0.796 0.642 317    1  -0.283  0.9998
+    ##  insitu_pvc / open                  4.965 3.577 317    1   2.224  0.2296
+    ##  insitu_pvc / open_with_log         2.858 2.306 317    1   1.302  0.7839
+    ##  insitu_pvc / open_with_pvc         1.393 1.135 317    1   0.407  0.9986
+    ##  open / open_with_log               0.576 0.392 317    1  -0.811  0.9654
+    ##  open / open_with_pvc               0.281 0.194 317    1  -1.838  0.4428
+    ##  open_with_log / open_with_pvc      0.487 0.381 317    1  -0.920  0.9411
+    ## 
+    ## P value adjustment: tukey method for comparing a family of 6 estimates 
+    ## Tests are performed on the log odds ratio scale
+
+###### Response of germination to log legacy
+
+The results from the zero-inflated model show that **TRCY counts are
+significantly higher in log legacy plots as compared to open legacy
+plots.** This was driven more by differences in abundance rather than
+presence/absence (analysis not shown).
+
+``` r
+emmip(fit_leg, ~initial|name, type='response', CI=T)+
+  theme_bw()
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+est<-emmeans(fit_leg,~initial|name, type='response')
+pairs(est)
+```
+
+    ## name = ngoro_germ:
+    ##  contrast   ratio    SE  df null t.ratio p.value
+    ##  log / open  1.27 0.400 315    1   0.771  0.4412
+    ## 
+    ## name = ntrcy_germ:
+    ##  contrast   ratio    SE  df null t.ratio p.value
+    ##  log / open  1.77 0.432 315    1   2.340  0.0199
+    ## 
+    ## name = ntror_germ:
+    ##  contrast   ratio    SE  df null t.ratio p.value
+    ##  log / open  1.08 0.186 315    1   0.430  0.6675
+    ## 
+    ## Tests are performed on the log scale
+
+###### Response of germination to physical barriers
+
+The results from the hurdle model show that **TRCY and TROR occurrence
+is significantly higher plots with physical barriers.** This resulted in
+higher overall counts for TRCY, but not TROR, in the zero-inflated count
+model (analysis not shown).
+
+``` r
+emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)+
+  theme_bw()
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
+``` r
+est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+```
+
+    ## name = ngoro_germ:
+    ##  contrast odds.ratio    SE  df null t.ratio p.value
+    ##  0 / 1         0.692 0.272 329    1  -0.936  0.3498
+    ## 
+    ## name = ntrcy_germ:
+    ##  contrast odds.ratio    SE  df null t.ratio p.value
+    ##  0 / 1         0.390 0.157 329    1  -2.342  0.0198
+    ## 
+    ## name = ntror_germ:
+    ##  contrast odds.ratio    SE  df null t.ratio p.value
+    ##  0 / 1         0.439 0.173 329    1  -2.089  0.0375
+    ## 
+    ## Tests are performed on the log odds ratio scale
