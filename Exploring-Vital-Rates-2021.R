@@ -20,7 +20,7 @@ dat1$block<-as.factor(dat1$block)
 
 dat2<-(dat1[c(1:4,7,11,15,22)])
 countdat<-as.data.frame(dat2 %>% pivot_longer(c(ntror, ngoro, ntrcy)))
-countdat$value2<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
+countdat$value<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
 countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data=countdat)
 
 # test for fit and zero inflation
@@ -210,6 +210,31 @@ emmip(pcwtmod_phys,~physical_barrier|name,CI=T)
 est<-emmeans(pcwtmod_phys,~physical_barrier|name, type='response')
 pairs(est)
 
+#### What about both physical and legacy? #### 
+### zeros and ones 
+zerofit_intxn<-glmmTMB(presence~name*physical_barrier*initial+(1 | block), family=binomial, data=countdat)
+
+sim<-simulateResiduals(zerofit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(zerofit_intxn,initial~physical_barrier|name, type='response',CI=T)
+est<-emmeans(zerofit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countfit_intxn<-glmmTMB(posicounts~name*physical_barrier*initial+(1 | block), family=truncated_nbinom2(), data=countdat)
+
+sim<-simulateResiduals(countfit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(countfit_intxn,~physical_barrier|name|initial, type='response',CI=T)
+est<-emmeans(countfit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
 ############## 2022 data ##############
 
 # read csv
@@ -311,4 +336,30 @@ testZeroInflation(sim)
 
 emmip(countfit_phys,~physical_barrier|name, type='response',CI=T)
 est<-emmeans(countfit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+
+
+#### What about both physical and legacy? #### 
+### zeros and ones 
+zerofit_intxn<-glmmTMB(presence~name*physical_barrier*initial+(1 | block), family=binomial, data=dat22)
+
+sim<-simulateResiduals(zerofit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(zerofit_intxn,initial~physical_barrier|name, type='response',CI=T)
+est<-emmeans(zerofit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countfit_intxn<-glmmTMB(posicounts~name*physical_barrier*initial+(1 | block), family=truncated_nbinom2(), data=dat22)
+
+sim<-simulateResiduals(countfit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(countfit_intxn,~physical_barrier|name|initial, type='response',CI=T)
+est<-emmeans(countfit_intxn, ~physical_barrier|name|initial, type='response')
 pairs(est)
