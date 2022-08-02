@@ -41,11 +41,11 @@ fit3<-glmmTMB(value~name*current_plot_type+(1 | block), ziformula=~., family=tru
 
 ## This stuff will just give you the end result counts with the zeros factored in...
 summary(fit3)
-emmip(fit3,name~current_plot_type, type='response',CI=T)
+emmip(fit3,~current_plot_type|name, type='response',CI=T)
 
-est<-emmeans(fit3,~name|current_plot_type, type='response')
+# visualize
+est<-emmeans(fit3,~current_plot_type|name, type='response')
 pairs(est)
-
 
 #### now i'll do a by-hand hurdle model on my own using a truncated negative binomial
 
