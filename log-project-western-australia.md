@@ -41,7 +41,7 @@ patches that are in the open?**
 patches in the open?**
 
 **3) Are plant species performances affected by proximity to fallen
-logs? **
+logs?**
 
 ### Hypotheses
 
@@ -400,7 +400,7 @@ for details.
     ## 
     ## Model: rda(X = ass.rel.t0, Y = init, Z = block)
     ##          Df Variance      F Pr(>F)  
-    ## Model     1 0.036127 2.0657   0.06 .
+    ## Model     1 0.036127 2.0657  0.055 .
     ## Residual  6 0.104933                
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -426,7 +426,9 @@ The most apparent result here is that there are two scales of spatial
 structure. The points from each block are close together in NMDS space,
 which indicates that a lot of the variation comes from large-scale
 variation between blocks, where different species are more abundant in
-different blocks. *question - hmmm, can i test this?*
+different blocks.
+
+*question - hmmm, can i test this?*
 
 Within blocks, there is also a pattern: the ‘log’ points are
 consistently the same direction away from the ‘open’ points in all
@@ -463,3 +465,405 @@ how to do this at the moment.
 
 This can be answered by comparing performance of sown plants among
 experimental treatments in 2021 and beyond.
+
+##### Data overview
+
+In 2021, we sowed 15 seeds of each species into all the different
+treatments. The data we collected was the following:
+
+1.  Number of sown individuals growing (out of 15) at peak biomass
+2.  Total biomass of sown individuals growing at peak biomass
+
+From these, we can also calculate:
+
+3.  Per-capita biomass of sown individuals.
+
+In 2022, we sowed 15 seeds of each species into all the different
+treatments. The data we have collected so far is germination - i.e., the
+number of sown seedlings present in July 2022.
+
+##### Modeling
+
+*Response variables* The data from 2021 and 2022 are different, but the
+analyses thus far are similar. I can model count data using a
+zero-inflated negative binomial model, which accounts for zero inflation
+to model total number of individuals in a given location.
+
+I can also use hurdle models to model the *probability of occurrence
+each species* (which is binomial), and the *abundance of each species in
+the cases where they are present* (this is either a truncated poisson or
+truncated negative binomial distribution, so called because it doesn’t
+model zeros).
+
+In 2021, I model counts of individuals that both germinated and survived
+to flowering. In 2022, the I model the number of seedlings.
+
+I also use generalized linear mixed effects models to model the total
+and per-capita biomass of sown individuals from 2021. This is a measure
+of performance that acts as proxy for fecundity.
+
+*Control Variables* There are multiple control variables we can use to
+predict the presence and abundance of individuals.
+
+1.  **Plot type**, which has seven levels and is the experimental
+    treatment.
+2.  **Log legacy**, which has two levels and groups treatments according
+    to the initial state of the plot before the experiment was
+    installed - was it a plot that originally had a log, or was out in
+    the open with no log?
+3.  **Physical barrier**, which has two levels. This groups treatments
+    according to if the experimental treatment is either a physical
+    barrier (pvc or log), or there is not (- either a ‘gap’ where the
+    log has been removed, or open)
+
+##### 2021
+
+###### Response of counts and biomass to plot type
+
+First we can look at the results from the zero-inflated model that
+predicts the *end-result, final counts of individuals in each plot
+type*. What we observe is **G. rosea counts are marginally singificantly
+higher in open with pvc plots than insitu log plots**
+
+``` r
+# visualize
+emmip(fit3,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+# visualize
+est<-emmeans(fit3,~current_plot_type|name, type='response')
+pairs(est)
+```
+
+    ## name = ngoro:
+    ##  contrast                      ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log              2.899 1.552 297    1   1.988  0.3515
+    ##  gap / insitu_pvc              1.022 0.459 297    1   0.048  1.0000
+    ##  gap / open                    1.049 0.422 297    1   0.118  1.0000
+    ##  gap / open_with_log           1.269 0.642 297    1   0.471  0.9971
+    ##  gap / open_with_pvc           0.695 0.286 297    1  -0.884  0.9501
+    ##  insitu_log / insitu_pvc       0.352 0.199 297    1  -1.844  0.4394
+    ##  insitu_log / open             0.362 0.191 297    1  -1.929  0.3864
+    ##  insitu_log / open_with_log    0.438 0.263 297    1  -1.376  0.7416
+    ##  insitu_log / open_with_pvc    0.240 0.124 297    1  -2.769  0.0654
+    ##  insitu_pvc / open             1.026 0.445 297    1   0.060  1.0000
+    ##  insitu_pvc / open_with_log    1.242 0.668 297    1   0.402  0.9986
+    ##  insitu_pvc / open_with_pvc    0.680 0.307 297    1  -0.856  0.9565
+    ##  open / open_with_log          1.210 0.590 297    1   0.391  0.9988
+    ##  open / open_with_pvc          0.663 0.266 297    1  -1.027  0.9086
+    ##  open_with_log / open_with_pvc 0.548 0.270 297    1  -1.220  0.8268
+    ## 
+    ## name = ntrcy:
+    ##  contrast                      ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log              0.951 0.412 297    1  -0.117  1.0000
+    ##  gap / insitu_pvc              1.286 0.498 297    1   0.650  0.9870
+    ##  gap / open                    1.803 0.798 297    1   1.332  0.7670
+    ##  gap / open_with_log           1.374 0.663 297    1   0.659  0.9862
+    ##  gap / open_with_pvc           2.034 0.859 297    1   1.680  0.5464
+    ##  insitu_log / insitu_pvc       1.353 0.599 297    1   0.682  0.9838
+    ##  insitu_log / open             1.897 0.913 297    1   1.329  0.7687
+    ##  insitu_log / open_with_log    1.446 0.799 297    1   0.667  0.9854
+    ##  insitu_log / open_with_pvc    2.139 1.015 297    1   1.603  0.5972
+    ##  insitu_pvc / open             1.402 0.625 297    1   0.758  0.9742
+    ##  insitu_pvc / open_with_log    1.069 0.536 297    1   0.133  1.0000
+    ##  insitu_pvc / open_with_pvc    1.582 0.683 297    1   1.061  0.8962
+    ##  open / open_with_log          0.762 0.424 297    1  -0.488  0.9966
+    ##  open / open_with_pvc          1.128 0.542 297    1   0.251  0.9999
+    ##  open_with_log / open_with_pvc 1.480 0.788 297    1   0.736  0.9773
+    ## 
+    ## name = ntror:
+    ##  contrast                      ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log              1.253 0.787 297    1   0.359  0.9992
+    ##  gap / insitu_pvc              0.549 0.255 297    1  -1.289  0.7908
+    ##  gap / open                    0.637 0.373 297    1  -0.771  0.9722
+    ##  gap / open_with_log           0.936 0.523 297    1  -0.119  1.0000
+    ##  gap / open_with_pvc           0.967 0.439 297    1  -0.074  1.0000
+    ##  insitu_log / insitu_pvc       0.438 0.275 297    1  -1.316  0.7759
+    ##  insitu_log / open             0.508 0.368 297    1  -0.936  0.9370
+    ##  insitu_log / open_with_log    0.747 0.526 297    1  -0.414  0.9984
+    ##  insitu_log / open_with_pvc    0.772 0.477 297    1  -0.419  0.9983
+    ##  insitu_pvc / open             1.159 0.680 297    1   0.252  0.9999
+    ##  insitu_pvc / open_with_log    1.704 0.962 297    1   0.945  0.9344
+    ##  insitu_pvc / open_with_pvc    1.761 0.784 297    1   1.271  0.8004
+    ##  open / open_with_log          1.470 0.982 297    1   0.577  0.9925
+    ##  open / open_with_pvc          1.519 0.879 297    1   0.722  0.9791
+    ##  open_with_log / open_with_pvc 1.033 0.568 297    1   0.060  1.0000
+    ## 
+    ## P value adjustment: tukey method for comparing a family of 6 estimates 
+    ## Tests are performed on the log scale
+
+We can use the hurdle model up to look a presence/absence and abundance
+separately. What this will show is there is one statistically
+significant result- **The probability of TROR presence in insitu pvc
+plots is significantly higher than the probability of TROR presence in
+open plots**. TROR is also marginally significantly more likely to occur
+in open plots with pvc as compared to open plots.
+
+``` r
+#visualize
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+# show comparisons
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+
+pairs(est)
+```
+
+    ## name = ngoro:
+    ##  contrast                      odds.ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log                   1.175 0.808 317    1   0.235  0.9999
+    ##  gap / insitu_pvc                   0.656 0.434 317    1  -0.638  0.9881
+    ##  gap / open                         0.676 0.376 317    1  -0.705  0.9812
+    ##  gap / open_with_log                0.741 0.499 317    1  -0.446  0.9978
+    ##  gap / open_with_pvc                0.145 0.125 317    1  -2.246  0.2198
+    ##  insitu_log / insitu_pvc            0.558 0.437 317    1  -0.745  0.9761
+    ##  insitu_log / open                  0.575 0.400 317    1  -0.796  0.9681
+    ##  insitu_log / open_with_log         0.630 0.500 317    1  -0.582  0.9922
+    ##  insitu_log / open_with_pvc         0.123 0.118 317    1  -2.189  0.2460
+    ##  insitu_pvc / open                  1.030 0.690 317    1   0.045  1.0000
+    ##  insitu_pvc / open_with_log         1.130 0.870 317    1   0.159  1.0000
+    ##  insitu_pvc / open_with_pvc         0.221 0.207 317    1  -1.610  0.5927
+    ##  open / open_with_log               1.097 0.747 317    1   0.135  1.0000
+    ##  open / open_with_pvc               0.215 0.186 317    1  -1.777  0.4819
+    ##  open_with_log / open_with_pvc      0.196 0.185 317    1  -1.725  0.5159
+    ## 
+    ## name = ntrcy:
+    ##  contrast                      odds.ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log                   0.612 0.428 317    1  -0.702  0.9816
+    ##  gap / insitu_pvc                   0.350 0.248 317    1  -1.483  0.6756
+    ##  gap / open                         1.737 0.974 317    1   0.984  0.9227
+    ##  gap / open_with_log                1.000 0.668 317    1   0.000  1.0000
+    ##  gap / open_with_pvc                0.487 0.331 317    1  -1.059  0.8972
+    ##  insitu_log / insitu_pvc            0.571 0.475 317    1  -0.673  0.9848
+    ##  insitu_log / open                  2.837 2.017 317    1   1.467  0.6858
+    ##  insitu_log / open_with_log         1.633 1.304 317    1   0.614  0.9899
+    ##  insitu_log / open_with_pvc         0.796 0.642 317    1  -0.283  0.9998
+    ##  insitu_pvc / open                  4.965 3.577 317    1   2.224  0.2296
+    ##  insitu_pvc / open_with_log         2.858 2.306 317    1   1.302  0.7839
+    ##  insitu_pvc / open_with_pvc         1.393 1.135 317    1   0.407  0.9986
+    ##  open / open_with_log               0.576 0.392 317    1  -0.811  0.9654
+    ##  open / open_with_pvc               0.281 0.194 317    1  -1.838  0.4428
+    ##  open_with_log / open_with_pvc      0.487 0.381 317    1  -0.920  0.9411
+    ## 
+    ## name = ntror:
+    ##  contrast                      odds.ratio    SE  df null t.ratio p.value
+    ##  gap / insitu_log                   1.211 0.848 317    1   0.273  0.9998
+    ##  gap / insitu_pvc                   0.360 0.245 317    1  -1.499  0.6654
+    ##  gap / open                         3.440 2.188 317    1   1.942  0.3785
+    ##  gap / open_with_log                1.000 0.675 317    1   0.000  1.0000
+    ##  gap / open_with_pvc                0.487 0.323 317    1  -1.083  0.8878
+    ##  insitu_log / insitu_pvc            0.298 0.240 317    1  -1.501  0.6640
+    ##  insitu_log / open                  2.841 2.185 317    1   1.358  0.7521
+    ##  insitu_log / open_with_log         0.826 0.662 317    1  -0.238  0.9999
+    ##  insitu_log / open_with_pvc         0.402 0.319 317    1  -1.149  0.8604
+    ##  insitu_pvc / open                  9.545 7.181 317    1   2.999  0.0344
+    ##  insitu_pvc / open_with_log         2.775 2.178 317    1   1.301  0.7845
+    ##  insitu_pvc / open_with_pvc         1.351 1.047 317    1   0.388  0.9988
+    ##  open / open_with_log               0.291 0.217 317    1  -1.656  0.5620
+    ##  open / open_with_pvc               0.142 0.104 317    1  -2.652  0.0880
+    ##  open_with_log / open_with_pvc      0.487 0.375 317    1  -0.934  0.9373
+    ## 
+    ## P value adjustment: tukey method for comparing a family of 6 estimates 
+    ## Tests are performed on the log odds ratio scale
+
+In the abundance analysis, there are no significant differences between
+plot types. However, we do see that goro tends to produce fewer plants
+in the insitu log plots than any other plot type.
+
+``` r
+#visualize
+emmip(countfit,~current_plot_type|name, type='response',CI=T)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+*Not shown: Per-capita and total biomass of sown individuals at peak
+biomass did not significantly vary according to plot type*
+
+###### Response of counts and biomass to log legacy
+
+Next we can look at the results from the zero-inflated model that
+predict the *end-result, final counts of individuals from initially log
+(log legacy) vs open plots*. **The main result is that the abundance of
+TRCY individuals is marginally significantly higher in log-legacy plots
+as compared to open-legacy plots**. This is driven by changes in
+abundance, not presence, where there were more TRCY individuals in log
+legacy plots than open legacy plots (analysis not shown).
+
+``` r
+fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=nbinom2(), data=countdat)
+
+## This stuff will just give you the end result counts with the zeros factored in...other code (not shown) demonstrates the results are coming from the abundance part of the model. Occurrence doesn't differ. 
+# summary(fit3_leg)
+
+# visualize 
+emmip(fit3_leg,~initial|name, type='response',CI=T)+
+  theme_bw()
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+est<-emmeans(fit3_leg,~initial|name, type='response')
+
+pairs(est)
+```
+
+    ## name = ngoro:
+    ##  contrast   ratio    SE  df null t.ratio p.value
+    ##  log / open 0.835 0.240 321    1  -0.628  0.5305
+    ## 
+    ## name = ntrcy:
+    ##  contrast   ratio    SE  df null t.ratio p.value
+    ##  log / open 1.677 0.482 321    1   1.800  0.0729
+    ## 
+    ## name = ntror:
+    ##  contrast   ratio    SE  df null t.ratio p.value
+    ##  log / open 1.003 0.363 321    1   0.010  0.9924
+    ## 
+    ## Tests are performed on the log scale
+
+This result is recapitualted in the model of total biomass of
+individuals, where **total biomass of TRCY is marginally significantly
+higher in log-legacy plots as compared to open-legacy plots**.
+
+``` r
+# weights
+totwtmod_leg<-lmer(log_wt~name*initial+(1|block), data=totwtdat)
+
+# model summary
+# summary(totwtmod_leg)
+
+# visaulise  
+emmip(totwtmod_leg,~initial|name,CI=T)+
+  theme_bw()
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
+# marginal means 
+est<-emmeans(totwtmod_leg,~initial|name, type='response')
+pairs(est)
+```
+
+    ## name = wt_max15_goro:
+    ##  contrast   estimate    SE  df t.ratio p.value
+    ##  log - open   -0.410 0.300 162  -1.368  0.1733
+    ## 
+    ## name = wt_max15_trcy:
+    ##  contrast   estimate    SE  df t.ratio p.value
+    ##  log - open    0.588 0.314 162   1.874  0.0628
+    ## 
+    ## name = wt_max15_tror:
+    ##  contrast   estimate    SE  df t.ratio p.value
+    ##  log - open    0.282 0.359 164   0.786  0.4333
+    ## 
+    ## Degrees-of-freedom method: kenward-roger
+
+*NB: In the biomass analysis, the trend is for goro to have biomass in
+open-legacy plots and the Trachymene species to have lower counts and
+weights in open-legacy plots.*
+
+###### Response of counts and biomass to physical barriers
+
+We can next look at the results from the physical barrier analyses to
+predict *counts of individuals from physical barrier vs no physical
+barrier plots*. **The main result is that *Trachymene* species are
+significantly more likely to occur where there is a physical barrier**.
+Abundance does not vary among species according to if there is a
+physical barrier or not.
+
+``` r
+#visualize
+emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)+
+  theme_bw()
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+```
+
+    ## name = ngoro:
+    ##  contrast odds.ratio    SE  df null t.ratio p.value
+    ##  0 / 1         0.692 0.272 329    1  -0.936  0.3498
+    ## 
+    ## name = ntrcy:
+    ##  contrast odds.ratio    SE  df null t.ratio p.value
+    ##  0 / 1         0.439 0.173 329    1  -2.089  0.0375
+    ## 
+    ## name = ntror:
+    ##  contrast odds.ratio    SE  df null t.ratio p.value
+    ##  0 / 1         0.390 0.157 329    1  -2.342  0.0198
+    ## 
+    ## Tests are performed on the log odds ratio scale
+
+Finally, we can look at results from the physical barrier analyses to
+predict *total and per-capita biomass*. **The main result is that
+*Goodenia* has significantly higher per-capita biomass when there is a
+physical barrier**
+
+``` r
+# model
+pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat)
+
+# visualize
+emmip(pcwtmod_phys,~physical_barrier|name,CI=T)+
+  theme_bw()
+```
+
+![](log-project-western-australia_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+``` r
+#test
+est<-emmeans(pcwtmod_phys,~physical_barrier|name, type='response')
+pairs(est)
+```
+
+    ## name = wt_percapita_goro:
+    ##  contrast estimate    SE  df t.ratio p.value
+    ##  0 - 1      -0.555 0.255 162  -2.177  0.0310
+    ## 
+    ## name = wt_percapita_trcy:
+    ##  contrast estimate    SE  df t.ratio p.value
+    ##  0 - 1       0.190 0.273 163   0.698  0.4864
+    ## 
+    ## name = wt_percapita_tror:
+    ##  contrast estimate    SE  df t.ratio p.value
+    ##  0 - 1      -0.289 0.313 162  -0.923  0.3575
+    ## 
+    ## Degrees-of-freedom method: kenward-roger
+
+###### Summary of 2021 statistically significant results
+
+**Plot type analysis**  
+- GORO abundance is marginally significantly higher in open with pvc
+plots than insitu log plots  
+- The probability of TROR presence in insitu pvc plots is significantly
+higher than the probability of TROR presence in open plots
+
+**Log legacy analysis**  
+- Count and total biomass of TRCY is marginally significantly higher in
+log-legacy plots as compared to open-legacy plots
+
+**Physical barrier analysis**  
+- TROR and TRCY are significantly more likely to occur where there is a
+physical barrier  
+- GORO has significantly higher per-capita biomass when there is a
+physical barrier

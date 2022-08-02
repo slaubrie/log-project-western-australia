@@ -20,12 +20,13 @@ dat1$block<-as.factor(dat1$block)
 
 dat2<-(dat1[c(1:4,7,11,15,22)])
 countdat<-as.data.frame(dat2 %>% pivot_longer(c(ntror, ngoro, ntrcy)))
+countdat$value2<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
 countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data=countdat)
 
 # test for fit and zero inflation
-# sim<-simulateResiduals(countmod)
-# testZeroInflation(sim)
-# plot(sim)
+ sim<-simulateResiduals(countmod)
+ testZeroInflation(sim)
+ plot(sim)
 
 ## going to do a hurdle model, which assumes a zero is only generated in one way 
 # https://jsdajournal.springeropen.com/articles/10.1186/s40488-021-00121-4
@@ -33,13 +34,12 @@ countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data
 
 # hurdle model 
 # using examples as presented here: https://www.biorxiv.org/content/biorxiv/suppl/2017/05/01/132753.DC1/132753-2.pdf 
-fit3<-glmmTMB(value~name*current_plot_type+(1 | block), ziformula=~., family=truncated_nbinom2(), data=countdat)
-# sim3<-simulateResiduals(fit3)
-# plot(sim3)
-# testDispersion(sim3)
-# testZeroInflation(sim3)
+fit3<-glmmTMB(value~name*current_plot_type+(1|block), ziformula=~., family=nbinom2(), data=countdat)
+ sim3<-simulateResiduals(fit3)
+ plot(sim3)
+ testDispersion(sim3)
+ testZeroInflation(sim3)
 
-## This stuff will just give you the end result counts with the zeros factored in...
 summary(fit3)
 emmip(fit3,~current_plot_type|name, type='response',CI=T)
 
@@ -52,7 +52,6 @@ pairs(est)
 ### zeros and ones 
 countdat$presence<-ifelse(countdat$value==0, 0, 1)
 zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=countdat)
-emmip(zerofit,~name|current_plot_type, type='response',CI=T)
 emmip(zerofit,~current_plot_type|name, type='response',CI=T)
 est<-emmeans(zerofit, ~current_plot_type|name, type='response')
 pairs(est)
@@ -81,7 +80,7 @@ plot(sim)
 summary(totwtmod)
 emmip(totwtmod,~current_plot_type|name, CI=T)
 
-est<-emmeans(totwtmod,~name|current_plot_type, type='response')
+est<-emmeans(totwtmod,~current_plot_type|name, type='response')
 pairs(est)
 
 ############# treatment response: do analysis for per capita biomass by species #############
@@ -107,18 +106,18 @@ pairs(est)
 ######### What about the log legacy - initial treatment for 2021 #######
 
 ############# log legacy response: do analysis for count by species ############# 
-fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=truncated_nbinom2(), data=countdat)
+fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=nbinom2(), data=countdat)
 
 ## This stuff will just give you the end result counts with the zeros factored in...
 summary(fit3_leg)
-emmip(fit3_leg,name~initial, type='response',CI=T)
+emmip(fit3_leg,~initial|name, type='response',CI=T)
 
 est<-emmeans(fit3_leg,~initial|name, type='response')
+pairs(est)
 
 #### split up occurrence and abundance
 ### zeros and ones 
 zerofit_leg<-glmmTMB(presence~name*initial+(1 | block), family=binomial, data=countdat)
-emmip(zerofit_leg,~name|initial, type='response',CI=T)
 emmip(zerofit_leg,~initial|name, type='response',CI=T)
 est<-emmeans(zerofit_leg, ~initial|name, type='response')
 pairs(est)
@@ -161,7 +160,7 @@ pairs(est)
 ######### What about the physical barrier treatment for 2021 #######
 
 ############# physical barrier response: do analysis for count by species ############# 
-fit3_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=truncated_nbinom2(), data=countdat)
+fit3_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=nbinom2(), data=countdat)
 
 ## This stuff will just give you the end result counts with the zeros factored in...
 summary(fit3_phys)
