@@ -87,7 +87,7 @@ There are two sets of data that I have collected since the project began.
 The ways I have looked at this so far are to compare the initial composition of annual plant communities in log vs. open plots before we implemented the experiment. I am suppressing the display of most of the data wrangling code in the output in the following stuff, but if you'd like to see you can take a look at what's in the .Rmd file.
 
 **Abundance** <br>
-First, I look at the abundance of microtransect plants in log vs open plots in 2020.  For this analysis, I include all plants including unknown plants. I find that log transects have marginally significantly more plants than open transects, but it really is a marginal difference (mean difference is approximately a half a plant). 
+First, I look at the abundance of microtransect plants in log vs open plots in 2020.  For this analysis, I include all plants including unknown plants. There is no significant difference in plant abundance between initial plot types. 
 
 ```{r abundance code, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE}
 
@@ -165,7 +165,7 @@ range(dat$total)
 abun.mod<-glm(total~init, data=dat, family='poisson') 
 summary(abun.mod)
 
-# the difference between open and log environments is marginal, where log has marginally significantly more plants. it's not a lot though. The model-estimated difference is like half a plant. 
+# the difference between open and log environments is not significant. it's not a lot though. The model-estimated difference is like half a plant. 
 emmeans(abun.mod, ~init, type='response')
 
 # here's a quick and dirty plot of model estimated means and CIs for abundance in each kind of plot.
@@ -343,7 +343,7 @@ mtext("X1=Initial treatment; X2=Block", side=3)
 trt_Frac<-rda(ass.rel.t0, init, block) # partial rda model
 anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
 ```
-Despite only explaining about 8% of variation, the contribution of initial treatment (open / log) is marginally significant (p-value sits around 0.05). Log communities and open communities are therefore marginally significantly different from each other in their overall composition. 
+Despite only explaining about 8% of variation, the contribution of initial treatment (open / log) is marginally significant (p-value sits around 0.05). Knowing if the intial plot was log or open therefore marginally significantly improves model performance in describing variation in plot diversity.
 
 Let's visualize the differences in the communities using an ordination plot: 
 ```{r dissimilarity wrangling code part 2, echo=FALSE, warning=FALSE}
@@ -382,7 +382,7 @@ In this plot, the points represent blocks, and the colors represent log vs open 
 
 The most apparent result here is that there are two scales of spatial structure. The points from each block are close together in NMDS space, which indicates that a lot of the variation comes from large-scale variation between blocks, where different species are more abundant in different blocks. 
 
-*question - hmmm, can i test this?*
+*question - hmmm, can i test this?- this is what the rda does*
 
 Within blocks, there is also a pattern: the 'log' points are consistently the same direction away from the 'open' points in all cases. In other words, log points are always lower on the x- and/or y-axes relative to the open points in the same blocks. I take this to mean that plant species common across all blocks are predictably 'log' species or 'open' species, and so there is also predictable spatial structure of plant diversity within blocks, where there are more 'log-affiliated' species and more 'open-affiliated' species. 
 

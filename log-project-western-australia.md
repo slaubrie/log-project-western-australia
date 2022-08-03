@@ -1,8 +1,6 @@
 log-project-western-australia
 ================
-July 2022
-
-<div class="Box">
+August 2022
 
 Understanding how spatial variation is linked to diversity maintenance
 in natural communities is a pillar of plant community ecology.
@@ -20,8 +18,6 @@ respond differently depending on if they are near logs or not. Despite
 such anecdotal evidence, it is yet unknown if and how fallen logs
 contribute to maintaining species diversity in the native annual plant
 communities of the Western Australian wheat belt.
-
-</div>
 
 <center>
 
@@ -195,10 +191,8 @@ like to see you can take a look at what’s in the .Rmd file.
 
 **Abundance** <br> First, I look at the abundance of microtransect
 plants in log vs open plots in 2020. For this analysis, I include all
-plants including unknown plants. I find that log transects have
-marginally significantly more plants than open transects, but it really
-is a marginal difference (mean difference is approximately a half a
-plant).
+plants including unknown plants. There is no significant difference in
+plant abundance between initial plot types.
 
 ``` r
 # look at plant abundance in log vs open 
@@ -239,7 +233,7 @@ summary(abun.mod)
     ## Number of Fisher Scoring iterations: 4
 
 ``` r
-# the difference between open and log environments is marginal, where log has marginally significantly more plants. it's not a lot though. The model-estimated difference is like half a plant. 
+# the difference between open and log environments is not significant. it's not a lot though. The model-estimated difference is like half a plant. 
 emmeans(abun.mod, ~init, type='response')
 ```
 
@@ -402,7 +396,7 @@ for details.
     ## 
     ## Model: rda(X = ass.rel.t0, Y = init, Z = block)
     ##          Df Variance      F Pr(>F)  
-    ## Model     1 0.036127 2.0657   0.05 *
+    ## Model     1 0.036127 2.0657  0.062 .
     ## Residual  6 0.104933                
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
