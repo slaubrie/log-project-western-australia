@@ -1,4 +1,13 @@
-
+# packages 
+require(lme4)
+require(emmeans)
+require(pscl)
+require(glmmTMB)
+require(tidyr)
+require(DHARMa)
+require(ggplot2)
+require(AICcmodavg)
+require(ggpubr)
 
 ############## 2022 data ##############
 
@@ -7,11 +16,24 @@ dat<-read.csv('nplants_data_2022.csv', header=T)
 dat1<-dat[which(dat$seeding_trt==1),]
 dat1$physical_barrier<-as.factor(dat1$physical_barrier)
 dat1$block<-as.factor(dat1$block)
-dat2<-dat1[,c(1,3:4,7:9,13)]
-dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_germ, ngoro_germ, ntror_germ)))
+names(dat1)
+
+# subset
+dat2<-dat1[,c(1,2:4,10:12,19)] # these are block, transect, initial, current_plot_type, ngoro_plants, ntrcy_plants, ntror_plants, physical_barrier
+head(dat2)
+
+# pivot
+dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_plants, ngoro_plants, ntror_plants)))
+range(dat22$value)
+dat22$value>15 # one sample is larger than 15, it is a tror.
+
+# max out at 15 
+dat22$value<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
+
+# I am going to do the analysis as in 2021 now, with final counts and biomass. 
 dat22$attempts<-rep(15, nrow(dat22))
 dat22$fails<-dat22$attempts-dat22$value
-dat22$presence<-ifelse(countdat$value==0, 0, 1)
+dat22$presence<-ifelse(dat22$value==0, 0, 1)
 dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
 
 ############# treatment response: do analysis for germination by species ############# 

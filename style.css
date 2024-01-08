@@ -1,0 +1,32 @@
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
+
+details.Discuss{background-color: #f2e6ff; border-radius: 8px; border: solid #6600cc; border-width: 1px; cursor: pointer;
+text-align: left; padding: 10px 1px 1px 6px; font-family: Helvetica; font-size: 12pt; color: #6600cc;}
+
+div.Rfunctions{background-color:#e6f0ff; border-radius: 5px; border-width: 1px; border: solid blue; text-align: center;
+padding: 10px 1px 1px 6px; font-family: Helvetica; font-size: 12pt; color: blue;}
+
+div.Critical{background-color:#e6f0ff; border-radius: 5px; border-width: 1px; border: solid blue;
+padding: 10px 1px 1px 6px; font-family: Helvetica; font-size: 12pt; color: blue;}
+
+div.Box{text-align: left; border-radius: 5px; border-width: 1px; border: solid black; 
+font-family: Helvetica; padding: 6px 1px 1px 6px;}
+
+Data{background-color:white; color: #00b300; border-radius: 5px}
+
+R{background-color:#0099ff; color: white; border-radius: 20px; padding: 2px 5px 2px 5px}
+
+UQ{color: #6600cc}

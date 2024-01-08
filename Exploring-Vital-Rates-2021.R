@@ -21,7 +21,8 @@ dat1$block<-as.factor(dat1$block)
 
 ############# treatment response: do analysis for count by species ############# 
 
-dat2<-(dat1[c(1:4,7,11,15,22)])
+dat2<-(dat1[c(1:4,7,11,15,22)]) # these are block, transect, initial, current_plot_type, ngoro, ntrcy, ntror, physical_barrier
+head(dat2) 
 countdat<-as.data.frame(dat2 %>% pivot_longer(c(ntror, ngoro, ntrcy)))
 countdat$value<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
 countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data=countdat)
