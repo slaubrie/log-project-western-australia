@@ -29,7 +29,7 @@ countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data
 
 # test for fit and zero inflation
  sim<-simulateResiduals(countmod)
- testZeroInflation(sim)
+ testZeroInflation(sim) # zero-inflated so need something else 
  plot(sim)
 
 ## going to do a hurdle model, which assumes a zero is only generated in one way 
@@ -41,8 +41,8 @@ countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data
 fit3<-glmmTMB(value~name*current_plot_type+(1|block), ziformula=~., family=nbinom2(), data=countdat)
  sim3<-simulateResiduals(fit3)
  plot(sim3)
- testDispersion(sim3)
- testZeroInflation(sim3)
+ testDispersion(sim3) # looks nice ! 
+ testZeroInflation(sim3) # looks nice ! 
 
 summary(fit3)
 emmip(fit3,~current_plot_type|name, type='response',CI=T)

@@ -28,72 +28,103 @@ range(dat22$value)
 dat22$value>15 # one sample is larger than 15, it is a tror.
 
 # max out at 15 
-dat22$value<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
+dat22$value<-as.numeric(ifelse(dat22$value>15, 15, dat22$value))
+
+#################################### TREATMENT RESPONSE PRELIM ANALYSIS ####################################
+############# treatment response: do analysis for count by species ############# 
 
 # I am going to do the analysis as in 2021 now, with final counts and biomass. 
-dat22$attempts<-rep(15, nrow(dat22))
-dat22$fails<-dat22$attempts-dat22$value
-dat22$presence<-ifelse(dat22$value==0, 0, 1)
-dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
+countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data=dat22)
 
-############# treatment response: do analysis for germination by species ############# 
-# I think this doens't work because it's mostly zeros.
-# fit<-glmmTMB(value~name*current_plot_type+(1| block), ziformula=~., family=poisson(), data=dat22)
-#  sim<-simulateResiduals(fit)
-#  plot(sim)
-#  testDispersion(sim)
-#  testZeroInflation(sim)
-#  
-#  summary(fit)
-#  emmip(fit, ~current_plot_type|name, type='response', CI=T)
-#  est<-emmeans(fit,~current_plot_type|name, type='response')
-#  pairs(est)
+# test for fit and zero inflation
+sim<-simulateResiduals(countmod)
+testZeroInflation(sim) # zero-inflated so need something else! 
+plot(sim) 
+
+## going to do a hurdle model, which assumes a zero is only generated in one way 
+# https://jsdajournal.springeropen.com/articles/10.1186/s40488-021-00121-4
+# #https://stats.stackexchange.com/questions/81457/what-is-the-difference-between-zero-inflated-and-hurdle-models
+
+# hurdle model 
+# using examples as presented here: https://www.biorxiv.org/content/biorxiv/suppl/2017/05/01/132753.DC1/132753-2.pdf 
+fit3<-glmmTMB(value~name+current_plot_type+(1|block), ziformula=~., family=nbinom2(), data=dat22) # model has non-positive definite hessian matrix when the model expression contains an interaction, so made it additive.
+ sim3<-simulateResiduals(fit3)
+ plot(sim3)
+ testDispersion(sim3) # looks ok ! 
+ testZeroInflation(sim3) # looks ok ! 
+
+summary(fit3)
+emmip(fit3,~current_plot_type|name, type='response',CI=T)
+
+# visualize
+est<-emmeans(fit3,~current_plot_type|name, type='response')
+pairs(est)
+
+#### now i'll do a by-hand hurdle model on my own using a truncated negative binomial
 
 ### zeros and ones 
-zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=dat22, REML=F)
+dat22$presence<-ifelse(dat22$value==0, 0, 1)
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=dat22, REML=FALSE)
 emmip(zerofit,~current_plot_type|name, type='response',CI=T)
 est<-emmeans(zerofit, ~current_plot_type|name, type='response')
 pairs(est)
 
 ### abundance with a truncated negbinom 
-countfit<-glmmTMB(posicounts~name*current_plot_type+(1 | block), family=truncated_nbinom2(), data=dat22, REML=F)
+dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
+countfit<-glmmTMB(posicounts~name*current_plot_type+(1 | block), family=truncated_nbinom2(), data=dat22, REML=FALSE)
 emmip(countfit,~current_plot_type|name, type='response',CI=T)
 est<-emmeans(countfit, ~current_plot_type|name, type='response')
 pairs(est)
 
-######### What about the log legacy - initial treatment for 2022 #######
+############# treatment response: do analysis for total biomass by species #############
 
-fit_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=poisson(), data=dat22, REML=F)
-sim<-simulateResiduals(fit_leg)
+dat3<-(dat1[c(1:4,19,21,23,25)])
+totwtdat<-as.data.frame(dat3 %>% pivot_longer(c(wt_max15_goro, wt_max15_tror, wt_max15_trcy)))
+totwtdat$log_wt<-log1p(totwtdat$value) # log transformation does not help the insane amount of heteroscedasticity here, neither does a square root transformation.
+
+# model
+totwtmod<-lm(log_wt~name*current_plot_type, data=totwtdat) # fit is singular when including a random effect for block so not doing that
+
+# test for fit, looks pretty good
+sim<-simulateResiduals(totwtmod) # insanely heteroscedastic, doesn't get better with sqrt transform
 plot(sim)
-testDispersion(sim)
-testZeroInflation(sim)
 
-summary(fit_leg)
-emmip(fit_leg, ~initial|name, type='response', CI=T)
-est<-emmeans(fit_leg,~initial|name, type='response')
+# model summary - don't trust this the residual dispersion is fucked, commenting out.
+# summary(totwtmod)
+# emmip(totwtmod,~current_plot_type|name, CI=T)
+# 
+# est<-emmeans(totwtmod,~current_plot_type|name, type='response')
+# pairs(est)
+
+############# treatment response: do analysis for per capita biomass by species #############
+
+# per capita might help with heteroscedasticity  
+dat4<-(dat1[c(1:4,19,20,22,24)])
+pcwtdat<-as.data.frame(dat4 %>% pivot_longer(c(wt_percapita_goro, wt_percapita_tror, wt_percapita_trcy)))
+pcwtdat$log_wt<-log(pcwtdat$value) # log transform the weight data to get it normal looking - it is heteroscedastic otherwise
+
+# model
+pcwtmod<-lm(log_wt~name*current_plot_type, data=pcwtdat) # fit is singular with random effect.
+
+# test for fit, looks pretty good
+sim<-simulateResiduals(pcwtmod)
+plot(sim) ## much better! 
+
+# model summary
+summary(pcwtmod)
+emmip(pcwtmod,~current_plot_type|name,CI=T)
+
+est<-emmeans(totwtmod,~current_plot_type|name, type='response')
 pairs(est)
 
-# split up occurrence and abundance
-### zeros and ones 
-zerofit_leg<-glmmTMB(presence~name*initial+(1 | block), family=binomial, data=dat22, REML=F)
-emmip(zerofit_leg,~initial|name, type='response',CI=T)
-est<-emmeans(zerofit_leg, ~initial|name, type='response')
-pairs(est)
-
-### abundance with a truncated negbinom 
-countfit_leg<-glmmTMB(posicounts~name*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=F)
-emmip(countfit_leg,~initial|name, type='response',CI=T)+
-  theme_bw()
-est<-emmeans(countfit_leg, ~initial|name, type='response')
-pairs(est)
+#################################### PHYSICAL BARRIER ANALYSIS ####################################
 
 ######### What about the physical barrier - initial treatment for 2022 #######
 
-fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=nbinom2(), data=dat22, REML=F)
+fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=poisson(), data=dat22, REML=F) #
 sim<-simulateResiduals(fit_phys)
 plot(sim)
-testDispersion(sim)
+testDispersion(sim) # not quite overdispersed; also if i fit nbinom model doesn't converge 
 testZeroInflation(sim)
 
 summary(fit_phys)
@@ -126,8 +157,12 @@ emmip(countfit_phys,~physical_barrier|name, type='response',CI=T)
 est<-emmeans(countfit_phys, ~physical_barrier|name, type='response')
 pairs(est)
 
+#################################### LEGACY ANALYSIS ####################################
 
-#### What about both physical and legacy? #### 
+
+# COME BACK TO THIS
+#################################### PHYSICAL BARRIER X LEGACY ANALYSIS ####################################
+######### What about both physical and legacy? ######### 
 ### zeros and ones 
 zerofit_intxn<-glmmTMB(presence~name*physical_barrier*initial+(1 | block), family=binomial, data=dat22, REML=F)
 
