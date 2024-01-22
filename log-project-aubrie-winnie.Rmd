@@ -16,9 +16,21 @@ The project will address the following questions:
 
 **1) Are/how are plant communities in fallen log patches different from patches that are in the open?**
 
+- abundance
+- diversity (hurdle model)
+- composition (nmds)
+- all three years separately
+
 **2) Why are plant communities in fallen log patches different from patches in the open?** 
 
+- nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
+
 **3) Are plant species performances affected by proximity to fallen logs?** 
+
+- presence and absence; count 
+- biomass
+- model comparison for plant performance in different environments
+- 2021 & 2022 data
 
 ### Hypotheses
 The null hypothesis, H0, is that annual plants in fallen log patches are not different in diversity, abundance, or composition from open patches. 
