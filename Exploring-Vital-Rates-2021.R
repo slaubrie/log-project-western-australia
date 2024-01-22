@@ -202,7 +202,7 @@ pairs(est)
 ############# physical barrier response: do analysis for per capita weight by species ############# 
 
 # model
-pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat, REML=FALSE)
+pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat, REML=FALSE) 
 
 # test for fit, looks pretty good
 # sim<-simulateResiduals(pcwtmod_leg)
