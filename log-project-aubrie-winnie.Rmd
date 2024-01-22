@@ -7,23 +7,43 @@ date: "2024-01-22"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+Understanding how spatial variation is linked to diversity maintenance in natural communities is a pillar of plant community ecology. Theoretically, a variable landscape can maintain diversity via niche partitioning: different species can trade off in performing better or worse depending on the conditions of the patch they are growing in, and as a result, more species can sustainably coexist in a community than if it were spatially heterogeneous. In the hyperdiverse system of native annual plants in Western Australia, fallen logs may be one of the greatest contributors to generating spatial variation that could help maintain species diversity. Considerable anecdotal evidence suggests that fallen logs generate spatial variation, or patchiness, in the environment (Figure 1), and that species or assemblages of plants may respond differently depending on if they are near logs or not. Despite such anecdotal evidence, it is yet unknown if and how fallen logs contribute to maintaining species diversity in the native annual plant communities of the Western Australian wheat belt. 
 
-## R Markdown
+<center>
+![Figure 1: image of annual plant halos around logs](example_winter.JPG){width=50%}
+</center>
+The project will address the following questions: 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+**1) Are/how are plant communities in fallen log patches different from patches that are in the open?**
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+**2) Why are plant communities in fallen log patches different from patches in the open?** 
 
-```{r cars}
-summary(cars)
-```
+**3) Are plant species performances affected by proximity to fallen logs?** 
 
-## Including Plots
+### Hypotheses
+The null hypothesis, H0, is that annual plants in fallen log patches are not different in diversity, abundance, or composition from open patches. 
 
-You can also embed plots, for example:
+In addition to the null hypothesis, the following constitute four, non-mutually exclusive hypotheses concerning how fallen logs may introduce spatial variation in the environment. I include corresponding predictions for how plant communities may differ between fallen log patches as compared to open patches.
+<br><br>
+**H1: Log decomposition creates islands of fertility directly around the fallen log.** <br>
+Prediction 1: Nutrient composition around logs will be higher than in open plots <br>
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+Prediction 2: Variation in nutrient composition in log vs open environments will correspond to variation in species composition, abundance, and/or richness in these environments. <br>
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Prediction 3: All sown plants will perform best in environments where organic logs have been left 'insitu'.  In locations where logs have been removed or replaced with pvc, the legacy of the nutrient island effect will yield higher sown plant performance than when compared to locations where logs have never been. The effect of the nutrient island in locations where logs have been added to open environments should yeild higher plant performance over time. *note: performance is measured in terms of germination rate, survival to fruiting, fecundity, and/or biomass.* <br><br>
+
+**H2: Fallen logs alter the microclimate directly around them by providing shade.**<br> Prediction 1: Shade and temperature around logs vs in open plots will be different <br>
+
+Prediction 2: Variation in shade and temperature in log vs open environments will correspond to variation in species composition, abundance, and/or richness in these environments. <br>
+
+Prediction 3: All sown plants will perform best in environments where there are organic or pvc logs, no matter if they have been recently moved or not.<br><br>
+
+**H3: Fallen logs trap dispersing seeds as they are blown along the ground.**<br>
+
+Prediction 1: Dispersing seeds accumulate around logs, leading to a denser stand of plants in fallen log patches. Plant abundance in fallen log patches will be higher as compared to open patches. Rare plants will be more common in fallen log patches as compared to open patches <br>
+
+Prediction 2: All sown plants will perform the same in all experimental environments <br><br>
+
+**H4: At least some species perform differently according to variation in log vs. open environments and have short dispersal kernals, causing fitness-density covariance** <br><br>
+<center>
+![Figure 2: Photo before germination, after a rain. Notice the seeming wet halo under and around the branch](wetpatch_example2.jpg){width=50%}
