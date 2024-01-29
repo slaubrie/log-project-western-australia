@@ -19,7 +19,7 @@ dat1$block<-as.factor(dat1$block)
 names(dat1)
 
 # subset
-dat2<-dat1[,c(1,2:4,10:12,19)] # these are block, transect, initial, current_plot_type, ngoro_plants, ntrcy_plants, ntror_plants, physical_barrier
+dat2<-dat1[,c(1,2:4,26:28,19)] # these are block, transect, initial, current_plot_type, ngoro_plants, ntrcy_plants, ntror_plants, physical_barrier
 head(dat2)
 
 ## because of the way weeding worked, where we thinned only once and probably too early in the season, there were cases where plants came up, we thinned them, and then when we collected plants at the end of the growing season there were more that popped up. 
@@ -30,10 +30,9 @@ head(dat2)
 # total = if((t0+t2=0),0,if(t0=0,t2,if(t2=0,t0, if(t0+t2=1,1,(t0-1+t2)))))
 # in this expression t0 is the germ value (e.g. ngoro_germ) and t2 is the plants value (e.g. ngoro_plants). 
 # I can run the analysis with germ, plants, or tot. I'm choosing to do the analysis on tot, but we can revisit this choice if we feel there's a better way to comparably (or not) analyze the data between 2021 and 2023. 
-
  
 # pivot
-dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_plants, ngoro_plants, ntror_plants)))
+dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_tot, ngoro_tot, ntror_tot)))
 range(dat22$value)
 dat22$value>15 # one sample is larger than 15, it is a tror.
 
@@ -81,10 +80,7 @@ zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, d
 emmip(zerofit,~current_plot_type|name, type='response',CI=T)
 est<-emmeans(zerofit, ~current_plot_type|name, type='response')
 pairs(est)
-# trcy significantly more likely to be present in instu pvc vs open (p=0.01) - legacy and phys. barrier 
-# trcy marginally significantly more likely to be present in gap vs open (p=0.09) - legacy
-# tror significantly more likely to be in open with pvc as compared to gap (p=0.05) - physical barrier
-# tror significantly more likely o be in open with pvc compared to open (p=0.01) - legacy and phys. barrier 
+# no significant differences
 
 ### abundance with a truncated negbinom 
 dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
@@ -135,17 +131,19 @@ emmip(pcwtmod,~current_plot_type|name,CI=T)
 
 est<-emmeans(totwtmod,~current_plot_type|name, type='response')
 pairs(est)
-# not any differences in per capita biomass among treatments within species, but to my eye goro is on average larger 
+est2<-emmeans(totwtmod,~name, type='response')
+pairs(est)
+# not any differences in per capita biomass among treatments within species, but goro is larger than the other two
 
 #################################### PHYSICAL BARRIER ANALYSIS ####################################
 
 ######### What about the physical barrier - initial treatment for 2022 #######
 
 # this is a model where do zero inflation and count together (occurrence and abundance)
-fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=poisson(), data=dat22, REML=F) #
+fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=nbinom2(), data=dat22, REML=F) #
 sim<-simulateResiduals(fit_phys)
 plot(sim)
-testDispersion(sim) # not quite overdispersed; also if i fit nbinom model doesn't converge 
+testDispersion(sim) 
 testZeroInflation(sim)
 
 summary(fit_phys)
@@ -215,7 +213,6 @@ emmip(fit3_leg,~initial|name, type='response',CI=T)
 
 est<-emmeans(fit3_leg,~initial|name, type='response')
 pairs(est)
-# total abundance (with presence and abundance factored in) for tror is significantly higher in places where initial treatment is open (!!!!!!!) 
 
 #### split up occurrence and abundance
 ### zeros and ones 
@@ -232,7 +229,6 @@ emmip(countfit_leg,~initial|name, type='response',CI=T)
 est<-emmeans(countfit_leg, ~initial|name, type='response')
 pairs(est)
 
-# abundance of tror is significantly higher in initial treatment is open (higher where there is not a log legacy p=0.03)
 
 # model for per capita weight
 # pcwtmod_leg<-lmer(log_wt~name*initial+(1|block), data=pcwtdat, REML=FALSE) #singular
@@ -268,8 +264,8 @@ est<-emmeans(zerofit_intxn, ~physical_barrier|name|initial, type='response')
 pairs(est)
 
 # goro presence/absence not explained by physical barrier or initial treatment 
-# when the initial treatment is "open", trcy has higher prbability of occurring when there is a physical barrier. if there is a legacy of a log, then there is no significant difference between legacy treatments. 
-# the initial treatment does not explain probability of occurrence for tror, but tror is more likely to occur where there's a physical barrier.
+# when the initial treatment is "open", trcy has higher prbability of occurring when there is a physical barrier. the same goes for tror.
+# if there is a legacy of a log, then there is no significant difference between physical barrier treatments for tror or for trcy. 
 
 ### abundance with a truncated negbinom 
 countfit_intxn<-glmmTMB(posicounts~name*physical_barrier*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=F)
@@ -333,8 +329,9 @@ pcwt_candmods<-list("Plot type"=pcwtmod,
                     "Physical Barrier + Nutrient Island" = pcwtmod_add,
                     "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
 aictab(pcwt_candmods)
-pairs(emmeans(pcwtmod_add, ~initial|physical_barrier|name))
 
+
+# tror is bigger when the legacy of the log and the log is still present
 
 ### figures ###
 # best fit models - zeros 
@@ -369,7 +366,7 @@ pl4
 summary(zerofit_add)
 pairs(emmeans(zerofit_add, ~physical_barrier|name|initial))
 
-# tror and trcy do better where there is a physical barrier as compared to when there is not (tror p=0.008, trcy p=0.019)
+# tror and trcy do better where there is a physical barrier as compared to when there is not (tror p=0.03, trcy p=0.007)
 
 pairs(emmeans(zerofit_add, ~initial|name|physical_barrier))
 
@@ -431,3 +428,6 @@ pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
               alpha=0.5)+
   labs(color = "Initial Plot Type")
 pl6
+summary(pcwtmod_add)
+pairs(emmeans(pcwtmod_add, ~initial|name))
+pairs(emmeans(pcwtmod_add, ~physical_barrier|name))
