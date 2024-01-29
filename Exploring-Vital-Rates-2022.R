@@ -22,6 +22,16 @@ names(dat1)
 dat2<-dat1[,c(1,2:4,10:12,19)] # these are block, transect, initial, current_plot_type, ngoro_plants, ntrcy_plants, ntror_plants, physical_barrier
 head(dat2)
 
+## because of the way weeding worked, where we thinned only once and probably too early in the season, there were cases where plants came up, we thinned them, and then when we collected plants at the end of the growing season there were more that popped up. 
+# I am choosing to use the total number of a species that popped up in the zone of planting. this required a somewhat complex excel formula that did not double-count the one individual when summing the total, and also accounts for the plants that came up but
+# did not survive. This value is called 'tot' (e.g. ngoro_tot). 
+# It's impossible to get the same dataset as the one from 2021 because we planted the plants and only came back when it was time to collect at the end of the season, thus capturing both survival through the season and germination. 
+# to get the total in the "tot" columns, I wrote a formula in excel, written below
+# total = if((t0+t2=0),0,if(t0=0,t2,if(t2=0,t0, if(t0+t2=1,1,(t0-1+t2)))))
+# in this expression t0 is the germ value (e.g. ngoro_germ) and t2 is the plants value (e.g. ngoro_plants). 
+# I can run the analysis with germ, plants, or tot. I'm choosing to do the analysis on tot, but we can revisit this choice if we feel there's a better way to comparably (or not) analyze the data between 2021 and 2023. 
+
+ 
 # pivot
 dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_plants, ngoro_plants, ntror_plants)))
 range(dat22$value)
@@ -29,6 +39,8 @@ dat22$value>15 # one sample is larger than 15, it is a tror.
 
 # max out at 15 
 dat22$value<-as.numeric(ifelse(dat22$value>15, 15, dat22$value))
+
+
 
 #################################### TREATMENT RESPONSE PRELIM ANALYSIS ####################################
 ############# treatment response: do analysis for count by species ############# 
