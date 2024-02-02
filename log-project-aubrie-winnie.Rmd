@@ -1,7 +1,7 @@
 ---
 title: "log-project-aubrie-winnie"
 output: html_document
-date: "2024-01-22"
+date: "2024-02-01"
 ---
 
 ```{r setup, include=FALSE}
@@ -87,44 +87,94 @@ The sets of data that we have collected for this arm of the project are the foll
 
 - In 2022, we went to the field early in the season and counted and thinned the number of germinated seedlings in each location. We therefore have a count for germination, but for the following reasons there are some issues with these data. The first is that we probably surveyed germination a little too early. The seedlings were often super small or hadn't come up yet. Because we couldn't come back later to re-thin the plots, we went ahead with counting and thinning seedlings. The values in the dataset for 2022 (nplants_data_2022.csv) corresponding to this germination survey are "ntrcy_germ", "ngoro_germ" and "ntror_germ". The second is that at the end of the growing season, Jake and Winnie came back and found that there was often more than one plant of the focal species where we seeded them, and sometimes there was one or more focal plants that popped up where we had not observed germination earlier in the season. We assume that these plants come from the seeds we planted, and that they came up later than our initial germination survey. The number of plants observed and collected at each location at the end of the season are in the columns "nplants_tror", "nplants_goro" and "nplants_trcy" in the nplants_data_2022.csv data file. Because ngerm and nplants don't totally capture what came up where we sowed seed, I chose to analyze the total number of observed plants. I calculated this as the number of total plants we observed between the germination and the end of the season, being careful not to double-count the individual that was left after thinning from the first round of germination survey. The performance data I analyze here are **total number of plants that came up for each species in each location, and the per capita biomass of plants collected at the end of the season**. 
 
+## Methods and analysis
 
-**Methods and analysis**
+### **Q1 Are/how are plant communities in fallen log patches different from patches that are in the open?** <br>
+#### *Overview of results* <br> 
 
-**Q1 Are/how are plant communities in fallen log patches different from patches that are in the open?** <br>
-*Overview of results* <br> 
+#### *Statistical Methods* <br>
 
-*Statistical Methods* <br>
-
-*Analysis*<br>
+#### *Analysis*<br>
 - abundance
 - diversity (hurdle model)
 - composition (nmds)
 - all three years separately
 
-*Interpretation* <br> 
+#### *Interpretation* 
 
-<br><br>
+### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
+#### *Overview of results* <br> 
 
-**Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
-*Overview of results* <br> 
+#### *Statistical Methods* <br>
 
-*Statistical Methods* <br>
-
-*Analysis*<br>
+#### *Analysis*<br>
 - nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
-<br><br>
-**Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
-*Overview of results* <br> 
 
-*Statistical Methods* <br>
+#### *Interpretation* 
+
+### **Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
+#### *Overview of results* <br> 
+
+#### *Statistical Methods* <br>
 
 My basic approach is to analyse count and biomass data from 2021 and 2022 sowing experiment. We sowed 15 seeds for each species into 16 plots in each of the seven blocks. There are 6 plot type treatments. The gap and open treatments each have four replicates per block, and the insitu_log, insitu_pvc, open_with_log, and open_with_pvc each have two replicates per block. *note: For each treatment of plot type, there is also a dispersal treatment, but I do not analyse that here (yet).*
 <br> 
-For **count data** I use a glmmTMB to run a generalized linear mixed effects model approach to analyse the data. The hurdle model approach I am using is to first code presence/absence as 0 or 1 (1 being any nonzero count value) and run this analysis as a binomial regression. Depending on the model fit and residual dispersion (using DHARMa), I then either run a truncated poisson or truncated negative binomial regression on the count data. 
+- For **count data** I use a glmmTMB to run a generalized linear mixed effects model approach to analyse the data. The hurdle model approach I am using is to first code presence/absence as 0 or 1 (1 being any nonzero count value) and run this analysis as a binomial regression. Depending on the model fit and residual dispersion (using DHARMa), I then either run a truncated poisson or truncated negative binomial regression on the count data. Though I did run alternative versions of hurdle models that predict count while accounting for zero inflation, I felt that analyzing the presence/absence, and then analyzing count, may be revealing more of the biology of the system, where presence/absence was distinctly affected by treatments while count was less so.
 <br>
-For **biomass data** I use linear mixed effects model to analyse the per capita biomass data. I first do a log(1+n) transformation on the per capita biomass, then analyze. I chose to do per capita biomass because of recalcitrant (!!) residual dispersion in total biomass, even after attemtps at log and square root transformations.
+- For **biomass data** I use linear mixed effects model to analyse the per capita biomass data. I first do a log(1+n) transformation on the per capita biomass, then analyze. I chose to do per capita biomass because of recalcitrant (!!) residual dispersion in total biomass, even after attemtps at log and square root transformations.
 <br>
 I chose to do a model selection approach, which I'm trying to move away from generally. However, the models I use to analyze the data represent different hypotheses about *why* plant species might perform differently, and so I chose to do a model comparison and selection approach as a way to not only understand how plant species performance is affected by proximity to fallen logs, but also gain insight as to why this may be the case. 
 
 The models I use test the hypotheses from above: Log decomposition creates islands of fertility directly around the fallen log and fallen logs alter the microclimate directly around them by providing shade. I can also investigate using the different response variables if logs affect the presence/absence of plants, the number of plants that come up, or the biomass of the plants in the end. 
-*Analysis*<br>
+
+#### *Analysis*<br>
+
+**2021**
+```{r abundance code, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
+
+# packages 
+require(lme4)
+require(emmeans)
+require(pscl)
+require(glmmTMB)
+require(tidyr)
+require(DHARMa)
+require(ggplot2)
+require(AICcmodavg)
+require(ggpubr)
+
+
+############## 2021 data #############
+
+# read csv
+dat<-read.csv('nplants_data_2021_git.csv', header=T)
+dat1<-dat[which(dat$seeding_trt==1),]
+dat1$physical_barrier<-as.factor(dat1$physical_barrier)
+dat1$block<-as.factor(dat1$block)
+
+############# treatment response: do analysis for count by species ############# 
+
+dat2<-(dat1[c(1:4,7,11,15,22)]) # these are block, transect, initial, current_plot_type, ngoro, ntrcy, ntror, physical_barrier
+head(dat2) 
+
+# max out at 15
+countdat<-as.data.frame(dat2 %>% pivot_longer(c(ntror, ngoro, ntrcy)))
+countdat$value<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
+
+#### now i'll do a by-hand hurdle model on my own using a truncated negative binomial
+
+### zeros and ones 
+countdat$presence<-ifelse(countdat$value==0, 0, 1)
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=countdat, REML=FALSE)
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countdat$posicounts<-as.numeric(ifelse(countdat$value==0, "NA", countdat$value))
+countfit<-glmmTMB(posicounts~name*current_plot_type+(1 | block), family=truncated_nbinom2(), data=countdat, REML=FALSE)
+emmip(countfit,~current_plot_type|name, type='response',CI=T)
+est<-emmeans(countfit, ~current_plot_type|name, type='response')
+pairs(est)
+
+#### *Interpretation* 
