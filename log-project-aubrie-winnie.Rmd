@@ -80,7 +80,7 @@ The sets of data that we have collected for this arm of the project are the foll
 - These data are available from 2020 (before the experiment began), 2021 (one year into the experiment), and 2022 (two years into the experiment)
 
 (2) Soil nutrient analysis in the open and insitu log plots.<br>
-- These data were collected 
+- These data were collected in 2023 
 
 (3) Performance data of TROR, TRCY, and TROR. <br>
 - In 2021, the only performance data that were collected after sowing the experiment were the **total number of plants that came up and survived to fruiting for each species in each location, their total biomass, and their per capita biomass**. I calculated per capita biomass by dividing total biomass of the collected focal plants by the number of focal plants observed. This was because of logistical issues due to covid. In this dataset, there were two instances where the number of plants collected was greater than the number of seeds sown. Both instances were T. cyanopetala, where nplants = 16 and 18. For these two datapoints I chose to convert the count values to 15, assuming that every individual we planted came up, and that the extra were either naturally occurring seeds or that the number of seeds that we put into the ground was greater than 15 (human error). To calculate total biomass for these two instances, I divided the total biomass by the number of individuals observed, and multiplied by 15. <br>
@@ -91,24 +91,40 @@ The sets of data that we have collected for this arm of the project are the foll
 **Methods and analysis**
 
 **Q1 Are/how are plant communities in fallen log patches different from patches that are in the open?** <br>
-*Methods* <br>
+*Overview of results* <br> 
+
+*Statistical Methods* <br>
 
 *Analysis*<br>
 - abundance
 - diversity (hurdle model)
 - composition (nmds)
 - all three years separately
+
+*Interpretation* <br> 
+
 <br><br>
 
 **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
-*Methods* <br>
+*Overview of results* <br> 
+
+*Statistical Methods* <br>
 
 *Analysis*<br>
 - nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
 <br><br>
 **Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
-*Methods* <br>
+*Overview of results* <br> 
 
-In the summer of 2021 and 2022, we 
+*Statistical Methods* <br>
 
+My basic approach is to analyse count and biomass data from 2021 and 2022 sowing experiment. We sowed 15 seeds for each species into 16 plots in each of the seven blocks. There are 6 plot type treatments. The gap and open treatments each have four replicates per block, and the insitu_log, insitu_pvc, open_with_log, and open_with_pvc each have two replicates per block. *note: For each treatment of plot type, there is also a dispersal treatment, but I do not analyse that here (yet).*
+<br> 
+For **count data** I use a glmmTMB to run a generalized linear mixed effects model approach to analyse the data. The hurdle model approach I am using is to first code presence/absence as 0 or 1 (1 being any nonzero count value) and run this analysis as a binomial regression. Depending on the model fit and residual dispersion (using DHARMa), I then either run a truncated poisson or truncated negative binomial regression on the count data. 
+<br>
+For **biomass data** I use linear mixed effects model to analyse the per capita biomass data. I first do a log(1+n) transformation on the per capita biomass, then analyze. I chose to do per capita biomass because of recalcitrant (!!) residual dispersion in total biomass, even after attemtps at log and square root transformations.
+<br>
+I chose to do a model selection approach, which I'm trying to move away from generally. However, the models I use to analyze the data represent different hypotheses about *why* plant species might perform differently, and so I chose to do a model comparison and selection approach as a way to not only understand how plant species performance is affected by proximity to fallen logs, but also gain insight as to why this may be the case. 
+
+The models I use test the hypotheses from above: Log decomposition creates islands of fertility directly around the fallen log and fallen logs alter the microclimate directly around them by providing shade. I can also investigate using the different response variables if logs affect the presence/absence of plants, the number of plants that come up, or the biomass of the plants in the end. 
 *Analysis*<br>

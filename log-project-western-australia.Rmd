@@ -84,7 +84,7 @@ There are two sets of data that I have collected since the project began.
 
 ##### 1) Are/how are plant communities in fallen log patches different from patches that are in the open? <br>
 
-The ways I have looked at this so far are to compare the initial composition of annual plant communities in log vs. open plots before we implemented the experiment. I am suppressing the display of most of the data wrangling code in the output in the following stuff, but if you'd like to see you can take a look at what's in the .Rmd file.
+We compare the initial composition of annual plant communities in log vs. open plots before we implemented the experiment. I am suppressing the display of most of the data wrangling code in the output in the following stuff, but if you'd like to see you can take a look at what's in the .Rmd file.
 
 **Abundance** <br>
 First, I look at the abundance of microtransect plants in log vs open plots in 2020.  For this analysis, I include all plants including unknown plants. There is no significant difference in plant abundance between initial plot types. 
