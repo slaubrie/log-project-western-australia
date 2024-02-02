@@ -14,23 +14,11 @@ Understanding how spatial variation is linked to diversity maintenance in natura
 </center>
 The project will address the following questions: 
 
-**1) Are/how are plant communities in fallen log patches different from patches that are in the open?**
+**Q1) Are/how are plant communities in fallen log patches different from patches that are in the open?**
 
-- abundance
-- diversity (hurdle model)
-- composition (nmds)
-- all three years separately
+**Q2) Why are plant communities in fallen log patches different from patches in the open?** 
 
-**2) Why are plant communities in fallen log patches different from patches in the open?** 
-
-- nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
-
-**3) Are plant species performances affected by proximity to fallen logs?** 
-
-- presence and absence; count 
-- biomass
-- model comparison for plant performance in different environments
-- 2021 & 2022 data
+**Q3) Are/how are plant species performances affected by proximity to fallen logs?** 
 
 ### Hypotheses
 The null hypothesis, H0, is that annual plants in fallen log patches are not different in diversity, abundance, or composition from open patches. 
@@ -59,3 +47,68 @@ Prediction 2: All sown plants will perform the same in all experimental environm
 **H4: At least some species perform differently according to variation in log vs. open environments and have short dispersal kernals, causing fitness-density covariance** <br><br>
 <center>
 ![Figure 2: Photo before germination, after a rain. Notice the seeming wet halo under and around the branch](wetpatch_example2.jpg){width=50%}
+</center><br>
+
+### Experimental Design
+In this experiment, 224 plots are arranged in 7 blocks of 32 plots each within the Caron Dam nature reserve. [A map can be found here](https://www.google.com/maps/d/edit?mid=1z6w6tScsCcKSpsdUmoupfOJVaaq16VYk&usp=sharing). <br>*note: the location info for 3.02 is probably incorrect as of May 2022, and location info is currently unavailable for plots 6.25 and 7.19* 
+
+Each block is approximately 30m X 30m in area. Plots are 1m long and linear, and have a pin tag on either end (see Figure 3). The pin tags have the identity of the plot written on them in the form of "blocknumber.plotnumber". Plots are 1m or more away from each other. 
+
+In each block, plot environments can be one of six types:<br>
+-	A 1m log that is out in the open (open_with_log,  4 plots)  <br>
+-	A 1m log that is a part of a tree (insitu_log, 4 plots)<br>
+-	A 1m pvc pipe that is out in the open (open_with_pvc, 4 plots)<br>
+-	A 1m pvc pipe that is a part of a tree (insitu_pvc, 4 plots)<br>
+-	A plot that is out in the open (open, 8 plots) <br>
+-	A gap in a log where a log used to be (gap, 8 plots)<br>
+
+In half of the plots (not including open plots), the addition, exchange, or removal of logs or pvc to the environment was implemented in October 2020, before seed dispersal. In the other half of these plots, these manipulations were implemented after seed dispersal, in March 2021. 
+
+Within each 1m long plot, there is a ~20cm long microtransect. The ends of the microtransects are marked by a nail and a washer sunken into the ground. Each microtransect is approximately 21 cm in internal length from inner washer edge to inner washer edge. Microtransects are not sided. 
+
+In half of all plots, seeds were sown in March 2021 and February 2022. In these plots, 15 seeds each of Trachymene ornata (TROR), Goodenia rosea (GORO), and Trachymene cyanopetala (TRCY) are sown outside of the microtransects as in the diagram. These plants were selected because they represent plants common to communities next to logs (TROR), out in the open (GORO), or both (TRCY). The plots where seeds were sown are called 'lambda' plots as noted in Figure 3. In the dataset, the rows with a "1" in the 'seeding_trt' column are the plots that had seeds sown into them.
+
+<center>
+![Figure 3: plot schematic](plottypes2021.png){width=50%}
+</center>
+
+### Datasets 
+The sets of data that we have collected for this arm of the project are the following. 
+
+(1) Community data, before and after the experiment was implemented. <br> 
+- Every year during peak biomass we surveyed plant communities at every centimeter along each microtransect. Plant count and identity information is collected at each centimeter. 
+- These data are available from 2020 (before the experiment began), 2021 (one year into the experiment), and 2022 (two years into the experiment)
+
+(2) Soil nutrient analysis in the open and insitu log plots.<br>
+- These data were collected 
+
+(3) Performance data of TROR, TRCY, and TROR. <br>
+- In 2021, the only performance data that were collected after sowing the experiment were the **total number of plants that came up and survived to fruiting for each species in each location, their total biomass, and their per capita biomass**. I calculated per capita biomass by dividing total biomass of the collected focal plants by the number of focal plants observed. This was because of logistical issues due to covid. In this dataset, there were two instances where the number of plants collected was greater than the number of seeds sown. Both instances were T. cyanopetala, where nplants = 16 and 18. For these two datapoints I chose to convert the count values to 15, assuming that every individual we planted came up, and that the extra were either naturally occurring seeds or that the number of seeds that we put into the ground was greater than 15 (human error). To calculate total biomass for these two instances, I divided the total biomass by the number of individuals observed, and multiplied by 15. <br>
+
+- In 2022, we went to the field early in the season and counted and thinned the number of germinated seedlings in each location. We therefore have a count for germination, but for the following reasons there are some issues with these data. The first is that we probably surveyed germination a little too early. The seedlings were often super small or hadn't come up yet. Because we couldn't come back later to re-thin the plots, we went ahead with counting and thinning seedlings. The values in the dataset for 2022 (nplants_data_2022.csv) corresponding to this germination survey are "ntrcy_germ", "ngoro_germ" and "ntror_germ". The second is that at the end of the growing season, Jake and Winnie came back and found that there was often more than one plant of the focal species where we seeded them, and sometimes there was one or more focal plants that popped up where we had not observed germination earlier in the season. We assume that these plants come from the seeds we planted, and that they came up later than our initial germination survey. The number of plants observed and collected at each location at the end of the season are in the columns "nplants_tror", "nplants_goro" and "nplants_trcy" in the nplants_data_2022.csv data file. Because ngerm and nplants don't totally capture what came up where we sowed seed, I chose to analyze the total number of observed plants. I calculated this as the number of total plants we observed between the germination and the end of the season, being careful not to double-count the individual that was left after thinning from the first round of germination survey. The performance data I analyze here are **total number of plants that came up for each species in each location, and the per capita biomass of plants collected at the end of the season**. 
+
+
+**Methods and analysis**
+
+**Q1 Are/how are plant communities in fallen log patches different from patches that are in the open?** <br>
+*Methods* <br>
+
+*Analysis*<br>
+- abundance
+- diversity (hurdle model)
+- composition (nmds)
+- all three years separately
+<br><br>
+
+**Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
+*Methods* <br>
+
+*Analysis*<br>
+- nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
+<br><br>
+**Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
+*Methods* <br>
+
+In the summer of 2021 and 2022, we 
+
+*Analysis*<br>
