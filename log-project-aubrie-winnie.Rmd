@@ -9,6 +9,7 @@ date: "2024-02-01"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 Understanding how spatial variation is linked to diversity maintenance in natural communities is a pillar of plant community ecology. Theoretically, a variable landscape can maintain diversity via niche partitioning: different species can trade off in performing better or worse depending on the conditions of the patch they are growing in, and as a result, more species can sustainably coexist in a community than if it were spatially heterogeneous. In the hyperdiverse system of native annual plants in Western Australia, fallen logs may be one of the greatest contributors to generating spatial variation that could help maintain species diversity. Considerable anecdotal evidence suggests that fallen logs generate spatial variation, or patchiness, in the environment (Figure 1), and that species or assemblages of plants may respond differently depending on if they are near logs or not. Despite such anecdotal evidence, it is yet unknown if and how fallen logs contribute to maintaining species diversity in the native annual plant communities of the Western Australian wheat belt. 
 
 <center>
@@ -97,10 +98,729 @@ The sets of data that we have collected for this arm of the project are the foll
 #### *Statistical Methods* <br>
 
 #### *Analysis*<br>
-- abundance
-- diversity (hurdle model)
-- composition (nmds)
-- all three years separately
+
+##### Abundance analysis
+** 2020 - 2022 **
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# packages
+
+require(vegan)
+require(dplyr)
+require(tidyr)
+require(labdsv)
+require(stringr)
+require(ggplot2)
+require(ggrepel)
+require(lme4)
+require(emmeans)
+require(ggpubr)
+
+##### data wrangling #####
+
+# This dataset includes unknown species.
+comm <- read.csv("20-22_species_composition_data_w_unk.csv", header=T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# make a group name for each row
+comm$grp<-apply(comm[c(1,3,5,6,7)], 1, paste, collapse=":") # timepoint, block, transect_name, initial state
+
+# Need to make each row a community using matrify.
+commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable.
+mat<-separate(commtry, 107, c("time","block","transect","init", "treatment"), ":")
+names(mat) #check
+
+# Add groupname using time, block, init columns.
+mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
+mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
+names(mat) #check
+
+# Another df where the grouping variables are time, block, transect and initial state.
+# Each row is a transect in a certain year.
+df<-mat[,c(1:106,113)]
+# df2 = with treatment in the grouping
+df2 = df %>% mutate(across(.cols=1:106,.fns=as.numeric))
+rownames(df2)<-NULL # remove rownames
+
+##### Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
+
+# Sum observations across initial X transect X time X  block X treatment (group variable).
+# This gives number of plants in each row observation (transect level).
+blocksum2<-rowsum(df2[,c(1:106)], group=df2$grp2)
+blocksum2$grps<-rownames(blocksum2)
+rownames(blocksum2)<-NULL # remove rownames
+
+# Add in group vars.
+nublock2<-separate(blocksum2, 107, c("time","block","transect","init", "treatment"), ":")
+nublock2$total<-rowSums(nublock2[,c(1:106)])
+nublock2$presence<-ifelse(nublock2$total > 0,  1, 0)
+
+# Subset data where before treatments installed (t0), in-situ log and in-situ open from t1 and t2 are included.
+# Hence only absolute log effect and absolute open effect are concerned
+dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
+
+# look at plant abundance in log vs open 
+# look at range of data - what family should i use? 
+range(dat_t0_insitu$total)
+
+# since samples from t1 and t2 from are mainly from the same plots as t0. These are not independent replicates and tend to correlated with each other.
+# including year and block as random effects
+# (1|year) + (1|block) as we think the effect of init on total is the same (slope) but the intercept differ amongst block and year
+# but since we have a greater number of sample from t0, data from t0 will contribute more to the variance in abundance.
+# see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
+abun.mod<- glmer(total~ init + (1|block) + (1|time), data=dat_t0_insitu, family = 'poisson')
+summary(abun.mod)
+
+emmeans(abun.mod, ~init, type='response') # plant abundance in log plots is higher by 0.04 plants - which is no higher
+
+abun.plot <- emmip(abun.mod5, ~init, type='response', CI=T)+theme_bw()+labs(x="Initial condition", y="Number of plants")
+print(abun.plot)
+
+##### Reason: why we need to include 'time' as random effect?
+
+# (1) Samples from t1 and t2 from are from the same plots as t0. These are not independent replicates and tend to correlated with each other.
+# We included year and block as random effects to alleviate the effect of temporal pseudo-replication.
+
+summary(aov(total ~ time, data = dat_t0_insitu)) # plant abundance differs between years
+
+# (2) When we stratify the data by year, significance of the difference between log and open treatment is lost.
+# if the effect of log-open (slope) is the same across year, year only affecting the intercept.
+# since the slopes are similar, we include time as random intercept effect.
+summary(glm(total ~ init, data = subset(dat_t0_insitu, time == "t0"), family = poisson))
+summary(glm(total ~ init, data = subset(dat_t0_insitu, time == "t1"), family = poisson))
+summary(glm(total ~ init, data = subset(dat_t0_insitu, time == "t2"), family = poisson))
+
+abun.plot.year <- ggplot(dat_t0_insitu, aes(x = as.factor(init), y = total, fill = as.factor(init))) +
+  geom_boxplot(position = "dodge", alpha = 0.5) +
+  labs(x = "init",
+       y = "Abundance") +
+  scale_fill_discrete(name = 'init') +
+  theme_classic() +
+  facet_grid(. ~ time) +
+  stat_compare_means(comparisons = list(c("log", "open")), label = "p.format", method="wilcox.test")
+
+print(abun.plot.year)
+```
+
+#### Diversity analysis
+Main takeaways:
+
+* we use a hurdle model to address zero-inflation
+* we first use logistic regression to predict the probability of non-zero
+* open and log environment significantly determines the probability of non-zero diversity index
+* note, zero in Shannon diversity index does not mean zero plant. 
+* we then use lmer to model non-zero diversity data with time and block as random terms
+* we assume approximal Gaussian distribution (1) continuous variable and (2) visual inspection suggests so
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
+require(vegan)
+require(dplyr)
+require(tidyr)
+require(labdsv)
+require(stringr)
+require(ggplot2)
+require(ggrepel)
+require(lme4)
+require(emmeans)
+require(lmerTest)
+require(performance)
+require(ggpubr)
+require(DHARMa)
+
+# This dataset does not include unknown data.
+comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# make a group name for each row
+comm$grp<-apply(comm[c(1,3,5,6,7)], 1, paste, collapse=":") # timepoint, block, transect_name, initial state
+
+# Need to make each row a community using matrify
+commsub<-comm[,c(15,10,13)] 
+
+# group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-labdsv::matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1  # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable
+mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
+names(mat) #check
+
+# Add groupname using time, block, init columns
+mat$grp<-apply(mat[c(88:92)], 1, paste, collapse=":")
+names(mat) #check
+
+# Another df where the grouping variables are time, block, transect and initial state.
+# Each row is a transect in a certain year.
+df<-mat[,c(1:87,93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+###### Species diversity analysis for 2020 - 2022 data (Shannon diversity on transect level) 
+numat = mat %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+
+# sum species for each group (grouped by init, transect, block, time)
+nudat<-numat%>% 
+  group_by(time, block, transect, init, treatment) %>% summarise(across(where(is.numeric), sum))
+
+# make a data frame
+dat<-as.data.frame(nudat) # this df contains transect levels from all years
+dat<-dat[which(dat$time=="t0" |  dat$treatment=="open" |  dat$treatment=="insitu_log"),]
+
+#estimate diversity for each row/group. don't include 'x' 
+
+# no groups, just estimate diversity of each row
+est<-dat[,c(6:91)]
+dat$diversity<-diversity(est, index='shannon') 
+
+###### We used a hurdle model since the data is zero-inflated
+# separate into zero and non-zero observations
+dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
+
+# what does our data look like? 
+hist(dat$diversity, xlab = "Shannon diversity", main = "Histogram of Shannon diversity index (all years, transect level)") # zero-inflated
+
+ggplot(dat, aes(x = diversity, fill = as.factor(non_zero))) +
+  geom_histogram(position = "identity", alpha = 1, bins = 30) +
+  labs(x = "Diversity",
+       y = "Frequency") +
+  scale_fill_discrete(name = 'non_zero') +
+  theme_bw()
+
+shapiro.test((dat$diversity[dat$non_zero == 1])) # non-zero data is not normal
+
+# Non-zero data is, however, an approximal Gaussian distribution
+hist(dat$diversity[dat$non_zero ==1], xlab = "Shannon diversity index (non-zero)", main = "Histogram of Shannon diversity index (non-zero, all years, transect level)") # visually it resembles a lot like a Gaussian distribution 
+
+# Gaussian distribution produced the best-fitting ggplot
+dat_nonzerodat <- dat[dat$non_zero == 1, ]
+ggplot(dat_nonzerodat, aes(sample = diversity)) + 
+                  geom_qq(distribution = qnorm) + 
+                  geom_qq_line(distribution = qnorm) +
+                  ggtitle("normal")
+
+# Hurdle model part 1. Logistic regression to predict the probability of non-zero.
+# Ppen and log environment does determine the probability of non-zero diversity index
+# 0 Shannon diversity index =/= zero plants
+Hurd.mod.1 <- glmer(non_zero ~ init + (1|block) + (1|time), data = dat, family = binomial)
+summary(Hurd.mod.1) # significant
+
+# Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
+# We included block and time as random terms.
+# Open and log environment is significant in explaining the plant diversity in transect levels.
+# Lmer was used because the distribution of non-zero data is approximally normal.
+Hurd.mod.2 <- lmer(diversity ~ init + (1|block)+ (1|time), data=subset(dat, non_zero == 1))
+summary(Hurd.mod.2)
+anova(Hurd.mod.2) # lmer on non-zero diversity values is significant
+
+# Check residual
+residuals <- resid(Hurd.mod.2) # Extract residuals
+plot(residuals)
+abline(0,0)
+check_model(Hurd.mod.2)
+```
+
+#### Composition analysis
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
+# packages
+library(tidyverse)
+require(vegan)
+require(dplyr)
+require(tidyr)
+require(labdsv)
+require(stringr)
+require(ggplot2)
+require(ggrepel)
+require(lme4)
+require(emmeans)
+require(lmerTest)
+require(performance)
+require(ggpubr)
+
+# Data wrangling
+# This data set does not include unknown data.
+comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# Make a group name for each row
+comm$grp<-apply(comm[c(1,3,5,6,7)], 1, paste, collapse=":") # timepoint, block, transect_name, initial state
+
+# Need to make each row a community using matrify.
+commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable
+mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
+names(mat) #check
+```
+
+Composition dissimilarity * 2020 *
+
+Main takeaways:
+
+* Constrained proportion: variance of community composition explained by initial treatment + block is 77.38%. 
+* Unexplained variance in community composition is 22.62%.
+* The overall model of initial treatment+block significantly explains variation in the data. 
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup'}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t0"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+head(nublock)
+
+# sum observations across initial X  block (group variable)
+# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
+blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum$grps<-rownames(blocksum)
+rownames(blocksum)<-NULL # remove rownames
+nrow(blocksum) # it is 14 rows as expected 
+
+## expand again
+blocksum<-separate(blocksum, 88, c("block", "init"), ":")
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t0<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+
+# MDS 
+ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
+ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 5) # run MDS 
+stressplot(ass.rel.t0_NMS) # check fit
+
+# scores
+mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
+mds_scores_t0$site<-rownames(vegan::scores(ass.rel.t0_NMS)$sites) # extract names 
+mds_scores_t0$treatment<-group_init # grouping factor 1 
+mds_scores_t0$block<-group_block # grouping factor 2 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+#### Redundancy analysis
+# can look at significance of model where initial treatment and block explain variation in community
+trt_tot_2<-rda(ass.rel.t0~init+block) # run model using standardized data 
+summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# Using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"))
+mtext("X1= Treatment; X2=Block", side=3)
+
+# can test for significance of contribution of the fraction of initial treatment
+# do this with partial redundancy analysis
+trt_Frac<-rda(ass.rel.t0, init, block) # partial rda model
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+# Extracting species scores and plotting 
+# Species scores
+species.scores<-as.data.frame(vegan::scores(ass.rel.t0_NMS,"species")) ## some species don't have scores
+species.scores$species<-rownames(species.scores) 
+
+### NMDS 1 and 2 
+log<-mds_scores_t0[mds_scores_t0$treatment == "log", ][chull(mds_scores_t0[mds_scores_t0$treatment == 
+                                                          "log", c("NMDS1", "NMDS2")]), ]
+
+open<-mds_scores_t0[mds_scores_t0$treatment == "open", ][chull(mds_scores_t0[mds_scores_t0$treatment == 
+                                                               "open", c("NMDS1", "NMDS2")]), ]
+
+hulldat<-rbind(log,open)
+ 
+nmds.plot<- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_text_repel(data=species.scores, aes(NMDS1, NMDS2, label=species), alpha=0.9, size=5, col='darkgray')+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t0, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")
+
+print(nmds.plot)
+```
+
+Composition dissimilarity * 2021 *
+
+Main takeaways:
+
+* Constrained proportion: variance of community composition explained by initial treatment + block is 65.82%. 
+* Unexplained variance in community composition is 34.18%.
+* The overall model of initial treatment+block significantly explains variation in the data. 
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+head(nublock)
+
+# sum observations across initial X  block (group variable)
+# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
+blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum$grps<-rownames(blocksum)
+rownames(blocksum)<-NULL # remove rownames
+nrow(blocksum) # it is 14 rows as expected 
+
+##  expand again
+blocksum<-separate(blocksum, 88, c("block", "init"), ":")
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t1<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+
+# MDS 
+ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 5) # run MDS 
+stressplot(ass.rel.t1_NMS) # check fit
+
+# scores
+mds_scores_t1<-as.data.frame(vegan::scores(ass.rel.t1_NMS)$sites) # extract scores
+mds_scores_t1$site<-rownames(vegan::scores(ass.rel.t1_NMS)$sites) # extract names 
+mds_scores_t1$treatment<-group_init # grouping factor 1 
+mds_scores_t1$block<-group_block # grouping factor 2 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+#### rda model analysis & results #### 
+# can look at significance of model where initial treatment and block explain variation in community
+trt_tot_2<-rda(ass.rel.t1~init+block) # run model using standardized data 
+summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# can model using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"))
+mtext("X1= Treatment; X2=Block", side=3)
+
+## can test for significance of contribution of the fraction of initial treatment
+# do this with partial redundancy analysis
+trt_Frac<-rda(ass.rel.t1, init, block) # partial rda model
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+### extracting species scores and plotting 
+# species scores
+species.scores<-as.data.frame(vegan::scores(ass.rel.t1_NMS,"species")) ## some species don't have scores
+species.scores$species<-rownames(species.scores) 
+
+### NMDS 1 and 2 
+log<-mds_scores_t1[mds_scores_t1$treatment == "log", ][chull(mds_scores_t1[mds_scores_t1$treatment == 
+                                                          "log", c("NMDS1", "NMDS2")]), ]
+
+open<-mds_scores_t1[mds_scores_t1$treatment == "open", ][chull(mds_scores_t1[mds_scores_t1$treatment == 
+                                                               "open", c("NMDS1", "NMDS2")]), ]
+
+hulldat<-rbind(log,open)
+ 
+nmds.plot <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_text_repel(data=species.scores, aes(NMDS1, NMDS2, label=species), alpha=0.9, size=5, col='darkgray')+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t1, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")
+
+print(nmds.plot)
+```
+
+Composition dissimilarity * 2022 *
+
+Main takeaways:
+
+* Constrained proportion: variance of community composition explained by initial treatment + block is 67.05%. 
+* Unexplained variance in community composition is 32.95%.
+* The overall model of initial treatment+block significantly explains variation in the data. 
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+head(nublock)
+
+# sum observations across initial X  block (group variable)
+# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
+blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum$grps<-rownames(blocksum)
+rownames(blocksum)<-NULL # remove rownames
+nrow(blocksum) # it is 14 rows as expected 
+
+##  expand again
+blocksum<-separate(blocksum, 88, c("block", "init"), ":")
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t2<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+
+# MDS 
+ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
+ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 5) # run MDS 
+stressplot(ass.rel.t2_NMS) # check fit
+
+# scores
+mds_scores_t2<-as.data.frame(vegan::scores(ass.rel.t2_NMS)$sites) # extract scores
+mds_scores_t2$site<-rownames(vegan::scores(ass.rel.t2_NMS)$sites) # extract names 
+mds_scores_t2$treatment<-group_init # grouping factor 1 
+mds_scores_t2$block<-group_block # grouping factor 2 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+#### rda model analysis & results #### 
+# can look at significance of model where initial treatment and block explain variation in community
+trt_tot_2<-rda(ass.rel.t2~init+block) # run model using standardized data 
+summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# can model using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"))
+mtext("X1= Treatment; X2=Block", side=3)
+
+## can test for significance of contribution of the fraction of initial treatment
+# do this with partial redundancy analysis
+trt_Frac<-rda(ass.rel.t2, init, block) # partial rda model
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+### extracting species scores and plotting 
+# species scores
+species.scores.t2<-as.data.frame(vegan::scores(ass.rel.t2_NMS,"species")) ## some species don't have scores
+species.scores.t2$species<-rownames(species.scores) 
+
+### NMDS 1 and 2 
+log<-mds_scores_t2[mds_scores_t2$treatment == "log", ][chull(mds_scores_t2[mds_scores_t2$treatment == 
+                                                          "log", c("NMDS1", "NMDS2")]), ]
+
+open<-mds_scores_t2[mds_scores_t2$treatment == "open", ][chull(mds_scores_t2[mds_scores_t2$treatment == 
+                                                               "open", c("NMDS1", "NMDS2")]), ]
+
+hulldat<-rbind(log,open)
+ 
+nmds.plot <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_text_repel(data=species.scores.t2, aes(NMDS1, NMDS2, label=species), alpha=0.9, size=5, col='darkgray')+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t2, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")
+  
+print(nmds.plot)
+```
+Composition dissimilarity * 2020 - 2022 *
+### 3. rda: composition dissimilarity all years with controlling effect of time and block
+Main takeaways:
+
+* Constrained proportion: variance of community composition explained by initial treatment + block + time is 50.31%. 
+* Unexplained variance in community composition is 49.59%.
+* The overall model of initial treatment+block+time significantly explains variation in the data. 
+Main takeaways:
+
+* time and block explains 44.33% of variations in plant compositions
+* initial treatment explains 6.08% of variations in plant compositions
+* 49.59% of variations are not explained
+```{r}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat3 <- mat[which(mat$time=="t0" |  mat$treatment=="open" | mat$treatment=="insitu_log"),]
+mat3$grp<-apply(mat3[c(88,89,91)], 1, paste, collapse=":") # block, init as grouping
+names(mat3) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat3[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("time", "block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat3[c(88,89, 91)], 1, paste, collapse=":")
+head(nublock)
+
+# sum observations across initial X  block (group variable)
+# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
+blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum$grps<-rownames(blocksum)
+rownames(blocksum)<-NULL # remove rownames
+nrow(blocksum) # it is 42 rows as expected 
+
+##  expand again
+blocksum<-separate(blocksum, 88, c("time", "block", "init"), ":")
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t012<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+group_time<-blocksum$time
+
+# MDS 
+ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
+ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 5) # run MDS 
+stressplot(ass.rel.t012_NMS) # check fit
+
+# scores
+mds_scores_t012<-as.data.frame(vegan::scores(ass.rel.t012_NMS)$sites) # extract scores
+mds_scores_t012$site<-rownames(vegan::scores(ass.rel.t012_NMS)$sites) # extract names 
+mds_scores_t012$treatment<-group_init # grouping factor 1 
+mds_scores_t012$block<-group_block # grouping factor 2 
+mds_scores_t012$time<-group_time # grouping factor 3
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+time<-as.factor(group_time)
+
+#### rda model analysis & results #### 
+# can look at significance of model where initial treatment and block explain variation in community
+trt_tot_2<-rda(ass.rel.t012~init+block+time) # run model using standardized data 
+summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# can model using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"))
+mtext("X1= Treatment; X2=Block; X3=time", side=3)
+
+## can test for significance of contribution of the fraction of initial treatment
+# do this with partial redundancy analysis
+trt_Frac<-rda(ass.rel.t012~ init +Condition(block + time)) # partial rda model
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+### extracting species scores and plotting 
+# species scores
+species.scores<-as.data.frame(vegan::scores(ass.rel.t012_NMS,"species")) ## some species don't have scores
+species.scores$species<-rownames(species.scores) 
+
+### NMDS 1 and 2 
+log<-mds_scores_t012[mds_scores_t012$treatment == "log", ][chull(mds_scores_t012[mds_scores_t012$treatment == 
+                                                          "log", c("NMDS1", "NMDS2")]), ]
+
+open<-mds_scores_t012[mds_scores_t012$treatment == "open", ][chull(mds_scores_t012[mds_scores_t012$treatment == 
+                                                               "open", c("NMDS1", "NMDS2")]), ]
+
+hulldat<-rbind(log,open)
+ 
+ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_text_repel(data=species.scores, aes(NMDS1, NMDS2, label=species), alpha=0.9, size=5, col='darkgray')+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t012, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")
+  
+```
 
 #### *Interpretation* 
 
