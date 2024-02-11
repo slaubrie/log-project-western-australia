@@ -107,7 +107,6 @@ A considerable number of zeros are generated in the computation of the Shannon d
 We used Non-Metric Dimensional Scaling (NMDS) to analyse the differences in plant communities with Bray-Curtis dissimilarity metrics. We retained two dimensions in the NMDS ordination plot for the interpretation of plant community composition differences between plot types and blocks. To identify the contribution of each species to the compositional changes amongst different sample plots, we extracted ordination scores for each species along NMDS axes 1 and 2. The species scores represent the weighted average of a species’ abundance score in a sample community along our selected NMDS axes. We also ran a partial Redundancy Analysis (RDA) to test the correlation between species composition (squared-root transformed) and plot type (log vs open patch) with block as a random term.
 
 #### *Analysis*<br>
-
 ##### Abundance analysis
 ** 2020 - 2022 **
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=FALSE}
@@ -124,6 +123,7 @@ require(ggrepel)
 require(lme4)
 require(emmeans)
 require(ggpubr)
+# require(see) #doing this for aubrie because of some weird thing that happened when I installed new version of R 
 
 ##### data wrangling #####
 
@@ -224,7 +224,7 @@ abun.plot.year <- ggplot(dat_t0_insitu, aes(x = as.factor(init), y = total, fill
 print(abun.plot.year)
 ```
 
-#### Diversity analysis
+##### Diversity analysis
 Main takeaways:
 
 * we use a hurdle model to address zero-inflation
@@ -248,7 +248,7 @@ require(performance)
 require(ggpubr)
 require(DHARMa)
 
-# This dataset does not include unknown data.
+# This dataset does not include data where the plant identity is.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
 
 # Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
@@ -349,7 +349,7 @@ abline(0,0)
 check_model(Hurd.mod.2)
 ```
 
-#### Composition analysis
+##### Composition analysis
 ```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
 # packages
 library(tidyverse)
@@ -717,7 +717,7 @@ nmds.plot <- ggplot()+
 print(nmds.plot)
 ```
 Composition dissimilarity * 2020 - 2022 *
-### 3. rda: composition dissimilarity all years with controlling effect of time and block
+3. rda: composition dissimilarity all years with controlling effect of time and block
 Main takeaways:
 
 * Constrained proportion: variance of community composition explained by initial treatment + block + time is 50.31%. 
@@ -835,6 +835,7 @@ print(nmds.plot)
 
 #### *Interpretation* 
 
+
 ### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
 #### *Overview of results* <br> 
 
@@ -849,7 +850,7 @@ knitr::opts_chunk$set(message = FALSE)
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
-library(xlsx)
+# library(xlsx)
 library(lme4)
 library(emmeans)
 library(pscl)
@@ -1422,7 +1423,7 @@ nrow(blocksum) # it is 42 rows as expected
 ##  expand again
 blocksum<-separate(blocksum, 88, c("time", "block", "init"), ":")
 nutrient_join <- nutrient[,c(1,3,5:16)]
-blocksum <- inner_join(blocksum, nutrient_join, by = c("init", "block"))
+blocksum <-inner_join(blocksum, nutrient_join, by = c("init", "block"))
 
 # at the moment this includes where there were no plants ("x" column in matrix)
 assemblies_t012<-blocksum[,c(1:87)]
@@ -1431,7 +1432,7 @@ assemblies_t012<-blocksum[,c(1:87)]
 group_init<-blocksum$init
 group_block<-blocksum$block
 group_time<-blocksum$time
-group_nutrient <-blocksum[, 90:101]
+group_nutrient <-blocksum[,90:101]
 
 # MDS 
 ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
@@ -1516,12 +1517,12 @@ print(nmds.plot)
 
 #### *Interpretation* 
 
+
 ### **Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
 #### *Overview of results* <br> 
 
 #### *Statistical Methods* <br>
-
-My basic approach is to analyse count and biomass data from 2021 and 2022 sowing experiment. We sowed 15 seeds for each species into 16 plots in each of the seven blocks. There are 6 plot type treatments. The gap and open treatments each have four replicates per block, and the insitu_log, insitu_pvc, open_with_log, and open_with_pvc each have two replicates per block. *note: For each treatment of plot type, there is also a dispersal treatment, but I do not analyse that here (yet).*
+The basic approach is to analyse count and biomass data from 2021 and 2022 sowing experiment. We sowed 15 seeds for each species into 16 plots in each of the seven blocks. There are 6 plot type treatments. The gap and open treatments each have four replicates per block, and the insitu_log, insitu_pvc, open_with_log, and open_with_pvc each have two replicates per block. *note: For each treatment of plot type, there is also a dispersal treatment, but I do not analyse that here (yet).*
 <br> 
 - For **count data** I use a glmmTMB to run a generalized linear mixed effects model approach to analyse the data. The hurdle model approach I am using is to first code presence/absence as 0 or 1 (1 being any nonzero count value) and run this analysis as a binomial regression. Depending on the model fit and residual dispersion (using DHARMa), I then either run a truncated poisson or truncated negative binomial regression on the count data. Though I did run alternative versions of hurdle models that predict count while accounting for zero inflation, I felt that analyzing the presence/absence, and then analyzing count, may be revealing more of the biology of the system, where presence/absence was distinctly affected by treatments while count was less so.
 <br>
@@ -1533,8 +1534,10 @@ The models I use test the hypotheses from above: Log decomposition creates islan
 
 #### *Analysis*<br>
 
-**2021**
-```{r abundance code, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
+##### **2021**
+```{r 2021 growth, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
+
+### doing vital rate analysis
 
 # packages 
 require(lme4)
@@ -1546,7 +1549,6 @@ require(DHARMa)
 require(ggplot2)
 require(AICcmodavg)
 require(ggpubr)
-
 
 ############## 2021 data #############
 
@@ -1560,10 +1562,33 @@ dat1$block<-as.factor(dat1$block)
 
 dat2<-(dat1[c(1:4,7,11,15,22)]) # these are block, transect, initial, current_plot_type, ngoro, ntrcy, ntror, physical_barrier
 head(dat2) 
-
-# max out at 15
 countdat<-as.data.frame(dat2 %>% pivot_longer(c(ntror, ngoro, ntrcy)))
 countdat$value<-as.numeric(ifelse(countdat$value>15, 15, countdat$value))
+countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data=countdat)
+
+# test for fit and zero inflation
+ sim<-simulateResiduals(countmod)
+ testZeroInflation(sim) # zero-inflated so need something else 
+ plot(sim)
+
+## going to do a hurdle model, which assumes a zero is only generated in one way 
+# https://jsdajournal.springeropen.com/articles/10.1186/s40488-021-00121-4
+# #https://stats.stackexchange.com/questions/81457/what-is-the-difference-between-zero-inflated-and-hurdle-models
+
+# hurdle model 
+# using examples as presented here: https://www.biorxiv.org/content/biorxiv/suppl/2017/05/01/132753.DC1/132753-2.pdf 
+fit3<-glmmTMB(value~name*current_plot_type+(1|block), ziformula=~., family=nbinom2(), data=countdat)
+ sim3<-simulateResiduals(fit3)
+ plot(sim3)
+ testDispersion(sim3) # looks nice ! 
+ testZeroInflation(sim3) # looks nice ! 
+
+summary(fit3)
+emmip(fit3,~current_plot_type|name, type='response',CI=T)
+
+# visualize
+est<-emmeans(fit3,~current_plot_type|name, type='response')
+pairs(est)
 
 #### now i'll do a by-hand hurdle model on my own using a truncated negative binomial
 
@@ -1581,4 +1606,750 @@ emmip(countfit,~current_plot_type|name, type='response',CI=T)
 est<-emmeans(countfit, ~current_plot_type|name, type='response')
 pairs(est)
 
+############# treatment response: do analysis for total biomass by species #############
+
+dat3<-(dat1[c(1:4,10,14,18,22)])
+totwtdat<-as.data.frame(dat3 %>% pivot_longer(c(wt_max15_goro, wt_max15_tror, wt_max15_trcy)))
+totwtdat$log_wt<-log(totwtdat$value) # log transform the weight data to get it normal looking
+
+# model
+totwtmod<-lmer(log_wt~name*current_plot_type+(1|block), data=totwtdat, REML=FALSE)
+
+# test for fit, looks pretty good
+sim<-simulateResiduals(totwtmod)
+plot(sim)
+
+# model summary
+summary(totwtmod)
+emmip(totwtmod,~current_plot_type|name, CI=T)
+
+est<-emmeans(totwtmod,~current_plot_type|name, type='response')
+pairs(est)
+
+############# treatment response: do analysis for per capita biomass by species #############
+
+dat4<-(dat1[c(1:4,9,13,17,22)])
+pcwtdat<-as.data.frame(dat4 %>% pivot_longer(c(wt_percapita_goro, wt_percapita_tror, wt_percapita_trcy)))
+pcwtdat$log_wt<-log(pcwtdat$value) # log transform the weight data to get it normal looking
+
+# model
+pcwtmod<-lmer(log_wt~name*current_plot_type+(1|block), data=pcwtdat, REML=FALSE)
+
+# test for fit, looks pretty good
+# sim<-simulateResiduals(pcwtmod)
+# plot(sim)
+
+# model summary
+summary(pcwtmod)
+emmip(pcwtmod,~current_plot_type|name,CI=T)
+
+est<-emmeans(totwtmod,~current_plot_type|name, type='response')
+pairs(est)
+
+######### What about the log legacy - initial treatment for 2021 #######
+
+############# log legacy response: do analysis for count by species ############# 
+fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=nbinom2(), data=countdat, REML=FALSE)
+
+## This stuff will just give you the end result counts with the zeros factored in...
+summary(fit3_leg)
+emmip(fit3_leg,~initial|name, type='response',CI=T)
+
+est<-emmeans(fit3_leg,~initial|name, type='response')
+pairs(est)
+
+#### split up occurrence and abundance
+### zeros and ones 
+zerofit_leg<-glmmTMB(presence~name*initial+(1 | block), family=binomial, data=countdat, REML=FALSE)
+emmip(zerofit_leg,~initial|name, type='response',CI=T)
+est<-emmeans(zerofit_leg, ~initial|name, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countfit_leg<-glmmTMB(posicounts~name*initial+(1 | block), family=truncated_nbinom2(), data=countdat, REML=FALSE)
+emmip(countfit_leg,~initial|name, type='response',CI=T)
+est<-emmeans(countfit_leg, ~initial|name, type='response')
+pairs(est)
+
+
+############# log legacy response: do analysis for total weight by species ############# 
+
+# weights
+totwtmod_leg<-lmer(log_wt~name*initial+(1|block), data=totwtdat, REML=FALSE)
+
+# model summary
+summary(totwtmod_leg)
+emmip(totwtmod_leg,~initial|name,CI=T)
+
+est<-emmeans(totwtmod_leg,~initial|name, type='response')
+pairs(est)
+
+############# log legacy response: do analysis for per capita weight by species ############# 
+
+# model
+pcwtmod_leg<-lmer(log_wt~name*initial+(1|block), data=pcwtdat, REML=FALSE)
+
+# test for fit, looks pretty good
+# sim<-simulateResiduals(pcwtmod_leg)
+# plot(sim)
+
+# model summary
+summary(pcwtmod_leg)
+emmip(pcwtmod_leg,~initial|name,CI=T)
+
+est<-emmeans(pcwtmod_leg,~initial|name, type='response')
+pairs(est)
+
+
+######### What about the physical barrier treatment for 2021 #######
+
+############# physical barrier response: do analysis for count by species ############# 
+fit3_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=nbinom2(), data=countdat, REML=FALSE)
+
+## This stuff will just give you the end result counts with the zeros factored in...
+summary(fit3_phys)
+emmip(fit3_phys,~physical_barrier|name, type='response',CI=T)
+
+est<-emmeans(fit3_phys,~physical_barrier|name, type='response')
+pairs(est)
+
+#### split up occurrence and abundance
+### zeros and ones 
+zerofit_phys<-glmmTMB(presence~name*physical_barrier+(1 | block), family=binomial, data=countdat, REML=FALSE)
+emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)
+est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countfit_phys<-glmmTMB(posicounts~name*physical_barrier+(1 | block), family=truncated_nbinom2(), data=countdat, REML=FALSE)
+emmip(countfit_phys,~physical_barrier|name, type='response',CI=T)
+est<-emmeans(countfit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+
+############# physical barrier response: do analysis for total weight by species ############# 
+
+# weights
+totwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=totwtdat, REML=FALSE)
+
+# model summary
+summary(totwtmod_phys)
+emmip(totwtmod_phys,~physical_barrier|name,CI=T)
+
+est<-emmeans(totwtmod_phys,~physical_barrier|name, type='response')
+pairs(est)
+
+############# physical barrier response: do analysis for per capita weight by species ############# 
+
+# model
+pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat, REML=FALSE) 
+
+# test for fit, looks pretty good
+# sim<-simulateResiduals(pcwtmod_leg)
+# plot(sim)
+
+# model summary
+summary(pcwtmod_phys)
+emmip(pcwtmod_phys,~physical_barrier|name,CI=T)
+
+est<-emmeans(pcwtmod_phys,~physical_barrier|name, type='response')
+pairs(est)
+
+#### What about both physical and legacy? #### 
+### zeros and ones 
+zerofit_intxn<-glmmTMB(presence~name*physical_barrier*initial+(1 | block), family=binomial, data=countdat, REML=FALSE)
+
+sim<-simulateResiduals(zerofit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(zerofit_intxn,initial~physical_barrier|name, type='response',CI=T)
+est<-emmeans(zerofit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
+### abundance with a truncated negbinom 
+countfit_intxn<-glmmTMB(posicounts~name*physical_barrier*initial+(1 | block), family=truncated_nbinom2(), data=countdat, REML=FALSE)
+
+sim<-simulateResiduals(countfit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(countfit_intxn,~physical_barrier|name|initial, type='response',CI=T)
+est<-emmeans(countfit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
+### additive examp,es
+zerofit_add<-glmmTMB(presence~name*physical_barrier+name*initial+(1 | block), family=binomial, data=countdat, REML=FALSE)
+
+countfit_add<-glmmTMB(posicounts~name*physical_barrier+name*initial+(1 | block), family=truncated_nbinom2(), data=countdat, REML=FALSE)
+
+### per capita biomass 
+
+# model - intxn
+pcwtmod_intxn<-lmer(log_wt~name*physical_barrier*initial+(1|block), data=pcwtdat, REML=FALSE)
+
+# model - no intxn
+pcwtmod_add<-lmer(log_wt~name*physical_barrier+name*initial+(1|block), data=pcwtdat, REML=FALSE)
+
+
+#### 2021 model comparison for counts #### 
+## zeros 
+zero_candmods<-list("Plot type"=zerofit, 
+                    "Physical barrier"=zerofit_phys,
+                    "Nutrient island"=zerofit_leg,
+                    "Physical Barrier + Nutrient Island"=zerofit_add,
+                    "Physical Barrier x Nutrient Island"=zerofit_intxn)
+aictab(zero_candmods)
+pairs(emmeans(zerofit_add, ~physical_barrier|name|initial))
+
+
+# counts
+count_candmods<-list("Plot type"=countfit, 
+                     "Physical barrier"=countfit_phys,
+                     "Nutrient island"=countfit_leg,
+                     "Physical Barrier + Nutrient Island"=countfit_add,
+                     "Physical Barrier x Nutrient Island"=countfit_intxn)
+aictab(count_candmods)
+pairs(emmeans(countfit_leg, ~initial|name))
+
+
+#### 2021 model comparison for per capita biomass #### 
+pcwt_candmods<-list("Plot type"=pcwtmod, 
+                    "Physical barrier"=pcwtmod_phys,
+                    "Nutrient island"=pcwtmod_leg,
+                    "Physical Barrier + Nutrient Island" = pcwtmod_add,
+                    "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
+aictab(pcwt_candmods)
+pairs(emmeans(pcwtmod_phys, ~physical_barrier|name))
+
+
+
+### figures ###
+# best fit models - zeros 
+# colors
+mimiscols<-c("#D66972","#108780")
+# zerofit_add<-glmmTMB(presence~name*physical_barrier+name*initial+(1 | block), family=binomial, data=countdat, REML=FALSE)
+
+zfit_est<-as.data.frame(emmeans(zerofit_add,~initial|physical_barrier|name, type='response'))
+zfit_est$name<-c(rep("ngoro", 4), rep("ntrcy",4), rep("ntror",4))
+
+pl1<-ggplot(zfit_est,aes(physical_barrier, prob,group=initial),)+
+  scale_color_manual(values=mimiscols)+
+  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
+  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+  facet_wrap(vars(name))+
+  theme_bw()+
+  theme(strip.text.x = element_text(size=0),
+        strip.background = element_blank(),
+        axis.text=element_text(size=15),
+        axis.title=element_text(size=20),
+        legend.text=element_text(size=15),
+        legend.title=element_text(size=15),
+        legend.position="top")+
+  xlab("Physical Barrier")+
+  ylab("Occurrence")+
+  geom_jitter(data=countdat,
+             aes(x=physical_barrier, y=presence, color=initial), 
+             height=0.1,
+             alpha=0.5)+
+  labs(color = "Initial Plot Type")
+  
+# best fit model - counts 
+# countfit_leg<-glmmTMB(posicounts~name*initial+(1 | block), family=truncated_nbinom2(), data=countdat, REML=FALSE)
+
+cfit_est<-as.data.frame(emmeans(countfit_leg,~initial|name, type='response'))
+cfit_est$name<-c(rep("ngoro", 2), rep("ntrcy", 2), rep("ntror",2))
+
+pl2<-ggplot(cfit_est,aes(initial, response, group=1))+
+  geom_jitter(data=countdat,
+              aes(x=initial, y=posicounts),
+              width=0.1,
+              alpha=0.4,
+              color="gray")+
+  geom_point(size=2, color="black")+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL),color="black")+
+  geom_line(color="black")+
+  facet_wrap(vars(name))+
+  theme_bw()+
+  theme(strip.text.x = element_text(size=0),
+        strip.background = element_blank(),
+        axis.text=element_text(size=15),
+        axis.title=element_text(size=20),
+        legend.text=element_text(size=15),
+        legend.title=element_text(size=15))+
+  xlab("Initial Plot Type")+
+  ylab("Abundance")+
+  labs(color = "Initial Plot \n Type")
+
+# best fit model - pcbiomass
+# pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat, REML=FALSE)
+
+pcbfit_est<-as.data.frame(emmeans(pcwtmod_phys,~physical_barrier|name, type='response'))
+#pcbfit_est$name<-c(rep("ngoro", 2), rep("ntrcy", 2), rep("ntror",2))
+
+
+pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=1))+
+  geom_jitter(data=pcwtdat,
+              aes(x=physical_barrier, y=log_wt),
+              width=0.1,
+              alpha=0.4,
+              color="gray")+
+  geom_point(size=2, color="black")+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL),color="black")+
+  facet_wrap(vars(name))+
+  geom_line(color="black")+
+  theme_bw()+
+  theme(strip.text.x = element_text(size=0),
+        strip.background = element_blank(),
+        axis.text=element_text(size=15),
+        axis.title=element_text(size=20),
+        legend.text=element_text(size=15),
+        legend.title=element_text(size=15))+
+  xlab("Physical Barrier")+
+  ylab("log(Biomass)")
+pl3
+### altogether now
+ggarrange(pl1, pl2, pl3, ncol=1, common.legend = T)
+pl1
+pl2
+pl3
+```
+
+
+
+##### **2022**
+```{r 2022 growth, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
+# packages 
+require(lme4)
+require(emmeans)
+require(pscl)
+require(glmmTMB)
+require(tidyr)
+require(DHARMa)
+require(ggplot2)
+require(AICcmodavg)
+require(ggpubr)
+
+############## 2022 data ##############
+
+# read csv
+dat<-read.csv('nplants_data_2022.csv', header=T)
+dat1<-dat[which(dat$seeding_trt==1),]
+dat1$physical_barrier<-as.factor(dat1$physical_barrier)
+dat1$block<-as.factor(dat1$block)
+names(dat1)
+
+# subset
+dat2<-dat1[,c(1,2:4,26:28,19)] # these are block, transect, initial, current_plot_type, ngoro_plants, ntrcy_plants, ntror_plants, physical_barrier
+head(dat2)
+
+## because of the way weeding worked, where we thinned only once and probably too early in the season, there were cases where plants came up, we thinned them, and then when we collected plants at the end of the growing season there were more that popped up. 
+# I am choosing to use the total number of a species that popped up in the zone of planting. this required a somewhat complex excel formula that did not double-count the one individual when summing the total, and also accounts for the plants that came up but
+# did not survive. This value is called 'tot' (e.g. ngoro_tot). 
+# It's impossible to get the same dataset as the one from 2021 because we planted the plants and only came back when it was time to collect at the end of the season, thus capturing both survival through the season and germination. 
+# to get the total in the "tot" columns, I wrote a formula in excel, written below
+# total = if((t0+t2=0),0,if(t0=0,t2,if(t2=0,t0, if(t0+t2=1,1,(t0-1+t2)))))
+# in this expression t0 is the germ value (e.g. ngoro_germ) and t2 is the plants value (e.g. ngoro_plants). 
+# I can run the analysis with germ, plants, or tot. I'm choosing to do the analysis on tot, but we can revisit this choice if we feel there's a better way to comparably (or not) analyze the data between 2021 and 2023. 
+ 
+# pivot
+dat22<-as.data.frame(dat2 %>% pivot_longer(c(ntrcy_tot, ngoro_tot, ntror_tot)))
+range(dat22$value)
+dat22$value>15 # one sample is larger than 15, it is a tror.
+
+# max out at 15 
+dat22$value<-as.numeric(ifelse(dat22$value>15, 15, dat22$value))
+
+
+
+#################################### TREATMENT RESPONSE PRELIM ANALYSIS ####################################
+############# treatment response: do analysis for count by species ############# 
+
+# I am going to do the analysis as in 2021 now, with final counts and biomass. 
+countmod<-glmmTMB(value~name*current_plot_type+(1|block), family="poisson", data=dat22)
+
+# test for fit and zero inflation
+sim<-simulateResiduals(countmod)
+testZeroInflation(sim) # zero-inflated so need something else! 
+plot(sim) 
+
+## going to do a hurdle model, which assumes a zero is only generated in one way 
+# https://jsdajournal.springeropen.com/articles/10.1186/s40488-021-00121-4
+# #https://stats.stackexchange.com/questions/81457/what-is-the-difference-between-zero-inflated-and-hurdle-models
+
+# hurdle model 
+# using examples as presented here: https://www.biorxiv.org/content/biorxiv/suppl/2017/05/01/132753.DC1/132753-2.pdf 
+fit3<-glmmTMB(value~name+current_plot_type+(1|block), ziformula=~., family=nbinom2(), data=dat22) # model has non-positive definite hessian matrix when the model expression contains an interaction, so made it additive.
+ sim3<-simulateResiduals(fit3)
+ plot(sim3)
+ testDispersion(sim3) # looks ok ! 
+ testZeroInflation(sim3) # looks ok ! 
+
+summary(fit3)
+emmip(fit3,~current_plot_type|name, type='response',CI=T)
+
+# visualize
+est<-emmeans(fit3,~current_plot_type|name, type='response')
+pairs(est)
+
+#### now i'll do a by-hand hurdle model on my own using a truncated negative binomial
+
+### zeros and ones 
+
+dat22$presence<-ifelse(dat22$value==0, 0, 1)
+zerofit<-glmmTMB(presence~name*current_plot_type+(1 | block), family=binomial, data=dat22, REML=FALSE)
+emmip(zerofit,~current_plot_type|name, type='response',CI=T)
+est<-emmeans(zerofit, ~current_plot_type|name, type='response')
+pairs(est)
+# no significant differences
+
+### abundance with a truncated negbinom 
+dat22$posicounts<-as.numeric(ifelse(dat22$value==0, "NA", dat22$value))
+countfit<-glmmTMB(posicounts~name*current_plot_type+(1 | block), family=truncated_nbinom2(), data=dat22, REML=FALSE)
+emmip(countfit,~current_plot_type|name, type='response',CI=T)
+est<-emmeans(countfit, ~current_plot_type|name, type='response')
+pairs(est)
+# no significant differences in abundance
+
+############# treatment response: do analysis for total biomass by species #############
+
+
+dat3<-(dat1[c(1:4,19,21,23,25)])
+totwtdat<-as.data.frame(dat3 %>% pivot_longer(c(wt_max15_goro, wt_max15_tror, wt_max15_trcy)))
+totwtdat$log_wt<-log1p(totwtdat$value) # log transformation does not help the insane amount of heteroscedasticity here, neither does a square root transformation.
+
+# model
+totwtmod<-lm(log_wt~name*current_plot_type, data=totwtdat) # fit is singular when including a random effect for block so not doing that
+
+# test for fit
+sim<-simulateResiduals(totwtmod) # insanely heteroscedastic, doesn't get better with sqrt transform (all transformations make it worse)
+plot(sim)
+
+# model summary - don't trust this the residual dispersion is fucked, commenting out.
+# summary(totwtmod)
+# emmip(totwtmod,~current_plot_type|name, CI=T)
+# 
+# est<-emmeans(totwtmod,~current_plot_type|name, type='response')
+# pairs(est)
+
+############# treatment response: do analysis for per capita biomass by species #############
+
+# per capita might help with heteroscedasticity  
+dat4<-(dat1[c(1:4,19,20,22,24)])
+pcwtdat<-as.data.frame(dat4 %>% pivot_longer(c(wt_percapita_goro, wt_percapita_tror, wt_percapita_trcy)))
+pcwtdat$log_wt<-log(pcwtdat$value) # log transform the weight data to get it normal looking - it is heteroscedastic otherwise
+
+# model
+pcwtmod<-lm(log_wt~name*current_plot_type, data=pcwtdat) # fit is singular with random effect.
+
+# test for fit, looks pretty good
+sim<-simulateResiduals(pcwtmod)
+plot(sim) ## much better! 
+
+# model summary
+summary(pcwtmod)
+emmip(pcwtmod,~current_plot_type|name,CI=T)
+
+est<-emmeans(totwtmod,~current_plot_type|name, type='response')
+pairs(est)
+est2<-emmeans(totwtmod,~name, type='response')
+pairs(est)
+# not any differences in per capita biomass among treatments within species, but goro is larger than the other two
+
+#################################### PHYSICAL BARRIER ANALYSIS ####################################
+
+######### What about the physical barrier - initial treatment for 2022 #######
+
+# this is a model where do zero inflation and count together (occurrence and abundance)
+fit_phys<-glmmTMB(value~name*physical_barrier+(1 | block), ziformula=~., family=nbinom2(), data=dat22, REML=F) #
+sim<-simulateResiduals(fit_phys)
+plot(sim)
+testDispersion(sim) 
+testZeroInflation(sim)
+
+summary(fit_phys)
+emmip(fit_phys, ~physical_barrier|name, type='response', CI=T)
+est<-emmeans(fit_phys,~physical_barrier|name, type='response')
+pairs(est)
+# no significant differences in total plants (occurrence and abundance) 
+
+# split up occurrence and abundance
+### zeros and ones 
+zerofit_phys<-glmmTMB(presence~name*physical_barrier+(1 | block), family=binomial, data=dat22, REML=F)
+
+sim<-simulateResiduals(zerofit_phys)
+plot(sim)
+testDispersion(sim) # looks good
+testZeroInflation(sim) # looks good
+
+summary(zerofit_phys)
+emmip(zerofit_phys,~physical_barrier|name, type='response',CI=T)
+est<-emmeans(zerofit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+
+# physical barrier occurrence results
+# physical barrier level does not significantly explain variation in goro 
+# trcy and tror probability of occurrence are higher in places where there is a physical barrier (p=0.02 and p=0.009 respectively)
+
+### abundance with a truncated negbinom 
+countfit_phys<-glmmTMB(posicounts~name*physical_barrier+(1 | block), family=truncated_nbinom2(), data=dat22, REML=F)
+
+sim<-simulateResiduals(countfit_phys)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+summary(countfit_phys)
+emmip(countfit_phys,~physical_barrier|name, type='response',CI=T)
+est<-emmeans(countfit_phys, ~physical_barrier|name, type='response')
+pairs(est)
+# abundance does not differ between physical barrier treatments for any of the plant species
+
+
+# model
+# pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat, REML=FALSE) # singular 
+pcwtmod_phys<-lm(log_wt~name*physical_barrier, data=pcwtdat) 
+
+
+# test for fit, looks pretty good
+ sim<-simulateResiduals(pcwtmod_phys)
+ plot(sim)
+
+# model summary
+summary(pcwtmod_phys)
+emmip(pcwtmod_phys,~physical_barrier|name,CI=T)
+
+est<-emmeans(pcwtmod_phys,~physical_barrier|name, type='response')
+pairs(est)
+
+#################################### LEGACY ANALYSIS ####################################
+
+############# log legacy response: do analysis for count by species ############# 
+# fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=nbinom2(), data=dat22, REML=FALSE) # does not converge, i think it's poisson dist.
+fit3_leg<-glmmTMB(value~name*initial+(1 | block), ziformula=~., family=poisson(), data=dat22, REML=FALSE) 
+
+## This stuff will just give you the end result counts with the zeros factored in...
+summary(fit3_leg)
+emmip(fit3_leg,~initial|name, type='response',CI=T)
+
+est<-emmeans(fit3_leg,~initial|name, type='response')
+pairs(est)
+
+#### split up occurrence and abundance
+### zeros and ones 
+zerofit_leg<-glmmTMB(presence~name*initial+(1 | block), family=binomial, data=dat22, REML=FALSE)
+emmip(zerofit_leg,~initial|name, type='response',CI=T)
+est<-emmeans(zerofit_leg, ~initial|name, type='response')
+pairs(est)
+
+# probability of occurrence is lower for trcy in places where initial treatment is open (higher where there is a log legacy p=0.03)
+
+### abundance with a truncated negbinom 
+countfit_leg<-glmmTMB(posicounts~name*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=FALSE)
+emmip(countfit_leg,~initial|name, type='response',CI=T)
+est<-emmeans(countfit_leg, ~initial|name, type='response')
+pairs(est)
+
+
+# model for per capita weight
+# pcwtmod_leg<-lmer(log_wt~name*initial+(1|block), data=pcwtdat, REML=FALSE) #singular
+pcwtmod_leg<-lm(log_wt~name*initial, data=pcwtdat)
+
+# test for fit, looks pretty good
+# sim<-simulateResiduals(pcwtmod_leg)
+# plot(sim)
+
+# model summary
+summary(pcwtmod_leg)
+emmip(pcwtmod_leg,~initial|name,CI=T)
+
+est<-emmeans(pcwtmod_leg,~initial|name, type='response')
+pairs(est)
+
+# biomass per capita in tror is lower in open legacy environments (p=0.03); biomass per capita in trcy is higher in open legacy environments
+
+#################################### PHYSICAL BARRIER X LEGACY ANALYSIS ####################################
+######### What about both physical and legacy? ######### 
+
+#### interaction model
+### zeros and ones 
+zerofit_intxn<-glmmTMB(presence~name*physical_barrier*initial+(1 | block), family=binomial, data=dat22, REML=F)
+
+sim<-simulateResiduals(zerofit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(zerofit_intxn,initial~physical_barrier|name, type='response',CI=T)
+est<-emmeans(zerofit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
+# goro presence/absence not explained by physical barrier or initial treatment 
+# when the initial treatment is "open", trcy has higher prbability of occurring when there is a physical barrier. the same goes for tror.
+# if there is a legacy of a log, then there is no significant difference between physical barrier treatments for tror or for trcy. 
+
+### abundance with a truncated negbinom 
+countfit_intxn<-glmmTMB(posicounts~name*physical_barrier*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=F)
+
+sim<-simulateResiduals(countfit_intxn)
+plot(sim)
+testDispersion(sim)
+testZeroInflation(sim)
+
+emmip(countfit_intxn,~physical_barrier|name|initial, type='response',CI=T)
+est<-emmeans(countfit_intxn, ~physical_barrier|name|initial, type='response')
+pairs(est)
+
+# abundance not explained by physical barrier or initial treatment for all three species
+
+#### additive model 
+zerofit_add<-glmmTMB(presence~name*physical_barrier+name*initial+(1 | block), family=binomial, data=dat22, REML=F)
+summary(zerofit_add)
+
+countfit_add<-glmmTMB(posicounts~name*physical_barrier+name*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=F)
+summary(countfit_add)
+
+### per capita biomass 
+
+# model - intxn
+# pcwtmod_intxn<-lmer(log_wt~name*physical_barrier*initial+(1|block), data=pcwtdat, REML=FALSE) # singular
+pcwtmod_intxn<-lm(log_wt~name*physical_barrier*initial, data=pcwtdat)
+
+# model - no intxn
+# pcwtmod_add<-lmer(log_wt~name*physical_barrier+name*initial+(1|block), data=pcwtdat, REML=FALSE) # singular 
+ pcwtmod_add<-lm(log_wt~name*physical_barrier+name*initial, data=pcwtdat) 
+summary(pcwtmod_add)
+
+emmip(pcwtmod_add,~physical_barrier|name|initial, type='response',CI=T)
+est<-emmeans(pcwtmod_add, ~initial|name, type='response')
+pairs(est)
+
+##### 2022 candidate model comparison ##### 
+
+## zeros 
+zero_candmods<-list("Plot type"=zerofit, 
+                    "Physical barrier"=zerofit_phys,
+                    "Nutrient island"=zerofit_leg,
+                    "Physical Barrier + Nutrient Island"=zerofit_add,
+                    "Physical Barrier x Nutrient Island"=zerofit_intxn)
+aictab(zero_candmods)
+
+# best fit model is a tie between physical barrier and physical barrier + nutrient island
+
+# counts
+count_candmods<-list("Plot type"=countfit, 
+                     "Physical barrier"=countfit_phys,
+                     "Nutrient island"=countfit_leg,
+                     "Physical Barrier + Nutrient Island"=countfit_add,
+                     "Physical Barrier x Nutrient Island"=countfit_intxn)
+aictab(count_candmods)
+
+pcwt_candmods<-list("Plot type"=pcwtmod, 
+                    "Physical barrier"=pcwtmod_phys,
+                    "Nutrient island"=pcwtmod_leg,
+                    "Physical Barrier + Nutrient Island" = pcwtmod_add,
+                    "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
+aictab(pcwt_candmods)
+
+
+# tror is bigger when the legacy of the log and the log is still present
+
+### figures ###
+# best fit models - zeros 
+# colors
+mimiscols<-c("#D66972","#108780")
+zerofit_add<-glmmTMB(presence~name*physical_barrier+name*initial+(1 | block), family=binomial, data=dat22, REML=FALSE)
+
+zfit_est<-as.data.frame(emmeans(zerofit_add,~initial|physical_barrier|name, type='response'))
+
+pl4<-ggplot(zfit_est,aes(physical_barrier,prob,group=initial),)+
+  scale_color_manual(values=mimiscols)+
+  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
+  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+  facet_wrap(vars(name))+
+  theme_bw()+
+  theme(strip.text.x = element_text(size=0),
+        strip.background = element_blank(),
+        axis.text=element_text(size=15),
+        axis.title=element_text(size=20),
+        legend.text=element_text(size=15),
+        legend.title=element_text(size=15),
+        legend.position="top")+
+  xlab("Physical Barrier")+
+  ylab("Occurrence")+
+  geom_jitter(data=dat22,
+              aes(x=physical_barrier, y=presence, color=initial), 
+              height=0.1,
+              alpha=0.5)+
+  labs(color = "Initial Plot Type")
+pl4
+summary(zerofit_add)
+pairs(emmeans(zerofit_add, ~physical_barrier|name|initial))
+
+# tror and trcy do better where there is a physical barrier as compared to when there is not (tror p=0.03, trcy p=0.007)
+
+pairs(emmeans(zerofit_add, ~initial|name|physical_barrier))
+
+# trcy does better with log initial as compared to open initial (p=0.03)
+
+# best fit model - counts 
+ countfit_leg<-glmmTMB(posicounts~name*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=FALSE)
+
+cfit_est<-as.data.frame(emmeans(countfit_leg,~initial|name, type='response'))
+
+pl5<-ggplot(cfit_est,aes(initial, response, group=1))+
+  geom_jitter(data=dat22,
+              aes(x=initial, y=posicounts),
+              width=0.1,
+              alpha=0.4,
+              color="gray")+
+  geom_point(size=2, color="black")+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL),color="black")+
+  geom_line(color="black")+
+  facet_wrap(vars(name))+
+  theme_bw()+
+  theme(strip.text.x = element_text(size=0),
+        strip.background = element_blank(),
+        axis.text=element_text(size=15),
+        axis.title=element_text(size=20),
+        legend.text=element_text(size=15),
+        legend.title=element_text(size=15))+
+  xlab("Initial Plot Type")+
+  ylab("Abundance")+
+  labs(color = "Initial Plot \n Type")
+pairs(emmeans(countfit_leg, ~initial|name))
+
+pl5
+
+# best fit model - pcbiomass
+
+pcbfit_est<-as.data.frame(emmeans(pcwtmod_add,~physical_barrier|name|initial, type='response'))
+
+
+pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
+  scale_color_manual(values=mimiscols)+
+  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
+  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+  facet_wrap(vars(name))+
+  theme_bw()+
+  theme(strip.text.x = element_text(size=0),
+        strip.background = element_blank(),
+        axis.text=element_text(size=15),
+        axis.title=element_text(size=20),
+        legend.text=element_text(size=15),
+        legend.title=element_text(size=15),
+        legend.position="top")+
+  xlab("Physical Barrier")+
+  ylab("log(Biomass)")+
+  geom_jitter(data=pcwtdat,
+              aes(x=physical_barrier, y=log_wt, color=initial), 
+              height=0.1,
+              alpha=0.5)+
+  labs(color = "Initial Plot Type")
+pl6
+```
 #### *Interpretation* 
