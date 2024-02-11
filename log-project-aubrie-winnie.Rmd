@@ -31,7 +31,7 @@ In addition to the null hypothesis, the following constitute four, non-mutually 
 **H1: Log decomposition creates islands of fertility directly around the fallen log.** <br>
 Prediction 1: Nutrient composition around logs will be higher than in open plots <br>
 
-Prediction 2: Variation in nutrient composition in log vs open environments will correspond to variation in species composition, abundance, and/or richness in these environments. <br>
+Prediction 2: Variations in nutrient composition in log vs open environments will correspond to variations in species composition, abundance, and/or richness in these environments. <br>
 
 Prediction 3: All sown plants will perform best in environments where organic logs have been left 'insitu'.  In locations where logs have been removed or replaced with pvc, the legacy of the nutrient island effect will yield higher sown plant performance than when compared to locations where logs have never been. The effect of the nutrient island in locations where logs have been added to open environments should yeild higher plant performance over time. *note: performance is measured in terms of germination rate, survival to fruiting, fecundity, and/or biomass.* <br><br>
 
@@ -47,7 +47,7 @@ Prediction 1: Dispersing seeds accumulate around logs, leading to a denser stand
 
 Prediction 2: All sown plants will perform the same in all experimental environments <br><br>
 
-**H4: At least some species perform differently according to variation in log vs. open environments and have short dispersal kernals, causing fitness-density covariance** <br><br>
+**H4: At least some species perform differently according to variation in log vs. open environments and have short dispersal kernels, causing fitness-density covariance** <br><br>
 <center>
 ![Figure 2: Photo before germination, after a rain. Notice the seeming wet halo under and around the branch](wetpatch_example2.jpg){width=50%}
 </center><br>
@@ -94,8 +94,17 @@ The sets of data that we have collected for this arm of the project are the foll
 
 ### **Q1 Are/how are plant communities in fallen log patches different from patches that are in the open?** <br>
 #### *Overview of results* <br> 
+1.	The abundance of plants in fallen log patches and patches that are in the open (hereafter referred to as open patches) are similar.
+2.	Plant species diversity is significantly higher in log patches than in open patches, as measured by the Shannon diversity index.
+3.	The two-dimensional NMDS plot types can be separated into two groups that overlap - fallen log patches and open patches. Based on the plant species compositions, the fallen open patches consistently have a higher score than fallen log patches along NMDS axes 1 across three years of analysis. According to RDA, plot types accounted for about 8% (2020), 12.1% (2021), and 11.4% (2022) of variations in species composition. Ordinations of plots sampled from the same block are always close to each other, reflecting the spatial proximity of plant communities within the same block. The relative arrangement of plots also defines a non-dimensional space that encloses common species that drive the shift of species composition between the two plot types. Meanwhile, the relative position of plots on the peripherals is influenced by rare species that occupy relatively extreme values along either NMDS axes 1 or 2.
 
 #### *Statistical Methods* <br>
+1.	Abundance
+Plant counts of all plots in 2020 before the experiment setup and plant abundance data from in-situ logs and in-situ open plots in 2021 and 2022 were used in the analyses for diversity, abundance, and composition differences. We used a generalized linear mixed model (GLMM) to model the abundance of plant individuals (2020, 2021 and 2022 data) in unaltered fallen log patches and open patches using a Poisson distribution structure with year and block as random terms.
+2.	Diversity
+A considerable number of zeros are generated in the computation of the Shannon diversity index. We used a two-component hurdle model on the truncated data set where the response variable was separated into zero and non-zero values. The first component uses a binomial GLMER to model the probability of zeros and non-zeros in the diversity index with block and year as random terms. The second component uses a linear mixed-effects model to test the effect of fallen logs and open patches on the non-zero species diversity index with year and block as random factors.
+3.	Composition
+We used Non-Metric Dimensional Scaling (NMDS) to analyse the differences in plant communities with Bray-Curtis dissimilarity metrics. We retained two dimensions in the NMDS ordination plot for the interpretation of plant community composition differences between plot types and blocks. To identify the contribution of each species to the compositional changes amongst different sample plots, we extracted ordination scores for each species along NMDS axes 1 and 2. The species scores represent the weighted average of a species’ abundance score in a sample community along our selected NMDS axes. We also ran a partial Redundancy Analysis (RDA) to test the correlation between species composition (squared-root transformed) and plot type (log vs open patch) with block as a random term.
 
 #### *Analysis*<br>
 
