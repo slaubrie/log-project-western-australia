@@ -1315,7 +1315,7 @@ assemblies_t2<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient <-blocksum[, 90:101]
+group_nutrient<-blocksum[,90:101]
 
 # MDS 
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
@@ -1338,7 +1338,7 @@ en_coord_cont = as.data.frame(vegan::scores(en.nutrient, "vectors")) * ordiArrow
 # explaining factors
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
-nutri<-as.factor(group_nutrient)
+# nutri<-as.factor(group_nutrient) # this might be a mistake
 
 #### rda model analysis & results #### 
 # can look at significance of model where initial treatment and block explain variation in community
@@ -1889,7 +1889,7 @@ pl2<-ggplot(cfit_est,aes(initial, response, group=1))+
 pcbfit_est<-as.data.frame(emmeans(pcwtmod_phys,~physical_barrier|name, type='response'))
 #pcbfit_est$name<-c(rep("ngoro", 2), rep("ntrcy", 2), rep("ntror",2))
 
-
+## aubrie homework !! find lower.CL 
 pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=1))+
   geom_jitter(data=pcwtdat,
               aes(x=physical_barrier, y=log_wt),
