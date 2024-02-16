@@ -123,6 +123,7 @@ require(ggrepel)
 require(lme4)
 require(emmeans)
 require(ggpubr)
+# require(Matrix)
 # require(see) #doing this for aubrie because of some weird thing that happened when I installed new version of R 
 
 ##### data wrangling #####
@@ -247,6 +248,7 @@ require(lmerTest)
 require(performance)
 require(ggpubr)
 require(DHARMa)
+require(patchwork)
 
 # This dataset does not include data where the plant identity is.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -264,20 +266,20 @@ commsub<-comm[,c(15,10,13)]
 commsub <-as.data.frame(commsub)
 commtry<-labdsv::matrify(commsub) # make it an expanded species matrix 
 commtry$x[which(is.na(commtry$x))] <- 1  # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
-ncol(commtry) # how many species are we working with in our community matrix
+# ncol(commtry) # how many species are we working with in our community matrix
 
 # Store grouping row names as a column, then remove rownames.
 commtry$grps<-rownames(commtry)
 rownames(commtry)<-NULL
-names(commtry)
+# names(commtry)
 
 # Split group info into columns for each variable
 mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
-names(mat) #check
+# names(mat) #check
 
 # Add groupname using time, block, init columns
 mat$grp<-apply(mat[c(88:92)], 1, paste, collapse=":")
-names(mat) #check
+# ynames(mat) #check
 
 # Another df where the grouping variables are time, block, transect and initial state.
 # Each row is a transect in a certain year.
@@ -404,7 +406,7 @@ Main takeaways:
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
-names(mat2) #check
+# names(mat2) #check
 
 # another df where the grouping variables are time, block and initial state
 # each row is a transect in a certain year.
@@ -417,14 +419,14 @@ nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, bloc
 
 # want to sum across transects in same block X init treatment
 nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
-head(nublock)
+# head(nublock)
 
 # sum observations across initial X  block (group variable)
 # this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
 blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
 blocksum$grps<-rownames(blocksum)
 rownames(blocksum)<-NULL # remove rownames
-nrow(blocksum) # it is 14 rows as expected 
+# nrow(blocksum) # it is 14 rows as expected 
 
 ## expand again
 blocksum<-separate(blocksum, 88, c("block", "init"), ":")
@@ -844,13 +846,11 @@ print(nmds.plot)
 #### *Analysis*<br>
 - nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
 
-Set global options
 ```{r include=FALSE}
 knitr::opts_chunk$set(message = FALSE)
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
-# library(xlsx)
 library(lme4)
 library(emmeans)
 library(pscl)
@@ -867,7 +867,7 @@ nutrient <-separate(nutrient,2 , c("block","plot"), "_")
 nutrient <- nutrient[,2:17]
 
 # Visualise data
-Nu <- c("ammonium.nitrogen", "nitrate.nitrogen", "phosphorus", "potassium", "organic.carbon", "conductivity", "pH.CaCl2", "pH.H2O", "prewash.exch.ca", "prewash.exch.k", "prewash.exch.mg", "prewash.exch.na")
+Nu <- c("NH4N", "NO3N", "P", "K", "C", "conductivity", "pH", "prewash.exch.ca", "prewash.exch.k", "prewash.exch.mg", "prewash.exch.na", "CEC")
 
 for (element in Nu) {
     print(
@@ -880,8 +880,8 @@ for (element in Nu) {
 ```
 
 Nutrient composition comparison between log and open
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8}
-Nu <- c("ammonium.nitrogen", "nitrate.nitrogen", "phosphorus", "potassium", "organic.carbon", "conductivity", "pH.CaCl2", "pH.H2O", "prewash.exch.ca", "prewash.exch.k", "prewash.exch.mg", "prewash.exch.na")
+```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE}
+Nu <- c("NH4N", "NO3N", "P", "K", "C", "pH", "CEC")
 
 wilcox_results <- data.frame(Element = character(),
                                 W = numeric(),
@@ -903,12 +903,12 @@ for (element in Nu) {
 
 plots_list <- list()
 
-for (element in c(Nu, "organic.carbon")) {
-  if (element == "organic.carbon") {
-    plot <- ggplot(nutrient, aes(x = init, y = organic.carbon)) +
+for (element in c(Nu, "C")) {
+  if (element == "C") {
+    plot <- ggplot(nutrient, aes(x = init, y = C)) +
       geom_boxplot() + 
       theme_bw() +
-      labs(x = NULL, y = "organic.carbon") + 
+      labs(x = NULL, y = "C") + 
       scale_x_discrete(labels=c('log', 'open')) +
       geom_signif(comparisons = list(c("log", "open")),
                   map_signif_level = TRUE,
@@ -919,7 +919,7 @@ for (element in c(Nu, "organic.carbon")) {
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank()) + 
-      theme(axis.line = element_line(color = 'black')) 
+      theme(axis.line = element_line(color = 'black'))
     
   } else {
     plot <- ggplot(nutrient, aes(x = init, y = !!rlang::sym(element))) +
@@ -931,13 +931,13 @@ for (element in c(Nu, "organic.carbon")) {
     plot.background = element_blank(),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    panel.border = element_blank()) + theme(axis.line = element_line(color = 'black')) 
+    panel.border = element_blank()) + theme(axis.line = element_line(color = 'black'))
   }
   
   plots_list[[element]] <- plot
 }
 
-all.bp <- ggarrange(plotlist=plots_list, ncol=3, nrow=4, common.legend =TRUE, legend="bottom",align = "v")
+all.bp <- ggarrange(plotlist=plots_list, ncol=3, nrow=3, common.legend =TRUE, legend="bottom",align = "v")
 
 all.bp <- annotate_figure(all.bp, bottom = "Plot treatment")
 # Show the final plot
@@ -1233,6 +1233,7 @@ for (element in Nu) {
 # Print or use the result dataframe
 print(hurd.mod.2.t2)
 ```
+
 Composition ~ nutrient composition
 ```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
 # packages
@@ -1249,7 +1250,15 @@ require(emmeans)
 require(lmerTest)
 require(performance)
 require(ggpubr)
+library(pscl)
+library(glmmTMB)
+library(DHARMa)
+library(AICcmodavg)
+```
 
+*2020*
+- There is no significant correlation between nutrient elements and plant composition.
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup'}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -1274,13 +1283,183 @@ names(commtry)
 
 # Split group info into columns for each variable
 mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
-names(mat) #check
+# names(mat) #check
+
+# Set up nutrient analysis data
+nutrient <- read.csv("Nutrient.csv", header = T)
+nutrient <-separate(nutrient,2 , c("block","plot"), "_")
+nutrient <- nutrient[,2:17]
+
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t0"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+# head(nublock)
+
+# sum observations across initial X  block (group variable)
+# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
+blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum$grps<-rownames(blocksum)
+rownames(blocksum)<-NULL # remove rownames
+# nrow(blocksum) # it is 14 rows as expected 
+
+## expand again
+blocksum<-separate(blocksum, 88, c("block", "init"), ":")
+nutrient_join <- nutrient[,c(1,3,5:9, 11,16)]
+blocksum <- inner_join(blocksum, nutrient_join, by = c("init", "block"))
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t0<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+group_nutrient<-blocksum[,c(90:96)]
+
+# MDS 
+ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
+ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4) # run MDS 
+stressplot(ass.rel.t0_NMS) # check fit
+en.nutrient = envfit(ass.rel.t0_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
+# plot(ass.rel.t0_NMS) 
+# plot(en.nutrient)
+print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
+
+# scores
+mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
+mds_scores_t0$site<-rownames(vegan::scores(ass.rel.t0_NMS)$sites) # extract names 
+mds_scores_t0$treatment<-group_init # grouping factor 1 
+mds_scores_t0$block<-group_block # grouping factor 2 
+en_coord_cont = as.data.frame(vegan::scores(en.nutrient, "vectors")) * ordiArrowMul(en.nutrient)
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+#### Redundancy analysis
+# can look at significance of model where initial treatment and block explain variation in community
+trt_tot_2<-rda(ass.rel.t0~init+block) # run model using standardized data 
+summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# Using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"))
+mtext("X1= Treatment; X2=Block", side=3)
+
+# can test for significance of contribution of the fraction of initial treatment
+# do this with partial redundancy analysis
+trt_Frac<-rda(ass.rel.t0, init, block) # partial rda model
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+# Extracting species scores and plotting 
+# Species scores
+species.scores<-as.data.frame(vegan::scores(ass.rel.t0_NMS,"species")) ## some species don't have scores
+species.scores$species<-rownames(species.scores) 
+
+### NMDS 1 and 2 
+log<-mds_scores_t0[mds_scores_t0$treatment == "log", ][chull(mds_scores_t0[mds_scores_t0$treatment == 
+                                                          "log", c("NMDS1", "NMDS2")]), ]
+
+open<-mds_scores_t0[mds_scores_t0$treatment == "open", ][chull(mds_scores_t0[mds_scores_t0$treatment == 
+                                                               "open", c("NMDS1", "NMDS2")]), ]
+
+hulldat<-rbind(log,open)
+
+nmds.plot.sp <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_text_repel(data=species.scores, aes(NMDS1, NMDS2, label=species), alpha=0.9, size=5, col='darkgray')+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+
+  scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t0, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  labs(title=paste0("Stress: ", round(ass.rel.t0_NMS$stress,3)))
+
+nmds.plot.nutrient <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+
+  scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t0, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ 
+  scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_segment(aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), 
+       data = en_coord_cont, size =0.5, alpha = 0.5, colour = "grey30") +
+     geom_text(data = en_coord_cont, aes(x = NMDS1, y = NMDS2), colour = "grey30", 
+       fontface = "bold", label = row.names(en_coord_cont))+
+  labs(title=paste0("Stress: ", round(ass.rel.t0_NMS$stress,3)))
+  
+print(nmds.plot.sp)
+print(nmds.plot.nutrient)
+
+
 ```
 
-* 2022*
+*2021*
+- There is no significant correlation between nutrient elements and plant composition.
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+# Data wrangling
+# This data set does not include unidentified species.
+comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# Make a group name for each row
+comm$grp<-apply(comm[c(1,3,5,6,7)], 1, paste, collapse=":") # timepoint, block, transect_name, initial state
+
+# Need to make each row a community using matrify.
+commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable
+mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
+names(mat) #check
+
+# Set up nutrient analysis data
+nutrient <- read.csv("Nutrient.csv", header = T)
+nutrient <-separate(nutrient,2 , c("block","plot"), "_")
+nutrient <- nutrient[,2:17]
+
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
+mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
 names(mat2) #check
 
@@ -1306,7 +1485,173 @@ nrow(blocksum) # it is 14 rows as expected
 
 ##  expand again
 blocksum<-separate(blocksum, 88, c("block", "init"), ":")
-nutrient_join <- nutrient[,c(1,3,5:16)]
+nutrient_join <- nutrient[,c(1,3,5:9, 11,16)]
+blocksum <- inner_join(blocksum, nutrient_join, by = c("init", "block"))
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t1<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+group_nutrient<-blocksum[,c(90:96)]
+
+# MDS 
+ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 4) # run MDS 
+stressplot(ass.rel.t1_NMS) # check fit
+en.nutrient = envfit(ass.rel.t1_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
+# plot(ass.rel.t1_NMS) 
+# plot(en.nutrient)
+print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
+
+# scores
+mds_scores_t1<-as.data.frame(vegan::scores(ass.rel.t1_NMS)$sites) # extract scores
+mds_scores_t1$site<-rownames(vegan::scores(ass.rel.t1_NMS)$sites) # extract names 
+mds_scores_t1$treatment<-group_init # grouping factor 1 
+mds_scores_t1$block<-group_block # grouping factor 2 
+en_coord_cont = as.data.frame(vegan::scores(en.nutrient, "vectors")) * ordiArrowMul(en.nutrient)
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+#### rda model analysis & results #### 
+# can look at significance of model where initial treatment and block explain variation in community
+trt_tot_2<-rda(ass.rel.t1~init+block) # run model using standardized data 
+summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# can model using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"))
+mtext("X1= Treatment; X2=Block", side=3)
+
+## can test for significance of contribution of the fraction of initial treatment
+# do this with partial redundancy analysis
+trt_Frac<-rda(ass.rel.t1, init, block) # partial rda model
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+### extracting species scores and plotting 
+# species scores
+species.scores<-as.data.frame(vegan::scores(ass.rel.t1_NMS,"species")) ## some species don't have scores
+species.scores$species<-rownames(species.scores) 
+
+### NMDS 1 and 2 
+log<-mds_scores_t1[mds_scores_t1$treatment == "log", ][chull(mds_scores_t1[mds_scores_t1$treatment == 
+                                                          "log", c("NMDS1", "NMDS2")]), ]
+
+open<-mds_scores_t1[mds_scores_t1$treatment == "open", ][chull(mds_scores_t1[mds_scores_t1$treatment == 
+                                                               "open", c("NMDS1", "NMDS2")]), ]
+
+hulldat<-rbind(log,open)
+
+nmds.plot.sp <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_text_repel(data=species.scores, aes(NMDS1, NMDS2, label=species), alpha=0.9, size=5, col='darkgray')+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t1, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
+
+nmds.plot.nutrient <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+
+  scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t1, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ 
+  scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_segment(aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), 
+       data = en_coord_cont, size =0.5, alpha = 0.5, colour = "grey30") +
+     geom_text(data = en_coord_cont, aes(x = NMDS1, y = NMDS2), colour = "grey30", 
+       fontface = "bold", label = row.names(en_coord_cont))+
+  labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
+  
+print(nmds.plot.sp)
+print(nmds.plot.nutrient)
+```
+
+* 2022*
+- There is no significant correlation between nutrient elements and plant composition.
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+# Data wrangling
+# This data set does not include unknown data.
+comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# Make a group name for each row
+comm$grp<-apply(comm[c(1,3,5,6,7)], 1, paste, collapse=":") # timepoint, block, transect_name, initial state
+
+# Need to make each row a community using matrify.
+commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable
+mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
+names(mat) #check
+
+# Set up nutrient analysis data
+nutrient <- read.csv("Nutrient.csv", header = T)
+nutrient <-separate(nutrient,2 , c("block","plot"), "_")
+nutrient <- nutrient[,2:17]
+
+#####
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+# head(nublock)
+
+# sum observations across initial X  block (group variable)
+# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
+blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum$grps<-rownames(blocksum)
+rownames(blocksum)<-NULL # remove rownames
+nrow(blocksum) # it is 14 rows as expected 
+
+##  expand again
+blocksum<-separate(blocksum, 88, c("block", "init"), ":")
+nutrient_join <- nutrient[,c(1,3,5:9, 11,16)]
 blocksum <- inner_join(blocksum, nutrient_join, by = c("init", "block"))
   
 # at the moment this includes where there were no plants ("x" column in matrix)
@@ -1315,11 +1660,11 @@ assemblies_t2<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,90:101]
+group_nutrient<-blocksum[,c(90:96)]
 
 # MDS 
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
-ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 5) # run MDS 
+ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4) # run MDS 
 stressplot(ass.rel.t2_NMS) # check fit
 en.nutrient = envfit(ass.rel.t2_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t2_NMS) 
@@ -1372,7 +1717,7 @@ open<-mds_scores_t2[mds_scores_t2$treatment == "open", ][chull(mds_scores_t2[mds
 
 hulldat<-rbind(log,open)
 
-nmds.plot <- ggplot()+
+nmds.plot.sp <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
         panel.grid.major = element_blank(),  #remove major-grid labels
@@ -1386,13 +1731,32 @@ nmds.plot <- ggplot()+
   geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
   geom_point(data=mds_scores_t2, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  labs(title=paste0("Stress: ", round(ass.rel.t2_NMS$stress,3)))
+
+nmds.plot.nutrient <- ggplot()+
+  theme_bw()+
+  theme(panel.background = element_blank(),
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(), 
+        axis.text = element_text(size = 15),
+        axis.title=element_text(size=20),
+        legend.title=element_text(size=20), 
+        legend.text=element_text(size=15))+
+  geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
+  geom_point(data=mds_scores_t2, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
+  scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment")+
   geom_segment(aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), 
-       data = en_coord_cont, size =1, alpha = 0.5, colour = "grey30") +
+       data = en_coord_cont, size =0.5, alpha = 0.5, colour = "grey30") +
      geom_text(data = en_coord_cont, aes(x = NMDS1, y = NMDS2), colour = "grey30", 
-       fontface = "bold", label = row.names(en_coord_cont))
+       fontface = "bold", label = row.names(en_coord_cont))+
+  labs(title=paste0("Stress: ", round(ass.rel.t2_NMS$stress,3)))
   
-print(nmds.plot)
+print(nmds.plot.sp)
+print(nmds.plot.nutrient)
 ```
+
+
 
 ```{r}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
@@ -1422,6 +1786,7 @@ nrow(blocksum) # it is 42 rows as expected
 
 ##  expand again
 blocksum<-separate(blocksum, 88, c("time", "block", "init"), ":")
+
 nutrient_join <- nutrient[,c(1,3,5:16)]
 blocksum <-inner_join(blocksum, nutrient_join, by = c("init", "block"))
 
