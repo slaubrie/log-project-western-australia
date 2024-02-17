@@ -845,7 +845,6 @@ print(nmds.plot)
 
 #### *Analysis*<br>
 - nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
-
 ```{r include=FALSE}
 library(ggplot2)
 library(ggpubr)
@@ -879,7 +878,7 @@ for (element in Nu) {
 
 nutrient.for.pca <- nutrient[,c(5:11,16)]
 nutrient.pca <- prcomp(nutrient.for.pca, center=TRUE, scale=TRUE)
-biplot(nutrient.pca)
+print(biplot(nutrient.pca))
 ```
 
 Nutrient composition comparison between log and open
@@ -1129,6 +1128,8 @@ print(result_2020)
 ```
 
 Diversity ~ nutrient composition
+- P seems to consistently affect the presence of non-zero diversity index.
+- C links to a higher Shannon diversity index in plant communities in 2022 only. 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
 require(vegan)
 require(dplyr)
@@ -1224,7 +1225,7 @@ ggplot(dat_nonzerodat, aes(sample = diversity)) +
 # 0 Shannon diversity index =/= zero plants
 
 # 2020-2022 #
-Nu <- c("NH4N", "K", "C", "conductivity", "pH", "CEC")
+Nu <- c("NH4N", "K", "C", "P", "CEC")
 
 hurd.mod.1.t012 <- data.frame(Element = character(), P_Value = numeric(), stringsAsFactors = FALSE)
 
@@ -1731,7 +1732,7 @@ nmds.plot.nutrient <- ggplot()+
 (nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
 ```
 
-* 2022*
+*2022*
 - There is no significant correlation between nutrient elements and plant composition.
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6}
 # Data wrangling
