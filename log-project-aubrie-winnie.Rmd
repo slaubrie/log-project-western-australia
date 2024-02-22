@@ -1086,7 +1086,7 @@ There are three response variables: count (Poisson), Shannon diversity index (hu
 
 #### *Analysis*<br>
 - nutrient analysis (nutrient composition ~ log vs open; abundance ~ nutrient composition , diversity ~ nutrient composition, composition ~ nutrient composition)
-```{r include=FALSE}
+```{r, include=TRUE, results='hold'}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1119,7 +1119,7 @@ for (element in Nu) {
 
 nutrient.for.pca <- nutrient[,c(5:11,16)]
 nutrient.pca <- prcomp(nutrient.for.pca, center=TRUE, scale=TRUE)
-print(biplot(nutrient.pca))
+biplot(nutrient.pca)
 ```
 
 ###### Nutrient composition comparison between log and open
@@ -1315,7 +1315,7 @@ for (element in Nu) {
 
 print(result_t012)
 
-mod.t012 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + + (1|block) + (1|time), data = dat_t0_insitu, family = poisson)
+mod.t012 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block) + (1|time), data = dat_t0_insitu, family = poisson)
 summary(mod.t012)
 
 # only 2022 #
@@ -1335,7 +1335,7 @@ for (element in Nu) {
 # Print or use the result dataframe
 print(result_2022)
 
-mod.t2 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + + (1|block), data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
+mod.t2 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
 summary(mod.t2)
 
 # only 2021 #
@@ -1355,7 +1355,7 @@ for (element in Nu) {
 # Print or use the result dataframe
 print(result_2021)
 
-mod.t1 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + + (1|block), data = dat_t0_insitu,subset = (time == "t1"), family = poisson)
+mod.t1 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat_t0_insitu,subset = (time == "t1"), family = poisson)
 summary(mod.t1)
 
 # only 2020 #
@@ -1375,7 +1375,7 @@ for (element in Nu) {
 # Print or use the result dataframe
 print(result_2020)
 
-mod.t0 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + + (1|block), data = dat_t0_insitu,subset = (time == "t0"), family = poisson)
+mod.t0 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat_t0_insitu,subset = (time == "t0"), family = poisson)
 summary(mod.t0)
 ```
 
