@@ -3,7 +3,7 @@ title: "log-project-aubrie-winnie"
 output:
   pdf_document: default
   html_document: default
-date: "2024-02-01"
+date: "2024-02-21"
 ---
 
 ```{r setup, include=FALSE}
@@ -96,7 +96,13 @@ The sets of data that we have collected for this arm of the project are the foll
 #### *Overview of results* <br> 
 1.	The abundance of plants in fallen log patches and patches that are in the open (hereafter referred to as open patches) are similar.
 2.	Plant species diversity is significantly higher in log patches than in open patches, as measured by the Shannon diversity index.
-3.	The two-dimensional NMDS plot types can be separated into two groups that overlap - fallen log patches and open patches. Based on the plant species compositions, the fallen open patches consistently have a higher score than fallen log patches along NMDS axes 1 across three years of analysis. According to RDA, plot types accounted for about 8% (2020), 12.1% (2021), and 11.4% (2022) of variations in species composition. Ordinations of plots sampled from the same block are always close to each other, reflecting the spatial proximity of plant communities within the same block. The relative arrangement of plots also defines a non-dimensional space that encloses common species that drive the shift of species composition between the two plot types. Meanwhile, the relative position of plots on the peripherals is influenced by rare species that occupy relatively extreme values along either NMDS axes 1 or 2.
+3.	The two-dimensional NMDS plot types can be separated into two groups that overlap - fallen log patches and open patches. Based on the plant species compositions, the fallen open patches consistently have a higher score than fallen log patches along NMDS axes 1 across three years of analysis. This can be interpreted as turnover in species diversity at the scale of the plot type.
+
+Ordinations of plots sampled from the same block are typically close to each other in nondimensional space, reflecting the similarity of plant communities within the same block irrespective of plot type. This can be interpreted as turnover in species diversity on the scale of the block. 
+
+According to an RDA analysis, Block accounted for X% (2020), Y% (2021), and Z% (2022) in variation in species composition. Plot type (log / open) accounted for about 8% (2020), 12.1% (2021), and 11.4% (2022) of variations in species composition.
+
+[winnie, I'm not sure what you mean in the following two sentences. I added more detail to the prior few pieces of information, but I'm wondering if you can add the data above where I wrote X%, Y%, and Z%?) The relative arrangement of plot type (log vs open) within a block  also defines a non-dimensional space that encloses common species that drive the shift of species composition between the two plot types. Meanwhile, the relative position of plots on the peripherals is influenced by rare species that occupy relatively extreme values along either NMDS axes 1 or 2.
 
 #### *Statistical Methods* <br>
 1.	Abundance
@@ -233,7 +239,7 @@ Main takeaways:
 * open and log environment significantly determines the probability of non-zero diversity index
 * note, zero in Shannon diversity index does not mean zero plant. 
 * we then use lmer to model non-zero diversity data with time and block as random terms
-* we assume approximal Gaussian distribution (1) continuous variable and (2) visual inspection suggests so
+* we assume approximate Gaussian distribution (1) continuous variable and (2) visual inspection suggests so
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
 require(vegan)
 require(dplyr)
@@ -1063,7 +1069,7 @@ Nu <- c("NH4N", "NO3N", "P", "K", "C", "pH", "CEC")
 result_t0123 <- data.frame(Element = character(), P_Value = numeric(), stringsAsFactors = FALSE)
 
 for (element in Nu) {
-  formula <- as.formula(paste("total ~", element, "(1|block) + (1|time)", sep = ""))
+  formula <- as.formula(paste("total ~", element, "+ (1|block) + (1|time)", sep = ""))
   
   abun.mod <- glmer(formula, data = dat_t0_insitu, family = poisson)
 
@@ -2072,6 +2078,42 @@ nmds.plot.nutrient <- ggplot()+
 
 ### **Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
 #### *Overview of results* <br> 
+**2021** 
+
+There are three response variables: presence (binomial), count (truncated poisson), and per capita biomass (gaussian).
+
+*Presence*
+- The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.32). I present the model analysis of the additive model. 
+- Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.03, TROR: p=0.01) 
+- Nutrient island does not significantly explain variation in presence/absence in any species. However, all species trend to having higher probability of presence in log-legacy plots. 
+
+*Count* 
+- The best fit model for count is nutrient island. 
+- Nutrient island does not strongly significantly explain variation in presence/absence in any species. TRCY is marginally significantly affected by nutrient island, where there are more TRCY in plots where there is a `log legacy' (there had been a decomposing log in the plot before the experiment began)
+
+*Biomass*
+- The best fit model for per capita biomass is the nutrient island, then physical barrier island, then the additive model. They are all within 2 AICc points of each other (deltaAIC=1.55 and 1.76, respectively). I present the model analysis of the additive model.
+- Nutrient island significantly explains variation GORO biomass, where there are larger GORO plants in plots where there is a `log legacy' (p=0.03).
+- Physical barrier does not explain variation in biomass for any species. 
+
+**2022**
+
+There are again three response variables: presence (binomial), count (truncated poisson), and per capita biomass (gaussian).
+
+*Presence*
+- The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.24). I present the model analysis of the additive model. 
+- Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.007, TROR: p=0.03) 
+- Nutrient island significantly explains the presence/absence of TRCY, where TRCY is more likely to be present in log legacy plots as compared to open legacy plots (p=0.02) 
+
+*Count* 
+- The best fit model for count is a tie between nutrient island and physical barrier. I present the model analysis of the nutrient island model. 
+- Nutrient island does not strongly significantly explain variation in presence/absence in any species. 
+
+*Biomass*
+- The best fit model for per capita biomass is the nutrient island, then the additive model, then the physical barrier model. They are all within 1 AICc points of each other (deltaAIC=0.31 and 0.46, respectively). I present the model analysis of the additive model.
+- Nutrient island significantly explains variation in TROR biomass, where log legacy plots have larger TROR as compared to open legacy plots (p=0.04)
+- Physical barrier significantly explains variation in TROR biomass, where plots in the open have larger TROR than plots near a physical barrier (either log or PVC pipe) (p=0.02)
+
 
 #### *Statistical Methods* <br>
 The basic approach is to analyse count and biomass data from 2021 and 2022 sowing experiment. We sowed 15 seeds for each species into 16 plots in each of the seven blocks. There are 6 plot type treatments. The gap and open treatments each have four replicates per block, and the insitu_log, insitu_pvc, open_with_log, and open_with_pvc each have two replicates per block. *note: For each treatment of plot type, there is also a dispersal treatment, but I do not analyse that here (yet).*
@@ -2082,12 +2124,17 @@ The basic approach is to analyse count and biomass data from 2021 and 2022 sowin
 <br>
 I chose to do a model selection approach, which I'm trying to move away from generally. However, the models I use to analyze the data represent different hypotheses about *why* plant species might perform differently, and so I chose to do a model comparison and selection approach as a way to not only understand how plant species performance is affected by proximity to fallen logs, but also gain insight as to why this may be the case. 
 
-The models I use test the hypotheses from above: Log decomposition creates islands of fertility directly around the fallen log and fallen logs alter the microclimate directly around them by providing shade. I can also investigate using the different response variables if logs affect the presence/absence of plants, the number of plants that come up, or the biomass of the plants in the end. 
+N.B.:Model comparison might not be the approach we want, and we may want to run the analysis differently. I'm open to discussion and change on this point. 
+
+After model comparison, I use estimated marginal means (package emmeans) on the best fit model and compute the significance of the difference in estimates.
+
+The models I use test the hypotheses from above: Log decomposition creates islands of fertility directly around the fallen log and fallen logs alter the microclimate directly around them by providing shade. 
+
 
 #### *Analysis*<br>
 
 ##### **2021**
-```{r 2021 growth, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
+```{r 2021 growth, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 
 ### doing vital rate analysis
 
@@ -2352,9 +2399,10 @@ zero_candmods<-list("Plot type"=zerofit,
                     "Nutrient island"=zerofit_leg,
                     "Physical Barrier + Nutrient Island"=zerofit_add,
                     "Physical Barrier x Nutrient Island"=zerofit_intxn)
-aictab(zero_candmods)
+aictab(zero_candmods) 
 pairs(emmeans(zerofit_add, ~physical_barrier|name|initial))
-
+# best fit model is a tie between physical barrier and additive model (deltaAIC=0.32)
+# i will show results from additive model. 
 
 # counts
 count_candmods<-list("Plot type"=countfit, 
@@ -2362,8 +2410,10 @@ count_candmods<-list("Plot type"=countfit,
                      "Nutrient island"=countfit_leg,
                      "Physical Barrier + Nutrient Island"=countfit_add,
                      "Physical Barrier x Nutrient Island"=countfit_intxn)
-aictab(count_candmods)
+aictab(count_candmods) 
 pairs(emmeans(countfit_leg, ~initial|name))
+# best fit model is nutrient island (next best deltaAIC=2.41 and it's physical barrier.)
+# I will show the results for nutrient island. 
 
 
 #### 2021 model comparison for per capita biomass #### 
@@ -2372,9 +2422,12 @@ pcwt_candmods<-list("Plot type"=pcwtmod,
                     "Nutrient island"=pcwtmod_leg,
                     "Physical Barrier + Nutrient Island" = pcwtmod_add,
                     "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
-aictab(pcwt_candmods)
+aictab(pcwt_candmods) 
 pairs(emmeans(pcwtmod_phys, ~physical_barrier|name))
-
+# best fit model is physical barrier by a hair, then nutrient island, then additive model. They are all within striking distance. 
+# deltaAIC physical barrier - nutrient island = 1.55
+# deltaAIC physical - nutrient island = 1.76
+# I will show the results for addivive model. 
 
 
 ### figures ###
@@ -2389,7 +2442,7 @@ zfit_est$name<-c(rep("ngoro", 4), rep("ntrcy",4), rep("ntror",4))
 pl1<-ggplot(zfit_est,aes(physical_barrier, prob,group=initial),)+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
-  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=initial), position=position_dodge(width=0.5))+
   geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
   theme_bw()+
@@ -2421,7 +2474,7 @@ pl2<-ggplot(cfit_est,aes(initial, response, group=1))+
               alpha=0.4,
               color="gray")+
   geom_point(size=2, color="black")+
-  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL),color="black")+
+  geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL),color="black")+
   geom_line(color="black")+
   facet_wrap(vars(name))+
   theme_bw()+
@@ -2438,41 +2491,42 @@ pl2<-ggplot(cfit_est,aes(initial, response, group=1))+
 # best fit model - pcbiomass
 # pcwtmod_phys<-lmer(log_wt~name*physical_barrier+(1|block), data=pcwtdat, REML=FALSE)
 
-pcbfit_est<-as.data.frame(emmeans(pcwtmod_phys,~physical_barrier|name, type='response'))
-#pcbfit_est$name<-c(rep("ngoro", 2), rep("ntrcy", 2), rep("ntror",2))
+pcbfit_est<-as.data.frame(emmeans(pcwtmod_add,~physical_barrier|name|initial, type='response'))
 
-## aubrie homework !! find lower.CL 
-pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=1))+
-  geom_jitter(data=pcwtdat,
-              aes(x=physical_barrier, y=log_wt),
-              width=0.1,
-              alpha=0.4,
-              color="gray")+
-  geom_point(size=2, color="black")+
-  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL),color="black")+
+
+pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
+  scale_color_manual(values=mimiscols)+
+  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
+  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
-  geom_line(color="black")+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
         legend.text=element_text(size=15),
-        legend.title=element_text(size=15))+
+        legend.title=element_text(size=15),
+        legend.position="top")+
   xlab("Physical Barrier")+
-  ylab("log(Biomass)")
-pl3
+  ylab("log(Biomass)")+
+  geom_jitter(data=pcwtdat,
+              aes(x=physical_barrier, y=log_wt, color=initial), 
+              height=0.1,
+              alpha=0.5)+
+  labs(color = "Initial Plot Type")
+# pl3
 ### altogether now
+```
+
+```{r 2021 figure, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width =6, fig.height=12}
 ggarrange(pl1, pl2, pl3, ncol=1, common.legend = T)
-pl1
-pl2
-pl3
 ```
 
 
 
 ##### **2022**
-```{r 2022 growth, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
+```{r 2022 growth, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 # packages 
 require(lme4)
 require(emmeans)
@@ -2789,6 +2843,7 @@ zero_candmods<-list("Plot type"=zerofit,
 aictab(zero_candmods)
 
 # best fit model is a tie between physical barrier and physical barrier + nutrient island
+# i will show the results for physical barrier + nutrient island. 
 
 # counts
 count_candmods<-list("Plot type"=countfit, 
@@ -2798,6 +2853,9 @@ count_candmods<-list("Plot type"=countfit,
                      "Physical Barrier x Nutrient Island"=countfit_intxn)
 aictab(count_candmods)
 
+# best fit model is nutrient island, tied with physical barrier. 
+# i will show the results for nutrient island.
+
 pcwt_candmods<-list("Plot type"=pcwtmod, 
                     "Physical barrier"=pcwtmod_phys,
                     "Nutrient island"=pcwtmod_leg,
@@ -2805,6 +2863,8 @@ pcwt_candmods<-list("Plot type"=pcwtmod,
                     "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
 aictab(pcwt_candmods)
 
+# best fit model is nutrient island, tied with physical barrier + nutrient island, and then physical barrier.
+# i will show the results for the additive model. 
 
 # tror is bigger when the legacy of the log and the log is still present
 
@@ -2819,7 +2879,7 @@ zfit_est<-as.data.frame(emmeans(zerofit_add,~initial|physical_barrier|name, type
 pl4<-ggplot(zfit_est,aes(physical_barrier,prob,group=initial),)+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
-  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=initial), position=position_dodge(width=0.5))+
   geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
   theme_bw()+
@@ -2837,7 +2897,7 @@ pl4<-ggplot(zfit_est,aes(physical_barrier,prob,group=initial),)+
               height=0.1,
               alpha=0.5)+
   labs(color = "Initial Plot Type")
-pl4
+# pl4
 summary(zerofit_add)
 pairs(emmeans(zerofit_add, ~physical_barrier|name|initial))
 
@@ -2847,7 +2907,6 @@ pairs(emmeans(zerofit_add, ~initial|name|physical_barrier))
 
 # trcy does better with log initial as compared to open initial (p=0.03)
 
-# best fit model - counts 
  countfit_leg<-glmmTMB(posicounts~name*initial+(1 | block), family=truncated_nbinom2(), data=dat22, REML=FALSE)
 
 cfit_est<-as.data.frame(emmeans(countfit_leg,~initial|name, type='response'))
@@ -2859,7 +2918,7 @@ pl5<-ggplot(cfit_est,aes(initial, response, group=1))+
               alpha=0.4,
               color="gray")+
   geom_point(size=2, color="black")+
-  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL),color="black")+
+  geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL),color="black")+
   geom_line(color="black")+
   facet_wrap(vars(name))+
   theme_bw()+
@@ -2874,9 +2933,7 @@ pl5<-ggplot(cfit_est,aes(initial, response, group=1))+
   labs(color = "Initial Plot \n Type")
 pairs(emmeans(countfit_leg, ~initial|name))
 
-pl5
-
-# best fit model - pcbiomass
+# pl5
 
 pcbfit_est<-as.data.frame(emmeans(pcwtmod_add,~physical_barrier|name|initial, type='response'))
 
@@ -2902,6 +2959,13 @@ pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
               height=0.1,
               alpha=0.5)+
   labs(color = "Initial Plot Type")
-pl6
+#pl6
+```
+
+```{r 2022 figure, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width =6, fig.height=12}
+
+
+ggarrange(pl4, pl5, pl6, ncol=1, common.legend = T)
+
 ```
 #### *Interpretation* 
