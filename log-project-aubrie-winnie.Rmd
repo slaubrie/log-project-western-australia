@@ -94,8 +94,8 @@ The sets of data that we have collected for this arm of the project are the foll
 
 ### **Q1 Are/how are plant communities in fallen log patches different from patches that are in the open?** <br>
 #### *Overview of results* <br> 
+< How I structure the results > 
 *2020-2022*
-
 There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
 
 1.	*Abundance* – the abundance of plants in log patches and open patches that are similar (treatment: p > 0.05). The presented model has a structure of “count ~ treatment(log/open) + (1|block) + (1|year)”.
@@ -141,7 +141,7 @@ Comparison of plant abundance between log patches and open patches involves two 
 
 2.	Diversity comparison
 
-A 30-centimeter linear transect was set up for each plot in 2020. We recorded species identity and individual counts for all species occurring along the transects in 2020, 2021 and 2022 respectively. Comparison of plant diversity between log patches and open patches involves two types of data: (1) plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. 
+A 20-centimeter linear transect was set up for each plot in 2020. We recorded species identity and individual counts for all species occurring along the transects in 2020, 2021 and 2022 respectively. Comparison of plant diversity between log patches and open patches involves two types of data: (1) plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. 
 
 We used the Shannon diversity index to calculate the plant species diversity for each transect at the plot level.  A considerable number of zeros are generated in the computation of the Shannon diversity index. We first tried modelling diversity data with a linear mixed-effect model (LMER) assuming a Gaussian distribution. The resulting model was zero-inflated as testing with DHARMa.
 
@@ -1050,13 +1050,10 @@ nmds.plot <- ggplot()+
 print(nmds.plot) 
 ```
 
-#### *Interpretation* 
-
-
 ### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
 #### *Overview of results* <br> 
 *Nutrient comparison*
-Total soil carbon is significantly higher in log patches than open patches (Wilcoxon rank sum test, p<0.05)
+Total soil carbon is significantly higher in log patches than open patches (Wilcoxon rank sum test, p<0.05).
 
 *2020-2022*
 There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
@@ -3097,4 +3094,3 @@ pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
 ggarrange(pl4, pl5, pl6, ncol=1, common.legend = T)
 
 ```
-#### *Interpretation* 
