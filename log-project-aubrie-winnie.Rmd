@@ -1100,10 +1100,10 @@ library(ggpubr)
 # Set up nutrient analysis data
 nutrient <- read.csv("Nutrient.csv", header = T)
 nutrient <-separate(nutrient,2 , c("block","plot"), "_")
-nutrient <- nutrient[,2:17]
+nutrient <- nutrient[,2:18]
 
 # Visualise data
-Nu <- c("NH4N", "NO3N", "P", "K", "C", "conductivity", "pH", "prewash.exch.ca", "prewash.exch.k", "prewash.exch.mg", "prewash.exch.na", "CEC")
+Nu <- c("N", "P", "K", "C", "conductivity", "pH", "prewash.exch.ca", "prewash.exch.k", "prewash.exch.mg", "prewash.exch.na", "CEC")
 
 for (element in Nu) {
     print(
@@ -1114,7 +1114,7 @@ for (element in Nu) {
     )
 }
 
-nutrient.for.pca <- nutrient[,c(5:11,16)]
+nutrient.for.pca <- nutrient[,c(7:12,17)]
 nutrient.pca <- prcomp(nutrient.for.pca, center=TRUE, scale=TRUE)
 biplot(nutrient.pca)
 ```
@@ -1138,9 +1138,9 @@ library(ggpubr)
 # Set up nutrient analysis data
 nutrient <- read.csv("Nutrient.csv", header = T)
 nutrient <-separate(nutrient,2 , c("block","plot"), "_")
-nutrient <- nutrient[,2:17]
+nutrient <- nutrient[,2:18]
 
-Nu <- c("NH4N", "NO3N", "P", "K", "C", "pH", "CEC")
+Nu <- c("N", "P", "K", "C", "pH", "CEC", "conductivity")
 
 wilcox_results <- data.frame(element = character(),
                                 w = numeric(),
@@ -1205,7 +1205,7 @@ print(all.bp)
 ```
 
 ##### Abundance ~ nutrient composition 
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE}
+```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1222,11 +1222,15 @@ require(vegan)
 require(labdsv)
 require(stringr)
 require(ggrepel)
+library(car)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
 
 # Set up nutrient analysis data
 nutrient <- read.csv("Nutrient.csv", header = T)
 nutrient <-separate(nutrient,2 , c("block","plot"), "_")
-nutrient <- nutrient[,2:17]
+nutrient <- nutrient[,2:18]
 
 # This community data set includes all species (including unidentified species)
 comm <- read.csv("20-22_species_composition_data_w_unk.csv", header=T)
@@ -1284,8 +1288,9 @@ dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" 
 
 # look at plant abundance in log vs open 
 # look at range of data - what family should i use? 
-range(dat_t0_insitu$total)
-nutrient_join <- nutrient[,c(1,3, 5:16)]
+# range(dat_t0_insitu$total)
+nutrient_join <- nutrient[,c(1,3, 7:12,17)]
+nutrient_join[,3:9] <- scale(nutrient_join[,3:9])
 dat_t0_insitu <- inner_join(dat_t0_insitu, nutrient_join, by = c("init", "block"))
 
 # since samples from t1 and t2 from are mainly from the same plots as t0. These are not independent replicates and tend to correlated with each other.
@@ -1295,90 +1300,46 @@ dat_t0_insitu <- inner_join(dat_t0_insitu, nutrient_join, by = c("init", "block"
 # see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
 
 # 2020 - 2022 #
-Nu <- c("NH4N", "NO3N", "P", "K", "C", "pH", "CEC")
-
-result_t012 <- data.frame(Element = character(), P_Value = numeric(), stringsAsFactors = FALSE)
-
-for (element in Nu) {
-  formula <- as.formula(paste("total ~", element, "+ (1|block) + (1|time)", sep = ""))
-  
-  abun.mod <- glmer(formula, data = dat_t0_insitu, family = poisson)
-
-  p.value <- coef(summary(abun.mod))[, "Pr(>|z|)"][2]  
-  
-  result_t012 <- rbind(result_t012, data.frame(Element = element, P_Value = p.value, stringsAsFactors = FALSE))
-  rownames(result_t012) <- NULL
-}
-
-print(result_t012)
-
-mod.t012 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block) + (1|time), data = dat_t0_insitu, family = poisson)
-summary(mod.t012)
+options(na.action = "na.fail")
+mod.dredge <- glm(total~ N+ P + K + C + CEC + conductivity, data = dat_t0_insitu, family = poisson)
+# vif(mod.dredge) # no collinearity
+dredge_allyear <- dredge(mod.dredge, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
+best.allyear <- glm(total~ N+ C + CEC, data = dat_t0_insitu, family = poisson)
+selected.allyear <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, family = poisson)
+tab_model(best.allyear,selected.allyear,mod.dredge, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Selected model", "Inclusive model (all years)"))
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.abun_nu_allyear.html")
 
 # only 2022 #
-result_2022 <- data.frame(Element = character(), P_Value = numeric(), stringsAsFactors = FALSE)
-
-for (element in Nu) {
-  formula <- as.formula(paste("total ~", element, "+ (1|block)", sep = ""))
-  abun.mod <- glmer(formula, data = dat_t0_insitu, family = poisson, subset = (time == "t2"))
-  model_summary <- summary(abun.mod)
-
-  p_value <- coef(summary(abun.mod))[, "Pr(>|z|)"][2]  
-  
-  result_2022 <- rbind(result_2022, data.frame(Element = element, P_Value = p_value, stringsAsFactors = FALSE))
-  rownames(result_2022) <- NULL
-}
-
-# Print or use the result dataframe
-print(result_2022)
-
-mod.t2 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
-summary(mod.t2)
+options(na.action = "na.fail")
+mod.dredge.2022 <- glm(total~ N+ P + K + C + CEC + conductivity, data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
+# vif(mod.dredge.2022) # no collinearity
+dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
+best.2022 <- glm(total~ N+ P + C + CEC + conductivity, data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
+tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model (2022)"))
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.abun_nu_2022.html")
 
 # only 2021 #
-result_2021 <- data.frame(Element = character(), P_Value = numeric(), stringsAsFactors = FALSE)
-
-for (element in Nu) {
-  formula <- as.formula(paste("total ~", element, "+ (1|block)", sep = ""))
-  abun.mod <- glmer(formula, data = dat_t0_insitu, family = poisson, subset = (time == "t1"))
-  model_summary <- summary(abun.mod)
-
-  p_value <- coef(summary(abun.mod))[, "Pr(>|z|)"][2]  
-  
-  result_2021 <- rbind(result_2021, data.frame(Element = element, P_Value = p_value, stringsAsFactors = FALSE))
-  rownames(result_2021) <- NULL
-}
-
-# Print or use the result dataframe
-print(result_2021)
-
-mod.t1 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat_t0_insitu,subset = (time == "t1"), family = poisson)
-summary(mod.t1)
+options(na.action = "na.fail")
+mod.dredge.2021 <- glm(total~ N+ P + K + C + CEC + conductivity, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
+# vif(mod.dredge.2021) # no collinearity
+dredge_2021 <- dredge(mod.dredge.2021, extra = "adjR^2")
+best.2021 <- glm(total~ P + conductivity, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
+selected.2021 <- glm(total~ N+ P + K + C, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
+tab_model(best.2021, selected.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Selected model", "Inclusive model (2021)"))
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.abun_nu_2021.html")
 
 # only 2020 #
-result_2020 <- data.frame(Element = character(), P_Value = numeric(), stringsAsFactors = FALSE)
-
-for (element in Nu) {
-  formula <- as.formula(paste("total ~", element, "+ (1|block)", sep = ""))
-  abun.mod <- glmer(formula, data = dat_t0_insitu, family = poisson, subset = (time == "t1"))
-  model_summary <- summary(abun.mod)
-
-  p_value <- coef(summary(abun.mod))[, "Pr(>|z|)"][2]  
-  
-  result_2020 <- rbind(result_2020, data.frame(Element = element, P_Value = p_value, stringsAsFactors = FALSE))
-  rownames(result_2020) <- NULL
-}
-
-# Print or use the result dataframe
-print(result_2020)
-
-mod.t0 <- glmer(total~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat_t0_insitu,subset = (time == "t0"), family = poisson)
-summary(mod.t0)
+options(na.action = "na.fail")
+mod.dredge.2020 <- glm(total~ N+ P + K + C + CEC + conductivity, data = dat_t0_insitu, subset = (time == "t0"), family = poisson)
+# vif(mod.dredge.2020) # no collinearity
+dredge_2020 <- dredge(mod.dredge.2020, extra = "adjR^2")
+best.2020 <- glm(total~ P + conductivity, data = dat_t0_insitu, subset = (time == "t0"), family = poisson)
+selected.2020 <- glm(total~ P + C, data = dat_t0_insitu, subset = (time == "t0"), family = poisson)
+tab_model(best.2020, selected.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Selected model", "Inclusive model (2020)"))
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.abun_nu_2020.html")
 ```
 
 ##### Diversity ~ nutrient composition
-- P seems to consistently affect the presence of non-zero diversity index.
-- C links to a higher Shannon diversity index in plant communities in 2022 only. 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
 require(vegan)
 require(dplyr)
@@ -1394,10 +1355,10 @@ require(performance)
 require(ggpubr)
 require(DHARMa)
 
-# Set up nutrient data
+# Set up nutrient analysis data
 nutrient <- read.csv("Nutrient.csv", header = T)
 nutrient <-separate(nutrient,2 , c("block","plot"), "_")
-nutrient <- nutrient[,2:17]
+nutrient <- nutrient[,2:18]
 
 # This dataset does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -1415,20 +1376,20 @@ commsub<-comm[,c(15,10,13)]
 commsub <-as.data.frame(commsub)
 commtry<-labdsv::matrify(commsub) # make it an expanded species matrix 
 commtry$x[which(is.na(commtry$x))] <- 1  # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
-ncol(commtry) # how many species are we working with in our community matrix
+# ncol(commtry) # how many species are we working with in our community matrix
 
 # Store grouping row names as a column, then remove rownames.
 commtry$grps<-rownames(commtry)
 rownames(commtry)<-NULL
-names(commtry)
+# names(commtry)
 
 # Split group info into columns for each variable
 mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
-names(mat) #check
+# names(mat) #check
 
 # Add groupname using time, block, init columns
 mat$grp<-apply(mat[c(88:92)], 1, paste, collapse=":")
-names(mat) #check
+# names(mat) #check
 
 # Another df where the grouping variables are time, block, transect and initial state.
 # Each row is a transect in a certain year.
@@ -1452,7 +1413,8 @@ dat<-dat[which(dat$time=="t0" |  dat$treatment=="open" |  dat$treatment=="insitu
 # no groups, just estimate diversity of each row
 est<-dat[,c(6:91)]
 dat$diversity<-diversity(est, index='shannon') 
-nutrient_join <- nutrient[,c(1,3, 5:16)]
+nutrient_join <- nutrient[,c(1,3,7:12,17)]
+nutrient_join[,3:9] <- scale(nutrient_join[,3:9])
 dat <- inner_join(dat, nutrient_join, by = c("init", "block"))
 
 ###### We used a hurdle model since the data is zero-inflated
@@ -1464,10 +1426,7 @@ hist(dat$diversity[dat$non_zero ==1], xlab = "Shannon diversity index (non-zero)
 
 # Gaussian distribution produced the best-fitting ggplot
 dat_nonzerodat <- dat[dat$non_zero == 1, ]
-ggplot(dat_nonzerodat, aes(sample = diversity)) + 
-                  geom_qq(distribution = qnorm) + 
-                  geom_qq_line(distribution = qnorm) +
-                  ggtitle("normal")
+# ggplot(dat_nonzerodat, aes(sample = diversity)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
 
 # Hurdle model part 1. Logistic regression to predict the probability of non-zero.
 # Ppen and log environment does determine the probability of non-zero diversity index
@@ -1475,40 +1434,69 @@ ggplot(dat_nonzerodat, aes(sample = diversity)) +
 
 # 2020-2022 #
 # model occurrence of zeros
-hurd.mod.1.t012 <- glmer(non_zero~ NH4N + NO3N + P + K + C + pH + CEC + (1|block) + (1|time), data = dat, family = binomial)
-summary(hurd.mod.1.t012)
+hurd.mod.1.t012 <- glmer(non_zero~ N + P + K + C + CEC + (1|time), data = dat, family = binomial)
+# vif(hurd.mod.1.t012) # no collinearity
+dredge_allyear <- dredge(hurd.mod.1.t012)
+best.allyear.1 <- glmer(non_zero~ N + P + K + (1|time), data = dat, family = binomial)
+selected.allyear.1 <- glmer(non_zero~ N + P + K + C + (1|time), data = dat, family = binomial)
+tab_model(best.allyear.1,selected.allyear.1,hurd.mod.1.t012, file="mod.diver_nu_allyear.html", dv.labels = c("Best model", "Selected model", "Inclusive model (all year)"), title="2020-2022: zero model")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver_nu_allyear.html")
+
 # model diversity
-hurd.mod.2.t012 <- lmer(diversity~ NH4N + NO3N + P + K + C + pH + CEC + (1|block) + (1|time), data = dat, subset = (non_zero == 1))
-summary(hurd.mod.1.t012) 
+hurd.mod.2.t012 <- lmer(diversity~ N + P + K + C + CEC + (1|time), data = dat, subset = (non_zero == 1))
+dredge_allyear <- dredge(hurd.mod.2.t012)
+best.allyear.2 <- lmer(diversity~ N + P + K + (1|time), data = dat)
+selected.allyear.2 <- lmer(diversity~ N + P + K + C + (1|time), data = dat)
+tab_model(best.allyear.2,selected.allyear.2,hurd.mod.2.t012, file="mod.diver.2_nu_allyear.html", dv.labels = c("Best model", "Selected model", "Inclusive model (all year)"), title = "2020-2022: when Shannon diversity index > 0")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver.2_nu_allyear.html")
 
 # 2022 #
 # model occurrence of zeros
-hurd.mod.1.t2 <- glmer(non_zero~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat,subset = (time == "t2"), family = binomial)
-summary(hurd.mod.1.t2)
+hurd.mod.1.t2 <- glm(non_zero~ N + P + K + C+ CEC, data = dat,subset = (time == "t2"), family = binomial)
+# vif(hurd.mod.1.t2) # no collinearity
+dredge_t2 <- dredge(hurd.mod.1.t2)
+best.t2.1 <- glm(non_zero~ P , data = dat, subset = (time == "t2"), family = binomial)
+tab_model(best.t2.1, hurd.mod.1.t2, file="mod.diver_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model"), title="2022: zero model")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver_nu_2022.html")
 
 # model diversity
-hurd.mod.2.t2 <- lmer(diversity~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat, subset = (non_zero == 1 & time == "t2" ))
-summary(hurd.mod.1.t2) 
-
+hurd.mod.2.t2 <- lm(diversity~ N + P + K + C + CEC, data = dat, subset = (non_zero == 1 & time == "t2" ))
+dredge_t2 <- dredge(hurd.mod.2.t2)
+best.t2.2 <- lm(diversity~  P , data = dat, subset = (non_zero == 1 & time == "t2"))
+tab_model(best.t2.2,hurd.mod.2.t2, file="mod.diver.2_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model"), title = "2022: when Shannon diversity index > 0")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver.2_nu_2022.html")
 
 # 2021 #
 # model occurrence of zeros
-hurd.mod.1.t1 <- glmer(non_zero~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat,subset = (time == "t1"), family = binomial)
-summary(hurd.mod.1.t1)
+hurd.mod.1.t1 <- glm(non_zero~ N + P + K + C+ CEC, data = dat,subset = (time == "t1"), family = binomial)
+# vif(hurd.mod.1.t1) # no collinearity
+dredge_t1 <- dredge(hurd.mod.1.t1)
+best.t1.1 <- glm(non_zero~ P + K + C+ CEC , data = dat,subset = (time == "t1"), family = binomial)
+tab_model(best.t1.1, hurd.mod.1.t1 ,file="mod.diver_nu_2021.html", dv.labels = c("Best model", "Selected inclusive model"), title="2021: zero model")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver_nu_2021.html")
 
 # model diversity
-hurd.mod.2.t1 <- lmer(diversity~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat, subset = (non_zero == 1 & time == "t1" ))
-summary(hurd.mod.1.t1) 
-
+hurd.mod.2.t1 <- lm(diversity~ N + P + K + C + CEC, data = dat, subset = (non_zero == 1 & time == "t1" ))
+dredge_t1 <- dredge(hurd.mod.2.t1)
+best.t1.2 <- lm(diversity~  P + K + C + CEC, data = dat,subset = (non_zero == 1 & time == "t1" ))
+tab_model(best.t1.2, hurd.mod.2.t1, file="mod.diver.2_nu_2021.html", dv.labels = c("Best model", "Selected inclusive model"), title = "2021: when Shannon diversity index > 0")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver.2_nu_2021.html")
 
 # 2020 #
 # model occurrence of zeros
-hurd.mod.1.t0 <- glmer(non_zero~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat,subset = (time == "t0"), family = binomial)
-summary(hurd.mod.1.t0)
+hurd.mod.1.t0 <- glm(non_zero~ N + P + K + C+ CEC, data = dat,subset = (time == "t0"), family = binomial)
+# vif(hurd.mod.1.t0) # no collinearity
+dredge_t0 <- dredge(hurd.mod.1.t0)
+best.t0.1 <- glm(non_zero~ P + K + C+ CEC , data = dat,subset = (time == "t1"), family = binomial)
+tab_model(best.t0.1, hurd.mod.1.t0 ,file="mod.diver_nu_2020.html", dv.labels = c("Best model", "Selected inclusive model"), title="2020: zero model")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver_nu_2020.html")
 
 # model diversity
-hurd.mod.2.t0 <- lmer(diversity~ NH4N + NO3N + P + K + C + pH + CEC + (1|block), data = dat, subset = (non_zero == 1 & time == "t0" ))
-summary(hurd.mod.1.t0) 
+hurd.mod.2.t0 <- lm(diversity~ N + P + K + C + CEC, data = dat, subset = (non_zero == 1 & time == "t0" ))
+dredge_t0 <- dredge(hurd.mod.2.t1)
+best.t0.2 <- lm(diversity~  P + K + C + CEC, data = dat,subset = (non_zero == 1 & time == "t1" ))
+tab_model(best.t0.2, hurd.mod.2.t0, file="mod.diver.2_nu_2020.html", dv.labels = c("Best model", "Selected inclusive model"), title = "2020: when Shannon diversity index > 0")
+htmltools::includeHTML("/Users/swm/Documents/GitHub/log-project-western-australia/mod.diver.2_nu_2020.html")
 ```
 
 ##### Composition ~ nutrient composition
