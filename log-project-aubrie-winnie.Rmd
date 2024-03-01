@@ -164,7 +164,7 @@ To identify the contribution of each species to the compositional changes amongs
 #### *Analysis*<br>
 ##### Abundance analysis
 ** 2020 - 2022 **
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup'}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 # packages
 
@@ -312,7 +312,7 @@ print(abun.emmeans.plot)
 ```
 
 ##### Diversity analysis
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup'}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 require(vegan)
 require(dplyr)
 require(tidyr)
@@ -533,7 +533,7 @@ print(div.emmeans.plot)
 ```
 
 ##### Composition analysis
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8, echo=FALSE}
 # Run this chunk before running any year specific chunk below
 # packages
 library(tidyverse)
@@ -580,7 +580,7 @@ names(mat) #check
 
 Composition dissimilarity * 2020 *
 
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup'}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -721,13 +721,13 @@ for (i in 1:num_axes) {
 ```
 
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=10, fig.height=12}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=10, fig.height=12,echo=FALSE}
 ((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
 ```
 
 Composition dissimilarity * 2021 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -868,13 +868,13 @@ for (i in 1:num_axes) {
 
 ```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16,echo=FALSE}
 (plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
 ```
 
 Composition dissimilarity * 2022 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -1020,13 +1020,13 @@ for (i in 1:num_axes) {
 
 ```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12,echo=FALSE}
 ((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
 ```
 
 Composition dissimilarity * 2020 - 2022 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat3 <- mat[which(mat$time=="t0" |  mat$treatment=="open" | mat$treatment=="insitu_log"),]
 mat3$grp<-apply(mat3[c(88,89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -1171,7 +1171,7 @@ for (i in 1:num_axes) {
 }
 ```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=18}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=18,echo=FALSE}
 (plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
@@ -1233,7 +1233,7 @@ This analysis involves three types of data: (1) plant count for each species of 
 
 #### *Analysis*<br>
 
-```{r, include=TRUE, results='hold'}
+```{r, include=TRUE, results='hold',echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1271,7 +1271,7 @@ biplot(nutrient.pca)
 
 ###### Nutrient composition comparison between log and open
 - Organic carbon in soil is significantly higher in fallen log patches.
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE}
+```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1355,7 +1355,7 @@ print(all.bp)
 ```
 
 ##### Abundance ~ nutrient composition 
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE}
+```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1486,7 +1486,7 @@ htmltools::includeHTML("mod.abun_nu_2020.html")
 ```
 
 ##### Diversity ~ nutrient composition
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8,echo=FALSE}
 require(vegan)
 require(dplyr)
 require(tidyr)
@@ -1649,7 +1649,7 @@ htmltools::includeHTML("mod.diver.2_nu_2020.html")
 ```
 
 ##### Composition ~ nutrient composition
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8,echo=FALSE}
 # packages
 library(tidyverse)
 require(vegan)
@@ -1673,7 +1673,7 @@ library(patchwork)
 
 *2020*
 - There is no significant correlation between nutrient elements and plant composition.
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -1839,7 +1839,7 @@ nmds.plot.nutrient <- ggplot()+
 
 *2021*
 - There is no significant correlation between nutrient elements and plant composition.
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unidentified species.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2003,7 +2003,7 @@ nmds.plot.nutrient <- ggplot()+
 
 *2022*
 - There is no significant correlation between nutrient elements and plant composition.
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2170,7 +2170,7 @@ nmds.plot.nutrient <- ggplot()+
 *2020-2022*
 - P and pH seem to be significantly affecting the compositions of log and open communities
 - I doubt it since envfit function do not take 'year' as a random effect.
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
