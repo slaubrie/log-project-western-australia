@@ -247,7 +247,7 @@ abun.mod.t012<- glmer(total~ init + (1|block) + (1|time), data=dat_t0_insitu, fa
 
 # emmeans(abun.mod.t012, ~init, type='response') # plant abundance in log plots is higher by 0.04 plants - which is no higher
 
-# abun.plot <- emmip(abun.mod, ~init, type='response', CI=T)+theme_bw()+labs(x="Initial condition", y="Number of plants")
+# abun.plot <- emmip(abun.mod.t012, ~init, type='response', CI=T)+theme_bw()+labs(x="Initial condition", y="Number of plants")
 # print(abun.plot)
 
 ##### Reason: why we need to include 'time' as random effect?
@@ -268,20 +268,45 @@ tab_model(abun.mod.t012, abun.mod.t0, abun.mod.t1, abun.mod.t2, file="abundance_
 
 htmltools::includeHTML("abundance_comparison.html")
 
+time.names <- c("2020", "2021", "2022")
+names(time.names) <- c("t0", "t1", "t2")
+
 abun.plot.year <- ggplot(dat_t0_insitu, aes(x = as.factor(init), y = total, fill = as.factor(init))) +
   geom_boxplot(position = "dodge", alpha = 0.5) +
   labs(x = "Initial plot treatment",
        y = "Abundance") +
-  scale_fill_discrete(name = 'init') +
+  scale_fill_discrete(name = 'Plot type') +
   theme_classic() +
-  facet_grid(. ~ time) + 
+  facet_grid(. ~ time, labeller = labeller(time=time.names)) + 
   stat_compare_means(comparisons = list(c("log", "open")), label = "p.format", method="wilcox.test")
 
+
 print(abun.plot.year)
+
+
+mimiscols<-c("#D66972","#108780")
+
+em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "2020")
+em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "2021")
+em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "2022")
+abun.mod <- bind_rows(em.0, em.1, em.2)
+
+abun.emmeans.plot <- ggplot(abun.mod,aes(init, rate, group=time))+
+  scale_color_manual(values=mimiscols)+
+  geom_point(aes(col=init), size=2, position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=init), position=position_dodge(width=0.5))+
+  geom_line(position=position_dodge(width=0.5))+
+  facet_wrap(vars(time))+
+  theme_bw()+
+  xlab("Plot type")+
+  ylab("Abundance")+
+  labs(color = "Initial Plot Type")
+
+print(abun.emmeans.plot)
 ```
 
 ##### Diversity analysis
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup'}
 require(vegan)
 require(dplyr)
 require(tidyr)
@@ -407,19 +432,19 @@ dat_2020 <-dat[which(dat$time=="t0"),] # just t0
 # Hurdle model part 1. Logistic regression to predict the probability of non-zero.
 # Ppen and log environment does determine the probability of non-zero diversity index
 # 0 Shannon diversity index =/= zero plants
-Hurd.mod.1 <- glmer(non_zero ~ init + (1|block), data = dat_2020, family = binomial)
-# summary(Hurd.mod.1) # significant
+Hurd.mod.1.2020 <- glmer(non_zero ~ init + (1|block), data = dat_2020, family = binomial)
+# summary(Hurd.mod.1.2020) # significant
 
 # Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
 # We included block and time as random terms.
 # Open and log environment is significant in explaining the plant diversity in transect levels.
 # Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2 <- lm(diversity ~ init, data=subset(dat_2020, non_zero == 1))
+Hurd.mod.2.2020 <- lm(diversity ~ init, data=subset(dat_2020, non_zero == 1))
 ## random effect (1|block) removed since it's close to zero
-# summary(Hurd.mod.2)
-# anova(Hurd.mod.2) # lmer on non-zero diversity values is significant
+# summary(Hurd.mod.2.2020)
+# anova(Hurd.mod.2.2020) # lmer on non-zero diversity values is significant
 
-tab_model(Hurd.mod.1, Hurd.mod.2, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2020", file = "sdi_openlog_2020.html")
+tab_model(Hurd.mod.1.2020, Hurd.mod.2.2020, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2020", file = "sdi_openlog_2020.html")
 htmltools::includeHTML("sdi_openlog_2020.html")
 
 # Check residual
@@ -434,19 +459,19 @@ dat_2021 <-dat[which(dat$time=="t1"),] # just t1
 # Hurdle model part 1. Logistic regression to predict the probability of non-zero.
 # Ppen and log environment does determine the probability of non-zero diversity index
 # 0 Shannon diversity index =/= zero plants
-Hurd.mod.1 <- glm(non_zero ~ init, data = dat_2021, family = binomial)
+Hurd.mod.1.2021 <- glm(non_zero ~ init, data = dat_2021, family = binomial)
 # Random effect (1|block) removed since it's close to zero.
-# summary(Hurd.mod.1) # significant
+# summary(Hurd.mod.1.2021) # significant
 
 # Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
 # We included block and time as random terms.
 # Open and log environment is significant in explaining the plant diversity in transect levels.
 # Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2 <- lmer(diversity ~ init + (1|block), data=subset(dat_2021, non_zero == 1))
-# summary(Hurd.mod.2)
-# anova(Hurd.mod.2) # lmer on non-zero diversity values is significant
+Hurd.mod.2.2021 <- lmer(diversity ~ init + (1|block), data=subset(dat_2021, non_zero == 1))
+# summary(Hurd.mod.2.2021)
+# anova(Hurd.mod.2.2021) # lmer on non-zero diversity values is significant
 
-tab_model(Hurd.mod.1, Hurd.mod.2, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2021", file = "sdi_openlog_2021.html")
+tab_model(Hurd.mod.1.2021, Hurd.mod.2.2021, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2021", file = "sdi_openlog_2021.html")
 htmltools::includeHTML("sdi_openlog_2021.html")
 
 # Check residual
@@ -461,18 +486,18 @@ dat_2022 <-dat[which(dat$time=="t2"),] # just t1
 # Hurdle model part 1. Logistic regression to predict the probability of non-zero.
 # Ppen and log environment does determine the probability of non-zero diversity index
 # 0 Shannon diversity index =/= zero plants
-Hurd.mod.1 <- glmer(non_zero ~ init + (1|block), data = dat_2022, family = binomial, )
-# summary(Hurd.mod.1) # significant
+Hurd.mod.1.2022 <- glmer(non_zero ~ init + (1|block), data = dat_2022, family = binomial, )
+# summary(Hurd.mod.1.2022) # significant
 
 # Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
 # We included block and time as random terms.
 # Open and log environment is significant in explaining the plant diversity in transect levels.
 # Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2 <- lmer(diversity ~ init + (1|block), data=subset(dat_2022, non_zero == 1))
-# summary(Hurd.mod.2)
-# anova(Hurd.mod.2) # lmer on non-zero diversity values is significant
+Hurd.mod.2.2022 <- lmer(diversity ~ init + (1|block), data=subset(dat_2022, non_zero == 1))
+# summary(Hurd.mod.2.2022)
+# anova(Hurd.mod.2.2022) # lmer on non-zero diversity values is significant
 
-tab_model(Hurd.mod.1, Hurd.mod.2, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2022", file = "sdi_openlog_2022.html")
+tab_model(Hurd.mod.1.2022, Hurd.mod.2.2022, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2022", file = "sdi_openlog_2022.html")
 htmltools::includeHTML("sdi_openlog_2022.html")
 
 
@@ -480,6 +505,25 @@ htmltools::includeHTML("sdi_openlog_2022.html")
 # residuals <- resid(Hurd.mod.2) # Extract residuals
 # plot(residuals, main="2022")
 # abline(0,0)
+em.0 <- as.data.frame(emmeans(Hurd.mod.2.2020, ~init, type='response')) %>% mutate(time = "2020")
+em.1 <- as.data.frame(emmeans(Hurd.mod.2.2021, ~init, type='response')) %>% mutate(time = "2021")
+em.2 <- as.data.frame(emmeans(Hurd.mod.2.2022, ~init, type='response')) %>% mutate(time = "2022")
+div.mod <- bind_rows(em.0, em.1, em.2)
+
+mimiscols<-c("#D66972","#108780")
+
+div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
+  scale_color_manual(values=mimiscols)+
+  geom_point(aes(col=init), size=2, position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=init), position=position_dodge(width=0.5))+
+  geom_line(position=position_dodge(width=0.5))+
+  facet_wrap(vars(time))+
+  theme_bw()+
+  xlab("Plot type")+
+  ylab("Shannon diversity index")+
+  labs(color = "Initial Plot Type")
+
+print(div.emmeans.plot)
 ```
 
 ##### Composition analysis
@@ -530,7 +574,7 @@ names(mat) #check
 
 Composition dissimilarity * 2020 *
 
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=12}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup'}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -568,7 +612,7 @@ group_block<-blocksum$block
 
 # MDS 
 ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
-ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4) # run MDS 
+ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t0_NMS) # check fit
 
 # scores
@@ -668,13 +712,16 @@ for (i in 1:num_axes) {
     }
   }
 }
+```
 
+
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=10, fig.height=12}
 ((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
 ```
 
 Composition dissimilarity * 2021 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12, out.width=c('30','30', '100')}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -712,7 +759,7 @@ group_block<-blocksum$block
 
 # MDS 
 ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
-ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 5) # run MDS 
+ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 5, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t1_NMS) # check fit
 
 # scores
@@ -773,7 +820,7 @@ nmds.plot <- ggplot()+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
   labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
 
-print(nmds.plot)
+# print(nmds.plot)
 
 # All other NMDS pairs
 treatments <- unique(mds_scores_t1$treatment)
@@ -813,12 +860,14 @@ for (i in 1:num_axes) {
   }
 }
 
-((plots$`1+3` + plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`+ plots$`2+5`)/(plots$`3+4` + plots$`3+5`+ plots$`4+5`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
+```
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16}
+(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
 ```
 
 Composition dissimilarity * 2022 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -856,7 +905,7 @@ group_block<-blocksum$block
 
 # MDS 
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
-ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4) # run MDS 
+ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t2_NMS) # check fit
 
 # scores
@@ -961,12 +1010,16 @@ for (i in 1:num_axes) {
   }
 }
 
+
+```
+
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12}
 ((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
 ```
 
 Composition dissimilarity * 2020 - 2022 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat3 <- mat[which(mat$time=="t0" |  mat$treatment=="open" | mat$treatment=="insitu_log"),]
 mat3$grp<-apply(mat3[c(88,89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -1005,7 +1058,7 @@ group_time<-blocksum$time
 
 # MDS 
 ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
-ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 5) # run MDS 
+ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 5, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t012_NMS) # check fit
 
 # scores
@@ -1069,7 +1122,7 @@ nmds.plot <- ggplot()+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
   labs(title=paste0("Stress: ", round(ass.rel.t012_NMS$stress,3)))
  
-print(nmds.plot)
+# print(nmds.plot)
 
 # All other NMDS pairs
 treatments <- unique(mds_scores_t012$treatment)
@@ -1109,10 +1162,10 @@ for (i in 1:num_axes) {
     }
   }
 }
+```
 
-
-((plots$`1+3` + plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`+ plots$`2+5`)/(plots$`3+4` + plots$`3+5`+ plots$`4+5`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
-
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16}
+(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
 ### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
