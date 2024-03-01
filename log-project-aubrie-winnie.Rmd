@@ -1,7 +1,8 @@
 ---
 title: "log-project-aubrie-winnie"
 output:
-  html_document
+  html_document: default
+  pdf_document: default
 date: "2024-02-21"
 ---
 
@@ -301,7 +302,7 @@ abun.emmeans.plot <- ggplot(abun.mod,aes(init, rate, group=time))+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=init), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=init), position=position_dodge(width=0.5))+
-  geom_line(position=position_dodge(width=0.5))+
+ # geom_line(position=position_dodge(width=0.5))+
   facet_wrap(vars(time))+
   theme_bw()+
   xlab("Plot type")+
@@ -522,7 +523,7 @@ div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=init), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=init), position=position_dodge(width=0.5))+
-  geom_line(position=position_dodge(width=0.5))+
+  #geom_line(position=position_dodge(width=0.5))+
   facet_wrap(vars(time))+
   theme_bw()+
   xlab("Plot type")+
@@ -580,7 +581,7 @@ names(mat) #check
 
 Composition dissimilarity * 2020 *
 
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+```{r, message=TRUE, warning=TRUE, include=FALSE, paged.print=FALSE, results='markup',echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -637,10 +638,17 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # summary(trt_tot_2)
 # anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 
+```
+
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+
 # Using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
+
 plot(var.mod2, bg=c("hotpink","skyblue"),
      Xnames = c("Treatment", "Block"))
+
+
 
 # can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
@@ -648,7 +656,8 @@ trt_Frac<-rda(ass.rel.t0, init, block) # partial rda model
 summary(trt_Frac)
 RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
-
+```
+```{r, message=TRUE, warning=TRUE, include=FALSE, paged.print=FALSE, results='markup',echo=FALSE}
 # Extracting species scores and plotting 
 # Species scores
 species.scores<-as.data.frame(vegan::scores(ass.rel.t0_NMS,"species")) ## some species don't have scores
@@ -662,7 +671,9 @@ open<-mds_scores_t0[mds_scores_t0$treatment == "open", ][chull(mds_scores_t0[mds
                                                                "open", c("NMDS1", "NMDS2")]), ]
 
 hulldat<-rbind(log,open)
- 
+```
+
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 nmds.plot<- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
@@ -727,7 +738,7 @@ for (i in 1:num_axes) {
 
 Composition dissimilarity * 2021 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -783,7 +794,9 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # trt_tot_2<-rda(ass.rel.t1~init+block) # run model using standardized data 
 # summary(trt_tot_2)
 # anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+```
 
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
 plot(var.mod2, bg=c("hotpink","skyblue"),
@@ -874,7 +887,7 @@ for (i in 1:num_axes) {
 
 Composition dissimilarity * 2022 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -924,7 +937,9 @@ mds_scores_t2$block<-group_block # grouping factor 2
 # explaining factors
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
+```
 
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 #### rda model analysis & results #### 
 # can look at significance of model where initial treatment and block explain variation in community
 trt_tot_2<-rda(ass.rel.t2~init+block) # run model using standardized data 
@@ -1026,7 +1041,7 @@ for (i in 1:num_axes) {
 
 Composition dissimilarity * 2020 - 2022 *
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat3 <- mat[which(mat$time=="t0" |  mat$treatment=="open" | mat$treatment=="insitu_log"),]
 mat3$grp<-apply(mat3[c(88,89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -1085,6 +1100,9 @@ time<-as.factor(group_time)
 # trt_tot_2<-rda(ass.rel.t012~init+block+time) # run model using standardized data 
 # summary(trt_tot_2)
 # anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+```
+
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
@@ -1169,22 +1187,25 @@ for (i in 1:num_axes) {
     }
   }
 }
-```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=18,echo=FALSE}
 (plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
 ### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
 #### *Overview of results* <br> 
-- Loading of P and pH on PCA are similar. For subsequence analyses, only P is included as we can infer the effect of pH from it.
-- Soil C is significantly higher in log patches than open patches.
-- Plant abundance has a variable relationship with different nutrient elements. In 2020, we found more plants in C rich area. In 2021, we found more plants in P rich area. In 2022, plants abundance tend to drop with N but increase in C and base cations. Overall (2020-2022), N tends to have a negative relationship with plant abundance.
-- Relationship between plant diversity and soil elements are variable.
-- There are no significant relationships found between plant composition and soil elements.
 
-*Nutrient comparison*
-Total soil carbon is significantly higher in log patches than open patches (Wilcoxon rank sum test, p<0.05).
+1. Soil C is significantly higher in log patches than open patches.
+- Total soil carbon is significantly higher in log patches than open patches (Wilcoxon rank sum test, p<0.05).
+
+2. Plant abundance has a variable relationship with different nutrient elements: 
+- In 2020, we found more plants in C rich area. 
+- In 2021, we found more plants in P rich area. 
+- In 2022, plants abundance tend to drop with N but increase in C and base cations. 
+- Overall (2020-2022), N tends to have a negative relationship with plant abundance.
+
+3. Relationship between plant diversity and soil elements are variable.
+
+4. There are no significant relationships found between plant composition and soil elements.
 
 *2020-2022*
 There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
@@ -1215,7 +1236,7 @@ There are three response variables: count (Poisson), Shannon diversity index (hu
 2. We used the Wilcoxon rank sum test to compare soil nutrient levels between log and open plots.
 3. Effect of soil nutrient on plant abundance.
 
-This analysis involves three types of data: (1) plant counts of all plots in 2020 before the experiment setup differentiated by the initial treatment "log" and "open"; (2) plant counts from insitu_log and insitu_open plots in 2021 and 2022 respectively, including species with unknown identity; and (3) soil nutrient data collected from one random log plot and one random open plot in each block. 
+This analysis involves three types of data: (1) plant counts of all plots in 2020 before the experiment setup differentiated by the initial treatment "log" and "open"; (2) plant counts from insitu_log and insitu_open plots in 2021 and 2022 respectively, including species with unknown identity; and (3) soil nutrient data collected from one random log plot and one random open plot in each block. (N=??)
 
 Since independent nutrient variables were sampled at block level, this part of the analysis does not include block as the random term to avoid singularity issues. We used a generalized linear model (GLM) with a Poisson distribution structure to model the effect of different soil components on the abundance of plant individuals (data from 2020, 2021, and 2022). Additionally, we performed model dredging (using the MuMln package) to compare the best fitting model, the biologically sensible model, and the inclusive model with all nutrient elements.
 
@@ -1224,9 +1245,9 @@ To avoid pseudo-replication, when pulling count data from 2020 to 2022 together,
 4. Effect of soil nutrient on plant diversity (Shannon diversity index = SDI)
 This analysis involves three types of data: (1) plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. (3) soil nutrient data. We used the Shannon diversity index to describe the plant species diversity for each transect at the plot level. Similarly, we used a hurdle model to model the effect of soil properties on plant diversity. 
 
-(1)	Model the probability of zero and non-zero Shannon diversity with a logistic regression. GLM for single-year data and GLMER for 2020-2022 data with year as random terms in 2020-2022 data.
+(1)	Model the probability of zero and non-zero Shannon diversity with a logistic regression. GLM for single-year data and GLMER for 2020-2022 data with year as random terms in 2020-2022 data. (Question for group: what approach should we take to multiyear data? Aubrie thinks using glmer and year as random intercept)
 (2)	Model the non-zero Shannon diversity with an LM for single-year data and LMER for 2020-2022 data with year as a random term since the distribution of non-zero data has an approximal Gaussian distribution.
-(3)	We also performed model dredging (using the MuMln package) to compare the best-fitting model, the biologically sensible model, and the inclusive model with all nutrient elements.
+(3)	We also performed model dredging (using the MuMln package) to compare the best-fitting model, the biologically sensible model, and the inclusive model with all nutrient elements. 
 
 5. We performed similar NMDS analyses as described in the previous section. We then used envfit analyses from the Vegan package to fit soil components onto the nondimensional space.
 
@@ -2348,11 +2369,11 @@ There are three response variables: presence (binomial), count (truncated poisso
 *Presence*
 - The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.32). I present the model analysis of the additive model. 
 - Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.03, TROR: p=0.01) 
-- Nutrient island does not significantly explain variation in presence/absence in any species. However, all species trend to having higher probability of presence in log-legacy plots. 
+- Nutrient island does not significantly explain variation in presence/absence in any species. However, there is a trend across all species that they are more likely present in log-legacy plots. 
 
 *Count* 
 - The best fit model for count is nutrient island. 
-- Nutrient island does not strongly significantly explain variation in presence/absence in any species. TRCY is marginally significantly affected by nutrient island, where there are more TRCY in plots where there is a `log legacy' (there had been a decomposing log in the plot before the experiment began)
+- Nutrient island does not strongly significantly explain variation in presence/absence in any species. However, TRCY is marginally significantly affected by nutrient island, where there are more TRCY in plots where there is a `log legacy' (there had been a decomposing log in the plot before the experiment began)
 
 *Biomass*
 - The best fit model for per capita biomass is the nutrient island, then physical barrier island, then the additive model. They are all within 2 AICc points of each other (deltaAIC=1.55 and 1.76, respectively). I present the model analysis of the additive model.
@@ -2364,18 +2385,23 @@ There are three response variables: presence (binomial), count (truncated poisso
 There are again three response variables: presence (binomial), count (truncated poisson), and per capita biomass (gaussian).
 
 *Presence*
-- The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.24). I present the model analysis of the additive model. 
-- Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.007, TROR: p=0.03) 
-- Nutrient island significantly explains the presence/absence of TRCY, where TRCY is more likely to be present in log legacy plots as compared to open legacy plots (p=0.02) 
+1. The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.24). I present the model analysis of the additive model. 
+
+2. Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.007, TROR: p=0.03) 
+
+3. Nutrient island significantly explains the presence/absence of TRCY, where TRCY is more likely to be present in log legacy plots as compared to open legacy plots (p=0.02) 
 
 *Count* 
-- The best fit model for count is a tie between nutrient island and physical barrier. I present the model analysis of the nutrient island model. 
-- Nutrient island does not strongly significantly explain variation in presence/absence in any species. 
+1. The best fit model for count is a tie between nutrient island and physical barrier. I present the model analysis of the nutrient island model. 
+
+2. Nutrient island does not strongly significantly explain variation in presence/absence in any species. 
 
 *Biomass*
-- The best fit model for per capita biomass is the nutrient island, then the additive model, then the physical barrier model. They are all within 1 AICc points of each other (deltaAIC=0.31 and 0.46, respectively). I present the model analysis of the additive model.
-- Nutrient island significantly explains variation in TROR biomass, where log legacy plots have larger TROR as compared to open legacy plots (p=0.04)
-- Physical barrier significantly explains variation in TROR biomass, where plots in the open have larger TROR than plots near a physical barrier (either log or PVC pipe) (p=0.02)
+1. The best fit model for per capita biomass is the nutrient island, then the additive model, then the physical barrier model. They are all within 1 AICc points of each other (deltaAIC=0.31 and 0.46, respectively). I present the model analysis of the additive model.
+
+2. Nutrient island significantly explains variation in TROR biomass, where log legacy plots have larger TROR as compared to open legacy plots (p=0.04)
+
+3. Physical barrier significantly explains variation in TROR biomass, where plots in the open have larger TROR than plots near a physical barrier (either log or PVC pipe) (p=0.02)
 
 
 #### *Statistical Methods* <br>
@@ -2397,7 +2423,7 @@ The models I use test the hypotheses from above: Log decomposition creates islan
 #### *Analysis*<br>
 
 ##### **2021**
-```{r 2021 growth, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+```{r 2021 growth, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
 
 ### doing vital rate analysis
 
@@ -2706,7 +2732,7 @@ pl1<-ggplot(zfit_est,aes(physical_barrier, prob,group=initial),)+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=initial), position=position_dodge(width=0.5))+
-  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+#  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
@@ -2738,7 +2764,7 @@ pl2<-ggplot(cfit_est,aes(initial, response, group=1))+
               color="gray")+
   geom_point(size=2, color="black")+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL),color="black")+
-  geom_line(color="black")+
+#  geom_line(color="black")+
   facet_wrap(vars(name))+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
@@ -2761,7 +2787,7 @@ pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
-  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+#  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
@@ -2789,7 +2815,7 @@ ggarrange(pl1, pl2, pl3, ncol=1, common.legend = T)
 
 
 ##### **2022**
-```{r 2022 growth, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
+```{r 2022 growth, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
 # packages 
 require(lme4)
 require(emmeans)
@@ -3143,7 +3169,7 @@ pl4<-ggplot(zfit_est,aes(physical_barrier,prob,group=initial),)+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=initial), position=position_dodge(width=0.5))+
-  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+  #geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
@@ -3182,7 +3208,7 @@ pl5<-ggplot(cfit_est,aes(initial, response, group=1))+
               color="gray")+
   geom_point(size=2, color="black")+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL),color="black")+
-  geom_line(color="black")+
+ # geom_line(color="black")+
   facet_wrap(vars(name))+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
@@ -3205,7 +3231,7 @@ pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
-  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
+#  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
   facet_wrap(vars(name))+
   theme_bw()+
   theme(strip.text.x = element_text(size=0),
