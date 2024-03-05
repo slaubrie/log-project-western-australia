@@ -639,10 +639,18 @@ plot(var.mod2, bg=c("hotpink","skyblue"),
 
 # can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
-trt_Frac<-rda(ass.rel.t0, init, block) # partial rda model
-summary(trt_Frac)     
-RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+trt_Frac<-rda(ass.rel.t0, init ,block)# partial rda model
+# summary(trt_Frac)     
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+result.df.t0 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("Call:rda(X = ass.rel.t0, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia = c("", 0.42624, 0.29429, 0.03551, 0.09643),
+  Proportion = c("",1.00000, 0.69045, 0.08332, 0.22624),
+  Note = c("Model signif. = *", "R2 = 0.08471055", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
+  )
+knitr::kable(result.df.t0, format = "html")
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
@@ -847,9 +855,18 @@ plot(var.mod2, bg=c("hotpink","skyblue"),
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
 trt_Frac<-rda(ass.rel.t1, init, block) # partial rda model
-summary(trt_Frac) 
-RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# summary(trt_Frac) 
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+result.df.t1 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("Call:rda(X = ass.rel.t1, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia = c("", 0.53262, 0.28621, 0.06436, 0.18206),
+  Proportion = c("",1.00000, 0.5373, 0.1208, 0.3418),
+  Note = c("Model signif. = .", "R2 = 0.1186067", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
+  )
+knitr::kable(result.df.t1, format = "html")
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
@@ -1039,9 +1056,9 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 #### rda model analysis & results #### 
 # can look at significance of model where initial treatment and block explain variation in community
-trt_tot_2<-rda(ass.rel.t2~init+block) # run model using standardized data 
-summary(trt_tot_2)
-anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+# trt_tot_2<-rda(ass.rel.t2~init+block) # run model using standardized data 
+# summary(trt_tot_2)
+# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
@@ -1051,9 +1068,18 @@ plot(var.mod2, bg=c("hotpink","skyblue"),
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
 trt_Frac<-rda(ass.rel.t2, init, block) # partial rda model
-summary(trt_Frac) 
-RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# summary(trt_Frac) 
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+result.df.t2 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("Call:rda(X = ass.rel.t2, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia = c("", 0.53400, 0.29726, 0.06081, 0.17593),
+  Proportion = c("",1.00000, 0.5567, 0.1139, 0.3295),
+  Note = c("Model signif. = .", "R2 = 0.1095098", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
+  )
+knitr::kable(result.df.t2, format = "html")
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
@@ -1262,9 +1288,19 @@ plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"),
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
 trt_Frac<-rda(ass.rel.t012~ init +Condition(block + time)) # partial rda model
-summary(trt_Frac) 
-RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# summary(trt_Frac) 
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+result.df.t012 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("Call:rda(X = ass.rel.t012, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia = c("", 0.56175, 0.24900, 0.03416, 0.27860),
+  Proportion = c("",1.0000, 0.4433, 0.0608, 0.4959),
+  Note = c("Model signif. = ***", "R2 = 0.05628909", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
+  )
+knitr::kable(result.df.t012, format = "html")
+
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
 sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
