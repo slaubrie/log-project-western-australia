@@ -2,7 +2,7 @@
 title: "log-project-aubrie-winnie"
 output:
   html_document: default
-  pdf_document: default
+#  pdf_document: default
 date: "2024-02-21"
 ---
 
@@ -273,7 +273,7 @@ abun.mod.t2 <- glmer(total ~ init + (1|block), data = subset(dat_t0_insitu, time
 
 tab_model(abun.mod.t012, abun.mod.t0, abun.mod.t1, abun.mod.t2, file="abundance_comparison.html", dv.labels = c("Abundance:2020-2022", "Abundance:2020", "Abundance:2021", "Abundance:2022"))
 
-htmltools::includeHTML("abundance_comparison.html")
+# htmltools::includeHTML("abundance_comparison.html")
 
 time.names <- c("2020", "2021", "2022")
 names(time.names) <- c("t0", "t1", "t2")
@@ -288,32 +288,38 @@ abun.plot.year <- ggplot(dat_t0_insitu, aes(x = as.factor(init), y = total, fill
   stat_compare_means(comparisons = list(c("log", "open")), label = "p.format", method="wilcox.test")
 
 
-print(abun.plot.year)
-
-
 mimiscols<-c("#D66972","#108780")
 
-em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "2020")
-em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "2021")
-em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "2022")
-abun.mod <- bind_rows(em.0, em.1, em.2)
+em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "0.355") %>% mutate(group1="log") %>% mutate(group2="open")
+em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "0.322") %>% mutate(group1="log") %>% mutate(group2="open")
+em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "0.642") %>% mutate(group1="log") %>% mutate(group2="open")
+abun.mod <- bind_rows(em.0, em.1, em.2) %>%
+  mutate(y.position = 27)
 
 abun.emmeans.plot <- ggplot(abun.mod,aes(init, rate, group=time))+
   scale_color_manual(values=mimiscols)+
-  geom_point(aes(col=init), size=2, position=position_dodge(width=0.5))+
+  geom_point(aes(col=init), size=4, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=init), position=position_dodge(width=0.5))+
  # geom_line(position=position_dodge(width=0.5))+
-  facet_wrap(vars(time))+
+  facet_wrap(vars(time), labeller = labeller(time = 
+    c("t0" = "2020",
+      "t1" = "2021",
+      "t2" = "2022")))+
   theme_bw()+
+  theme(legend.position="top",panel.grid = element_blank())+
   xlab("Plot type")+
   ylab("Abundance")+
-  labs(color = "Initial Plot Type")
+  labs(color = "Initial Plot Type") +
+  geom_jitter(data=dat_t0_insitu,
+             aes(x=init, y=total, color=init), 
+             height=0.1,
+             alpha=0.5) + stat_pvalue_manual(abun.mod, size = 3.5, linetype = 1)
 
 print(abun.emmeans.plot)
 ```
 
 ##### Diversity analysis
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 require(vegan)
 require(dplyr)
 require(tidyr)
@@ -328,6 +334,7 @@ require(performance)
 require(ggpubr)
 require(DHARMa)
 require(patchwork)
+require(glmmTMB)
 
 # This dataset does not include data where the plant identity is unknown.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -410,21 +417,20 @@ dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
 #                  ggtitle("normal")
 
 # Hurdle model part 1. Logistic regression to predict the probability of non-zero.
-# Ppen and log environment does determine the probability of non-zero diversity index
+# Plot treatment does determine the probability of non-zero diversity index.
+# We included block and time as random terms.
 # 0 Shannon diversity index =/= zero plants
-Hurd.mod.1 <- glmer(non_zero ~ init + (1|block) + (1|time), data = dat, family = binomial)
+# Hurd.mod.1 <- glmer(non_zero ~ init + (1|block) + (1|time), data = dat, family = binomial)
 # summary(Hurd.mod.1) # significant
 
-# Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
-# We included block and time as random terms.
 # Open and log environment is significant in explaining the plant diversity in transect levels.
 # Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2 <- lmer(diversity ~ init + (1|block)+ (1|time), data=subset(dat, non_zero == 1))
+# Hurd.mod.2 <- lmer(diversity ~ init + (1|block)+ (1|time), data=subset(dat, non_zero == 1))
 # summary(Hurd.mod.2)
 # anova(Hurd.mod.2) # lmer on non-zero diversity values is significant
 
-tab_model(Hurd.mod.1, Hurd.mod.2, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2020-2022", file = "sdi_openlog_allyear.html", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("sdi_openlog_allyear.html")
+# tab_model(Hurd.mod.1, Hurd.mod.2, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2020-2022", file = "sdi_openlog_allyear.html", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("sdi_openlog_allyear.html")
 
 # Check residual
 # residuals <- resid(Hurd.mod.2) # Extract residuals
@@ -432,103 +438,85 @@ htmltools::includeHTML("sdi_openlog_allyear.html")
 # abline(0,0)
 # check_model(Hurd.mod.2)
 
+# zi model using glmmTMB with Gaussian link
+# https://journal.r-project.org/archive/2017/RJ-2017-066/RJ-2017-066.pdf
+di.mod.allyear <- glmmTMB(diversity ~ init+(1|block), data=dat, ziformula=~1, family = gaussian)
+# summary(di.mod.allyear) # significant! p=0.0132 
+tab_model(di.mod.allyear, dv.labels="SDI [all years]", title = "Shannon diversity index (SDI): 2020-2022")
+
 ###### Species diversity analysis for 2020 data (Shannon diversity on transect level) 
-dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
-dat_2020 <-dat[which(dat$time=="t0"),] # just t0
-
-# Hurdle model part 1. Logistic regression to predict the probability of non-zero.
-# Ppen and log environment does determine the probability of non-zero diversity index
-# 0 Shannon diversity index =/= zero plants
-Hurd.mod.1.2020 <- glmer(non_zero ~ init + (1|block), data = dat_2020, family = binomial)
-# summary(Hurd.mod.1.2020) # significant
-
-# Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
-# We included block and time as random terms.
-# Open and log environment is significant in explaining the plant diversity in transect levels.
-# Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2.2020 <- lm(diversity ~ init, data=subset(dat_2020, non_zero == 1))
+# Hurdle model appraoch
+# Hurd.mod.1.2020 <- glmer(non_zero ~ init + (1|block), data = dat_2020, family = binomial)
+# Hurd.mod.2.2020 <- lm(diversity ~ init, data=subset(dat_2020, non_zero == 1))
 ## random effect (1|block) removed since it's close to zero
-# summary(Hurd.mod.2.2020)
-# anova(Hurd.mod.2.2020) # lmer on non-zero diversity values is significant
+# anova(Hurd.mod.2.2020)
 
-tab_model(Hurd.mod.1.2020, Hurd.mod.2.2020, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2020", file = "sdi_openlog_2020.html", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("sdi_openlog_2020.html")
+di.mod.2020 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t0"), ziformula=~1, family = gaussian)
+# summary(di.mod.2020)
+tab_model(di.mod.2020, dv.labels="SDI [2020]", title = "Shannon diversity index (SDI): 2020")
 
 # Check residual
-# residuals <- resid(Hurd.mod.2) # Extract residuals
+# residuals <- resid(di.mod.2020) # Extract residuals
 # plot(residuals, main="2020")
 # abline(0,0)
 
 ###### Species diversity analysis for 2021 data (Shannon diversity on transect level)
-dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
-dat_2021 <-dat[which(dat$time=="t1"),] # just t1
-
-# Hurdle model part 1. Logistic regression to predict the probability of non-zero.
-# Ppen and log environment does determine the probability of non-zero diversity index
-# 0 Shannon diversity index =/= zero plants
-Hurd.mod.1.2021 <- glm(non_zero ~ init, data = dat_2021, family = binomial)
+# Hurdle model appraoch
+# Hurd.mod.1.2021 <- glm(non_zero ~ init, data = dat_2021, family = binomial)
 # Random effect (1|block) removed since it's close to zero.
-# summary(Hurd.mod.1.2021) # significant
+# Hurd.mod.2.2021 <- lmer(diversity ~ init + (1|block), data=subset(dat_2021, non_zero == 1))
 
-# Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
-# We included block and time as random terms.
-# Open and log environment is significant in explaining the plant diversity in transect levels.
-# Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2.2021 <- lmer(diversity ~ init + (1|block), data=subset(dat_2021, non_zero == 1))
-# summary(Hurd.mod.2.2021)
-# anova(Hurd.mod.2.2021) # lmer on non-zero diversity values is significant
-
-tab_model(Hurd.mod.1.2021, Hurd.mod.2.2021, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2021", file = "sdi_openlog_2021.html", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("sdi_openlog_2021.html")
+di.mod.2021 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t1"), ziformula=~1, family = gaussian)
+# summary(di.mod.2021)
+tab_model(di.mod.2021, dv.labels="SDI [2021]", title = "Shannon diversity index (SDI): 2021")
 
 # Check residual
-# residuals <- resid(Hurd.mod.2) # Extract residuals
+# residuals <- resid(di.mod.2021) # Extract residuals
 # plot(residuals, main="2021")
 # abline(0,0)
 
 ###### Species diversity analysis for 2022 data (Shannon diversity on transect level) 
-dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
-dat_2022 <-dat[which(dat$time=="t2"),] # just t1
+# Hurdle model appraoch
+# Hurd.mod.1.2022 <- glmer(non_zero ~ init + (1|block), data = dat_2022, family = binomial, )
+# Hurd.mod.2.2022 <- lmer(diversity ~ init + (1|block), data=subset(dat_2022, non_zero == 1))
 
-# Hurdle model part 1. Logistic regression to predict the probability of non-zero.
-# Ppen and log environment does determine the probability of non-zero diversity index
-# 0 Shannon diversity index =/= zero plants
-Hurd.mod.1.2022 <- glmer(non_zero ~ init + (1|block), data = dat_2022, family = binomial, )
-# summary(Hurd.mod.1.2022) # significant
-
-# Hurdle model part 1. Linear mixed effect model to predict the mean of the non-zero data.
-# We included block and time as random terms.
-# Open and log environment is significant in explaining the plant diversity in transect levels.
-# Lmer was used because the distribution of non-zero data is approximally normal.
-Hurd.mod.2.2022 <- lmer(diversity ~ init + (1|block), data=subset(dat_2022, non_zero == 1))
-# summary(Hurd.mod.2.2022)
-# anova(Hurd.mod.2.2022) # lmer on non-zero diversity values is significant
-
-tab_model(Hurd.mod.1.2022, Hurd.mod.2.2022, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2022", file = "sdi_openlog_2022.html", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("sdi_openlog_2022.html")
-
+di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
+# summary(di.mod.2022)
+tab_model(di.mod.2022, dv.labels="SDI [2022]", title = "Shannon diversity index (SDI): 2022")
 
 # Check residual
 # residuals <- resid(Hurd.mod.2) # Extract residuals
 # plot(residuals, main="2022")
 # abline(0,0)
-em.0 <- as.data.frame(emmeans(Hurd.mod.2.2020, ~init, type='response')) %>% mutate(time = "2020")
-em.1 <- as.data.frame(emmeans(Hurd.mod.2.2021, ~init, type='response')) %>% mutate(time = "2021")
-em.2 <- as.data.frame(emmeans(Hurd.mod.2.2022, ~init, type='response')) %>% mutate(time = "2022")
-div.mod <- bind_rows(em.0, em.1, em.2)
+em.0 <- as.data.frame(emmeans(di.mod.2020, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "p = 0.063")
+em.1 <- as.data.frame(emmeans(di.mod.2021, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "p = 0.822")
+em.2 <- as.data.frame(emmeans(di.mod.2022, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "p < 0.001")
+div.mod <- bind_rows(em.0, em.1, em.2) %>% mutate(group1="log") %>% mutate(group2="open") 
 
 mimiscols<-c("#D66972","#108780")
 
 div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   scale_color_manual(values=mimiscols)+
-  geom_point(aes(col=init), size=2, position=position_dodge(width=0.5))+
+  geom_point(aes(col=init), size=4, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=init), position=position_dodge(width=0.5))+
   #geom_line(position=position_dodge(width=0.5))+
-  facet_wrap(vars(time))+
+  facet_wrap(vars(time), labeller = labeller(time = 
+    c("t0" = "2020",
+      "t1" = "2021",
+      "t2" = "2022")))+
   theme_bw()+
   xlab("Plot type")+
   ylab("Shannon diversity index")+
-  labs(color = "Initial Plot Type")
+  labs(color = "Initial Plot Type")+
+  theme_bw()+
+  theme(legend.position="top",panel.grid = element_blank())+
+  xlab("Plot type")+
+  ylab("Abundance")+
+  labs(color = "Initial Plot Type")+
+  geom_jitter(data=dat,
+             aes(x=init, y=diversity, color=init), 
+             height=0.1,
+             alpha=0.5) + stat_pvalue_manual(div.mod, size = 3.5, linetype = 1, y.position = 2)
 
 print(div.emmeans.plot)
 ```
@@ -621,6 +609,8 @@ group_block<-blocksum$block
 ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
 ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t0_NMS) # check fit
+ano_t0 <- anosim(assemblies_t0, blocksum$init, distance = "bray", strata=blocksum$block, permutations = 9999)
+print(ano_t0)
 
 # scores
 mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
@@ -637,7 +627,6 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # trt_tot_2<-rda(ass.rel.t0~init+block) # run model using standardized data 
 # summary(trt_tot_2)
 # anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
-
 ```
 
 ```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
@@ -648,16 +637,68 @@ var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
 plot(var.mod2, bg=c("hotpink","skyblue"),
      Xnames = c("Treatment", "Block"))
 
-
-
 # can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
 trt_Frac<-rda(ass.rel.t0, init, block) # partial rda model
-summary(trt_Frac)
+summary(trt_Frac)     
 RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.3,.3),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("MDS1 (", perc[2], "%)") 
+) 
+
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 ```
-```{r, message=TRUE, warning=TRUE, include=FALSE, paged.print=FALSE, results='markup',echo=FALSE}
+
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 # Extracting species scores and plotting 
 # Species scores
 species.scores<-as.data.frame(vegan::scores(ass.rel.t0_NMS,"species")) ## some species don't have scores
@@ -671,9 +712,7 @@ open<-mds_scores_t0[mds_scores_t0$treatment == "open", ][chull(mds_scores_t0[mds
                                                                "open", c("NMDS1", "NMDS2")]), ]
 
 hulldat<-rbind(log,open)
-```
 
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 nmds.plot<- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
@@ -729,6 +768,7 @@ for (i in 1:num_axes) {
     }
   }
 }
+
 ```
 
 
@@ -778,6 +818,8 @@ group_block<-blocksum$block
 ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
 ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 5, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t1_NMS) # check fit
+ano_t1 <- anosim(assemblies_t1, blocksum$init, distance = "bray", strata=blocksum$block, permutations = 9999)
+print(ano_t1)
 
 # scores
 mds_scores_t1<-as.data.frame(vegan::scores(ass.rel.t1_NMS)$sites) # extract scores
@@ -808,6 +850,59 @@ trt_Frac<-rda(ass.rel.t1, init, block) # partial rda model
 summary(trt_Frac) 
 RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("MDS1 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 ### extracting species scores and plotting 
 # species scores
@@ -927,6 +1022,8 @@ group_block<-blocksum$block
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
 ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t2_NMS) # check fit
+ano_t2 <- anosim(assemblies_t2, blocksum$init, distance = "bray", strata=blocksum$block, permutations = 9999)
+print(ano_t2)
 
 # scores
 mds_scores_t2<-as.data.frame(vegan::scores(ass.rel.t2_NMS)$sites) # extract scores
@@ -957,6 +1054,57 @@ trt_Frac<-rda(ass.rel.t2, init, block) # partial rda model
 summary(trt_Frac) 
 RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("MDS1 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 ### extracting species scores and plotting 
 # species scores
@@ -1082,6 +1230,8 @@ group_time<-blocksum$time
 ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
 ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 5, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t012_NMS) # check fit
+ano_t012 <- anosim(assemblies_t012, blocksum$init, distance = "bray", strata=interaction(blocksum$block, blocksum$time), permutations = 9999)
+print(ano_t012)
 
 # scores
 mds_scores_t012<-as.data.frame(vegan::scores(ass.rel.t012_NMS)$sites) # extract scores
@@ -1115,6 +1265,58 @@ trt_Frac<-rda(ass.rel.t012~ init +Condition(block + time)) # partial rda model
 summary(trt_Frac) 
 RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("MDS1 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 ### extracting species scores and plotting 
 # species scores
@@ -1188,6 +1390,8 @@ for (i in 1:num_axes) {
   }
 }
 
+```
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16,echo=FALSE}
 (plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
@@ -1254,7 +1458,7 @@ This analysis involves three types of data: (1) plant count for each species of 
 
 #### *Analysis*<br>
 
-```{r, include=TRUE, results='hold',echo=FALSE}
+```{r, warning=FALSE,message=FALSE, include=TRUE, results='hold',echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1292,7 +1496,7 @@ biplot(nutrient.pca)
 
 ###### Nutrient composition comparison between log and open
 - Organic carbon in soil is significantly higher in fallen log patches.
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE,echo=FALSE}
+```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1311,7 +1515,7 @@ nutrient <- read.csv("Nutrient.csv", header = T)
 nutrient <-separate(nutrient,2 , c("block","plot"), "_")
 nutrient <- nutrient[,2:18]
 
-Nu <- c("N", "P", "K", "C", "pH", "CEC", "conductivity")
+Nu <- c("N", "P", "K", "C", "pH", "CEC")
 
 wilcox_results <- data.frame(element = character(),
                                 w = numeric(),
@@ -1334,16 +1538,16 @@ print(wilcox_results) # only organic carbon is significantly different between t
 
 plots_list <- list()
 
-for (element in c(Nu, "C")) {
-  if (element == "C") {
-    plot <- ggplot(nutrient, aes(x = init, y = C)) +
+for (element in c(Nu)) {
+  if (element == "C" | element == "N") {
+    plot <- ggplot(nutrient, aes(x = init, y = !!rlang::sym(element))) +
       geom_boxplot() + 
       theme_bw() +
-      labs(x = NULL, y = "C") + 
+      labs(x = NULL, y = element) + 
       scale_x_discrete(labels=c('log', 'open')) +
       geom_signif(comparisons = list(c("log", "open")),
                   map_signif_level = TRUE,
-                  textsize = 5, vjust = 0.5, y_position = 1.6, tip_length = 0) + 
+                  textsize = 5, vjust = 0.5, tip_length = 0) + 
       scale_y_continuous(expand = c(0,0.1))+
       theme(
     plot.background = element_blank(),
@@ -1368,7 +1572,7 @@ for (element in c(Nu, "C")) {
   plots_list[[element]] <- plot
 }
 
-all.bp <- ggarrange(plotlist=plots_list, ncol=3, nrow=3, common.legend =TRUE, legend="bottom",align = "v")
+all.bp <- ggarrange(plotlist=plots_list, ncol=3, nrow=2, common.legend =TRUE, legend="bottom",align = "v")
 
 all.bp <- annotate_figure(all.bp, bottom = "Plot treatment")
 # Show the final plot
@@ -1376,7 +1580,7 @@ print(all.bp)
 ```
 
 ##### Abundance ~ nutrient composition 
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE,echo=FALSE}
+```{r, include=TRUE, results='hold', warning=FALSE, message=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1476,17 +1680,16 @@ mod.dredge <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, family = pois
 # vif(mod.dredge) # no collinearity
 dredge_allyear <- dredge(mod.dredge, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
 best.allyear <- glm(total~ N+ C + CEC, data = dat_t0_insitu, family = poisson)
-selected.allyear <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, family = poisson)
-tab_model(best.allyear,selected.allyear,mod.dredge, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Selected model", "Inclusive model (all years)"), transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.abun_nu_allyear.html")
+tab_model(best.allyear,mod.dredge, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020-2022]")
+# htmltools::includeHTML("mod.abun_nu_allyear.html")
 
 # only 2022 #
 mod.dredge.2022 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu,subset = (time == "t2"), family = poisson, na.action = "na.fail")
 # vif(mod.dredge.2022) # no collinearity
 dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
 best.2022 <- glm(total~ N+ P + C + CEC + conductivity, data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
-tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.abun_nu_2022.html")
+tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2022]")
+# htmltools::includeHTML("mod.abun_nu_2022.html")
 
 # only 2021 #
 mod.dredge.2021 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, subset = (time == "t1"), family = poisson ,na.action = "na.fail")
@@ -1494,16 +1697,16 @@ mod.dredge.2021 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, subset =
 dredge_2021 <- dredge(mod.dredge.2021, extra = "adjR^2")
 best.2021 <- glm(total~ K + N + P, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
 selected.2021 <- glm(total~ N+ P + K + C, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
-tab_model(best.2021, selected.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Selected model", "Inclusive model (2021)"), transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.abun_nu_2021.html")
+tab_model(best.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2021]")
+# htmltools::includeHTML("mod.abun_nu_2021.html")
 
 # only 2020 #
 mod.dredge.2020 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, subset = (time == "t0"), family = poisson,na.action = "na.fail")
 # vif(mod.dredge.2020) # no collinearity
 dredge_2020 <- dredge(mod.dredge.2020, extra = "adjR^2")
 best.2020 <- glm(total~ P + C, data = dat_t0_insitu, subset = (time == "t0"), family = poisson)
-tab_model(best.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Selected inclusive model (2020)"), transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.abun_nu_2020.html")
+tab_model(best.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020]")
+# htmltools::includeHTML("mod.abun_nu_2020.html")
 ```
 
 ##### Diversity ~ nutrient composition
@@ -1603,70 +1806,36 @@ dat_nonzerodat <- dat[dat$non_zero == 1, ]
 # 0 Shannon diversity index =/= zero plants
 
 # 2020-2022 #
-# model occurrence of zeros
-hurd.mod.1.t012 <- glmer(non_zero~ N + P + K + C + CEC + (1|time), data = dat, family = binomial,na.action = "na.fail")
-# vif(hurd.mod.1.t012) # no collinearity
-dredge_allyear <- dredge(hurd.mod.1.t012)
-best.allyear.1 <- glmer(non_zero~ N + P + K + (1|time), data = dat, family = binomial)
-selected.allyear.1 <- glmer(non_zero~ N + P + K + C + (1|time), data = dat, family = binomial)
-tab_model(best.allyear.1,selected.allyear.1,hurd.mod.1.t012, file="mod.diver_nu_allyear.html", dv.labels = c("Best model", "Selected model", "Inclusive model (all year)"), title="2020-2022: zero model")
-htmltools::includeHTML("mod.diver_nu_allyear.html")
-
-# model diversity
-hurd.mod.2.t012 <- lmer(diversity~ N + P + K + C + CEC + (1|time), data = dat, subset = (non_zero == 1),na.action = "na.fail")
-dredge_allyear <- dredge(hurd.mod.2.t012)
-best.allyear.2 <- lmer(diversity~ N + P + K + (1|time), data = dat)
-selected.allyear.2 <- lmer(diversity~ N + P + K + C + (1|time), data = dat)
-tab_model(best.allyear.2,selected.allyear.2,hurd.mod.2.t012, file="mod.diver.2_nu_allyear.html", dv.labels = c("Best model", "Selected model", "Inclusive model (all year)"), title = "2020-2022: when Shannon diversity index > 0", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver.2_nu_allyear.html")
+di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
+di.mod.t012 <- glmmTMB(diversity ~ N + P + K + C + CEC + (1|time), data=dat, ziformula=~1, family = gaussian, na.action = "na.fail")
+dredge_allyear <- dredge(di.mod.t012)
+best.allyear <- glmmTMB(diversity~ N + P + K + (1|time), data=dat, ziformula=~1, family = gaussian)
+tab_model(best.allyear, file="mod.diver_nu_allyear.html", dv.labels = c("Best model"), title="Shannon diversity index ~ soil nutrient[2020-2022]")
+# htmltools::includeHTML("mod.diver_nu_allyear.html")
 
 # 2022 #
-# model occurrence of zeros
-hurd.mod.1.t2 <- glm(non_zero~ N + P + K + C+ CEC, data = dat,subset = (time == "t2"), family = binomial,na.action = "na.fail")
-# vif(hurd.mod.1.t2) # no collinearity
-dredge_t2 <- dredge(hurd.mod.1.t2)
-best.t2.1 <- glm(non_zero~ P , data = dat, subset = (time == "t2"), family = binomial)
-tab_model(best.t2.1, hurd.mod.1.t2, file="mod.diver_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model"), title="2022: zero model", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver_nu_2022.html")
-
-# model diversity
-hurd.mod.2.t2 <- lm(diversity~ N + P + K + C + CEC, data = dat, subset = (non_zero == 1 & time == "t2" ),na.action = "na.fail")
-dredge_t2 <- dredge(hurd.mod.2.t2)
-best.t2.2 <- lm(diversity~  P , data = dat, subset = (non_zero == 1 & time == "t2"))
-tab_model(best.t2.2,hurd.mod.2.t2, file="mod.diver.2_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model"), title = "2022: when Shannon diversity index > 0", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver.2_nu_2022.html")
+dat_t2 <- dat[dat$time == "t2",]
+di.mod.2022 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t2, ziformula=~1, family = gaussian, na.action= "na.fail")
+dredge_2022 <- dredge(di.mod.2022)
+best.t2 <- glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)
+tab_model(best.t2, file="mod.diver_nu_2022.html", dv.labels = "Best model", title="Shannon diversity index ~ soil nutrient[2022]", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("mod.diver_nu_2022.html")
 
 # 2021 #
-# model occurrence of zeros
-hurd.mod.1.t1 <- glm(non_zero~ N + P + K + C+ CEC, data = dat,subset = (time == "t1"), family = binomial,na.action = "na.fail")
-# vif(hurd.mod.1.t1) # no collinearity
-dredge_t1 <- dredge(hurd.mod.1.t1)
-best.t1.1 <- glm(non_zero~ P + K + C+ CEC , data = dat,subset = (time == "t1"), family = binomial)
-tab_model(best.t1.1, hurd.mod.1.t1 ,file="mod.diver_nu_2021.html", dv.labels = c("Best model", "Selected inclusive model"), title="2021: zero model", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver_nu_2021.html")
-
-# model diversity
-hurd.mod.2.t1 <- lm(diversity~ N + P + K + C + CEC, data = dat, subset = (non_zero == 1 & time == "t1" ),na.action = "na.fail")
-dredge_t1 <- dredge(hurd.mod.2.t1)
-best.t1.2 <- lm(diversity~  P + K + C + CEC, data = dat,subset = (non_zero == 1 & time == "t1" ))
-tab_model(best.t1.2, hurd.mod.2.t1, file="mod.diver.2_nu_2021.html", dv.labels = c("Best model", "Selected inclusive model"), title = "2021: when Shannon diversity index > 0", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver.2_nu_2021.html")
+dat_t1 <- dat[dat$time == "t1",]
+di.mod.2021 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t1, ziformula=~1, family = gaussian, na.action= "na.fail")
+dredge_2021 <- dredge(di.mod.2021)
+best.t1 <- glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)
+tab_model(best.t1, file="mod.diver_nu_2021.html", dv.labels = "Best model", title="Shannon diversity index ~ soil nutrient[2021]", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("mod.diver_nu_2021.html")
 
 # 2020 #
-# model occurrence of zeros
-hurd.mod.1.t0 <- glm(non_zero~ N + P + K + C+ CEC, data = dat,subset = (time == "t0"), family = binomial,na.action = "na.fail")
-# vif(hurd.mod.1.t0) # no collinearity
-dredge_t0 <- dredge(hurd.mod.1.t0)
-best.t0.1 <- glm(non_zero~ P + K + C+ CEC , data = dat,subset = (time == "t1"), family = binomial)
-tab_model(best.t0.1, hurd.mod.1.t0 ,file="mod.diver_nu_2020.html", dv.labels = c("Best model", "Selected inclusive model"), title="2020: zero model", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver_nu_2020.html")
-
-# model diversity
-hurd.mod.2.t0 <- lm(diversity~ N + P + K + C + CEC, data = dat, subset = (non_zero == 1 & time == "t0" ),na.action = "na.fail")
-dredge_t0 <- dredge(hurd.mod.2.t1)
-best.t0.2 <- lm(diversity~  P + K + C + CEC, data = dat,subset = (non_zero == 1 & time == "t1" ))
-tab_model(best.t0.2, hurd.mod.2.t0, file="mod.diver.2_nu_2020.html", dv.labels = c("Best model", "Selected inclusive model"), title = "2020: when Shannon diversity index > 0", transform = NULL, show.est = TRUE, show.se = TRUE)
-htmltools::includeHTML("mod.diver.2_nu_2020.html")
+dat_t0 <- dat[dat$time == "t0",]
+di.mod.2020 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t0, ziformula=~1, family = gaussian, na.action= "na.fail")
+dredge_2020 <- dredge(di.mod.2020)
+best.t0 <- glmmTMB(diversity ~ CEC + K +N, data =dat_t0, ziformula=~1, family = gaussian)
+tab_model(best.t0, file="mod.diver_nu_2020.html", dv.labels = "Best model", title="Shannon diversity index ~ soil nutrient[2020]", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("mod.diver_nu_2020.html")
 ```
 
 ##### Composition ~ nutrient composition
@@ -1694,7 +1863,7 @@ library(patchwork)
 
 *2020*
 - There is no significant correlation between nutrient elements and plant composition.
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -1762,7 +1931,7 @@ assemblies_t0<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,c(90:95)]
+group_nutrient<-blocksum[,c(90:93,95)]
 
 # MDS 
 ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
@@ -1786,9 +1955,62 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 #### Redundancy analysis
 # can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t0~init+block) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t0 ~ ., data = blocksum[,c(90:93,95)]) # run model using standardized data 
 # summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# Plotting rda
+perc <- round(100*(summary(trt_tot_2)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_tot_2, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_tot_2, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_tot_2, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_tot_2)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_tot_2,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = rownames(sc_bp), 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 # Using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
@@ -1860,7 +2082,7 @@ nmds.plot.nutrient <- ggplot()+
 
 *2021*
 - There is no significant correlation between nutrient elements and plant composition.
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unidentified species.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -1928,11 +2150,11 @@ assemblies_t1<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,c(90:95)]
+group_nutrient<-blocksum[,c(90:93,95)]
 
 # MDS 
 ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
-ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 4) # run MDS 
+ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 4, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t1_NMS) # check fit
 en.nutrient = envfit(ass.rel.t1_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t1_NMS) 
@@ -1951,10 +2173,62 @@ init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 #### rda model analysis & results #### 
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t1~init+block) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t1 ~ ., data = blocksum[,c(90:93,95)]) # run model using standardized data 
 # summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# Plotting rda
+perc <- round(100*(summary(trt_tot_2)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_tot_2, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_tot_2, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_tot_2, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_tot_2)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_tot_2,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = rownames(sc_bp), 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
@@ -2040,16 +2314,16 @@ commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for
 commsub <-as.data.frame(commsub)
 commtry<-matrify(commsub) # make it an expanded species matrix 
 commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
-ncol(commtry) # how many species are we working with in our community matrix
+# ncol(commtry) # how many species are we working with in our community matrix
 
 # Store grouping row names as a column, then remove rownames.
 commtry$grps<-rownames(commtry)
 rownames(commtry)<-NULL
-names(commtry)
+# names(commtry)
 
 # Split group info into columns for each variable
 mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
-names(mat) #check
+# names(mat) #check
 
 # Set up nutrient analysis data
 nutrient <- read.csv("Nutrient.csv", header = T)
@@ -2093,7 +2367,7 @@ assemblies_t2<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,c(90:95)]
+group_nutrient<-blocksum[,c(90:93,95)]
 
 # MDS 
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
@@ -2119,10 +2393,62 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # nutri<-as.factor(group_nutrient) # this might be a mistake
 
 #### rda model analysis & results #### 
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t2~init+block) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t2 ~ ., data = blocksum[,c(90:93,95)]) # run model using standardized data 
 # summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# Plotting rda
+perc <- round(100*(summary(trt_tot_2)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_tot_2, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_tot_2, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_tot_2, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_tot_2)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_tot_2,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = rownames(sc_bp), 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
@@ -2260,7 +2586,7 @@ assemblies_t012<-blocksum[,c(1:87)]
 group_init<-blocksum$init
 group_block<-blocksum$block
 group_time<-blocksum$time
-group_nutrient<-blocksum[,c(91:96)]
+group_nutrient<-blocksum[,c(91:94,96)]
 
 # MDS 
 ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
@@ -2286,10 +2612,62 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 time<-as.factor(group_time)
 
 #### rda model analysis & results #### 
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t012~init+block+time) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t012 ~ ., data = blocksum[,c(91:94,96)]) # run model using standardized data 
 # summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+# Plotting rda
+perc <- round(100*(summary(trt_tot_2)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_tot_2, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_tot_2, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_tot_2, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_tot_2)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_tot_2,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.3,.3), 
+     ylim = c(-.5,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
+) 
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+
+text(sc_si, # adjust text coordinates to avoid overlap with points 
+     labels = sc_si$block, 
+     col = "white", 
+     font = 2, # bold
+     cex = 0.6)
+
+legend("topleft",  legend=c("log", "open"),
+       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] , 
+     labels = rownames(sc_bp), 
+     col = "black", 
+     cex = 1, 
+     font = 2)
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
