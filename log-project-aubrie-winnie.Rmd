@@ -83,7 +83,7 @@ The sets of data that we have collected for this arm of the project are the foll
 - These data are available from 2020 (before the experiment began), 2021 (one year into the experiment), and 2022 (two years into the experiment)
 
 (2) Soil nutrient analysis in the open and insitu log plots.<br>
-- In 2022, we sampled 14 samples taken from one insitu_open plot and one insitu_log plot from each of the seven blocks. At each plot, three soil cores from random positions were collected by inserting a Hamilton tree planter into a depth of 5 cm. Particularly in insitu_log plots, soil cores were removed within a five-centimeter zone adjacent to the wood debris. Between each extraction, all tools were sterilised with 80% ethanol to prevent cross contamination. Soil cores from each plot were then mixed, cooled and immediately transported to a commercial laboratory (CSBP laboratories). Nutrient analysis was conducted at CSBP laboratories to determine soil pH, organic C, P, K, inorganic nitrogen (NO3- and NO4+) and basic exchangeable cations (Ca, Mg, Na and K). All basic exchangeable cations were summed together and labelled as "CEC".
+- In 2022, we sampled 14 soil samples taken from one insitu_open plot and one insitu_log plot from each of the seven blocks. At each plot, three 5-cm deep soil cores from random positions were collected with the use of a Hamilton tree planter. Particularly in insitu_log plots, soil cores were removed within a five-centimeter zone adjacent to the coarse wood debris. Between each extraction, all tools were sterilised with 80% ethanol to prevent cross contamination. Soil cores from each plot were then mixed, cooled and immediately transported to a commercial laboratory (CSBP laboratories). Nutrient analysis was conducted at CSBP laboratories to determine soil pH, organic C, P, K, inorganic nitrogen (NO3- and NO4+) and basic exchangeable cations (Ca, Mg, Na and K). All basic exchangeable cations were summed together and labelled as "CEC".
 
 (3) Performance data of TROR, TRCY, and TROR. <br>
 - In 2021, the only performance data that were collected after sowing the experiment were the **total number of plants that came up and survived to fruiting for each species in each location, their total biomass, and their per capita biomass**. I calculated per capita biomass by dividing total biomass of the collected focal plants by the number of focal plants observed. This was because of logistical issues due to covid. In this dataset, there were two instances where the number of plants collected was greater than the number of seeds sown. Both instances were T. cyanopetala, where nplants = 16 and 18. For these two datapoints I chose to convert the count values to 15, assuming that every individual we planted came up, and that the extra were either naturally occurring seeds or that the number of seeds that we put into the ground was greater than 15 (human error). To calculate total biomass for these two instances, I divided the total biomass by the number of individuals observed, and multiplied by 15. <br>
@@ -96,71 +96,65 @@ The sets of data that we have collected for this arm of the project are the foll
 #### *Overview of results* <br> 
 Quick recap:
 
-- Plant abundance did not differ between log and open patches every year.
-- Plant diversity is higher in log patches in 2022. When pulling data from 2020-2022 together, plant diversity and likelihood of having positive Shannon diversity index are higher in log patches.
-- Plot type (log vs open) explained a relatively small portion of the variance in plant species composition across plots ranging from 6-12% across years. Visually, the composition of plants tends to consistently differ between plot types in the non-dimensional space.
+1.    Plant abundance does not differ between log and open plots across all years. 
 
-To compare the characteristic of plant communities in fallen log patches and open patches, we assessed differences in plant abundance, diversity using the Shannon diversity index, and plant composition summarized at the transect level. The analysis is organized by year - we first analysed plot level community data that was compiled from 2020 to 2022. In other words, each row in the data set represents an individual plot from a specific year. After that, we analysed plot level data from 2020, 2021, and 2022 separately. Next, we analysed the plot level data for each year separately: 2020, 2021, and 2022. This resulted in four levels of analysis: 1. 2020-2022 composite data, 2. 2020 data, 3. 2021 data, and 4. 2022 data. For each year, we evaluated three response variables: abundance, diversity, and plant composition.
+2.    Plant diversity is higher in log patches in 2022 but no significant difference was detected in 2020 and 2021.
 
-*2020-2022*
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and truncated-Gaussian distributiobns), and composition matrix.
+3.    Plot type (log vs open) explains a near-zero portion of the variance in plant species composition across plots across years.
 
-1.	*Abundance* – the abundance of plants in log patches and open patches that are similar (treatment: p > 0.05). The presented model has a structure of “count ~ treatment(log/open) + (1|block) + (1|year)”.
-2.	*Diversity* – the probability of having a positive Shannon diversity index in the plant community is lower in open patches by 6.04% (treatment: p = 0.03). The plant diversity, as measured by the Shannon diversity index, is higher in log patches by 0.09 units (treatment: p = 0.02). The presented model has a structure of “diversity ~ treatment(log/open) + (1|block) + (1|year)”.
-3.	*Composition* – the five-dimensional NMDS ordination has stress values of 9%, which suggests a fairly good fit for the ordinations. Each two-dimensional NMDS plot can be separated into two groups that overlap - fallen log patches and open patches. In the nondimensional space, the relative position of log plots tend to consistently deviate away from open plots. This can be interpreted as a turnover in species composition at the scale of the plot type. At the same time, relative position of plots sampled from the same block are typically close to each other in nondimensional space, reflecting the similarity of plant communities at a greater spatial level (i.e. block). 
-
-Adjusted R2 of the partial RDA is 5.62%. The conditioned terms Block and Year accounted for 44.3% of variations in species composition. Plot type (constrained term) accounted for about 6% of variations in species composition. 49.6% of variation is unexplained (unconstrained).
+To compare the characteristic of plant communities in fallen log patches and open patches, we assessed differences in plant abundance, diversity using the Shannon diversity index, and plant composition summarized at the transect level. The analysis is organized by year - we analysed the plot-level community data for each year separately: 2020, 2021, and 2022. In other words, each row in the data set represents an individual plot from a specific year. In these analyses, we evaluated three response variables: abundance, diversity, and plant composition.
 
 *2020*
 
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
+There are three response variables: count (Poisson), Shannon diversity index (zero-inflated glmer with Gaussian), and composition matrix.
 
-1.	*Abundance* – the abundance of plants in log patches and open patches that are similar (treatment: p > 0.05). The presented model has a structure of “count ~ treatment(log/open) + (1|block)”.
-2.	*Diversity* – the plant diversity and the probability of having a positive Shannon diversity index in the plant community between log and open patches are similar (treatment: p > 0.05).  The presented model has a structure of “diversity ~ treatment(log/open) + (1|block)”.
-3.	*Composition* – the four-dimensional NMDS ordination has stress values of 4.8%, which suggests a very good fit for the ordinations. Similar discussion as in *2020-2022*.
+1.	*Abundance* – No difference in total plant count between log patches and open patches (p = 0.355). Model: total count ~ treatment(log/open) + (1|block).
 
-Adjusted R2 of the partial RDA is 8.5%. The conditioned term, Block, accounted for 69.6% of variations in species composition. Plot type (constrained term) accounted for about 8.3% of variations in species composition. 22.6% of variation is unexplained (unconstrained).
+2.	*Diversity* – Plant diversity (SDI) is marginally lower in open patches than log patches (p = 0.063). Model: diversity ~ treatment(log/open) + (1|block) with zero-inflation terms=~1
+
+3.	*Composition* – Partial rda partitions variance in plant composition by R-squared. As expressed by the constrained term, 'treatment' (p = .001) explains only 1.36% of variations in plant composition. The conditional term 'block' explains 9.17% of variance in plant composition. 89.5% of the variance in plant composition remains unexplained in unconstrained terms. The analysis of variation partitioning uses an adjusted R-squared method to express the variance explained by the explanatory matrix. The variable 'treatment' alone explains about 1% of the total variance, while the 'block' explains roughly 7% of the variance.  Note that the shared fraction in the Venn diagram is not shown as it is negative, likely due to 'treatment' being a suppressor variable with a close-to-zero relationship to plant composition. (Read: https://www.jstor.org/stable/20069271). In a parallel set of analyses, the 4-D NMDS ordination has stress values of 4.8%, suggesting a good fit of ordination. ANOSIM indicates no difference in plant composition between open and log plots (P = 0.5985). 
 
 *2021*
 
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
+There are three response variables: count (Poisson), Shannon diversity index (zero-inflated glmer with Gaussian), and composition matrix.
 
-1.	*Abundance* – the abundance of plants in log patches and open patches that are similar (treatment: p > 0.05). The presented model has a structure of “count ~ treatment(log/open) + (1|block)”.
-2.	*Diversity* – the plant diversity and the probability of having a positive Shannon diversity index in the plant community between log and open patches are similar (treatment: p > 0.05).  The presented model has a structure of “diversity ~ treatment(log/open) + (1|block)”. 
-3.	*Composition* – The five-dimensional NMDS ordination has stress values of 4.1%, which suggests a very good fit for the ordinations. Similar discussion as in *2020-2022*.
+1.	*Abundance* – No difference between total plant count between log patches and open patches (p = 0.322). Model: total count ~ treatment(log/open) + (1|block).
 
-Adjusted R2 of the partial RDA is 11.9%. The conditioned term, Block, accounted for 53.7% of variations in species composition. Plot type (constrained term) accounted for about 12.1% of variations in species composition. 34.2% of variation is unexplained (unconstrained).
+2.	*Diversity* – No difference in plant diversity (SDI) between open patches and log patches (p = 0.822). Note that the zero-inflated model has a significant constant term. Model: diversity ~ treatment(log/open) + (1|block) with zero-inflation terms=~1
+
+3.	*Composition* – As expressed by the constrained term, 'treatment' (p = .01) explains only 2.15% of variations in plant composition. The conditional term 'block' explains 13.5% of variance in plant composition. 84.4% of the variance in plant composition remains unexplained in unconstrained terms. In terms of adjusted R-squared, the Venn diagram shows that 'treatment' alone explains about 1% and 'block' explains roughly 7% of the total variance in plant composition. Similarly, 'treatment' is likely to be a suppressor. In a parallel set of analyses, the 5-D NMDS ordination has stress values of 4.1%, suggesting a very good fit of ordination. ANOSIM indicates a significant difference in plant composition between open and log plots (P = 0.0088) but the magnitude of difference is rather small (R = 0.28 - ratio of dissimilarity in plant composition between log and open plot types).
 
 *2022*
 
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
+There are three response variables: count (Poisson), Shannon diversity index (zero-inflated glmer with Gaussian), and composition matrix.
 
-1.	*Abundance* – the abundance of plants in log patches and open patches that are similar (treatment: p > 0.05). The presented model has a structure of “count ~ treatment(log/open) + (1|block)”.
-2.	*Diversity* – the probability of having a positive Shannon diversity index in the plant community between log and open patches are similar (treatment: p > 0.05).  The plant diversity, as measured by the Shannon diversity index, higher in log patches by 0.24 units (treatment: p = 0.007). The presented model has a structure of “diversity ~ treatment(log/open) + (1|block)”. 
-3.	*Composition* – The five-dimensional NMDS ordination has stress values of 4%, which suggests a very good fit for the ordinations. Similar discussion as in *2020-2022*.
+1.	*Abundance* – No difference between total plant count between log patches and open patches (p = 0.322). Model: total count ~ treatment(log/open) + (1|block).
 
-Adjusted R2 of the partial RDA is 11.0%. The conditioned term, Block, accounted for 55.7% of variations in species composition. Plot type (constrained term) accounted for about 11.4% of variations in species composition. 33.0% of variation is unexplained (unconstrained).
+2.	*Diversity* – Plant diversity (SDI) is significantly lower in open patches than log patches (p < 0.001). Model: diversity ~ treatment(log/open) + (1|block) with zero-inflation terms=~1
 
-#### *Statistical Methods* <br>
-1.	Abundance comparison
+3.	*Composition* – As expressed by the constrained term, 'treatment' (p = 0.002) explains only 3.08% of variations in plant composition. The conditional term 'block' explains 12.7% of variance in plant composition. 84.2% of the variance in plant composition remains unexplained in unconstrained terms. In terms of adjusted R-squared, the Venn diagram shows that 'treatment' alone explains about 2% and 'block' explains roughly 6% of the total variance in plant composition. Similarly, 'treatment' is likely to be a suppressor. In a parallel set of analyses, the 4-D NMDS ordination has stress values of 4%, suggesting a very good fit of ordination. ANOSIM indicates a significant difference in plant composition between open and log plots (P = 0.0017) but the magnitude of difference is rather small (R = 0.31 - ratio of dissimilarity in plant composition between log and open plot types). 
 
-Comparison of plant abundance between log patches and open patches involves two types of data: (1) plant counts of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant counts from insitu_log and insitu_open plots in 2021 and 2022 respectively. All count data used for abundance comparison includes species with unknown identity. We used a generalized linear mixed-effects model (GLMER) to model the abundance of plant individuals (2020, 2021 and 2022 data) in unaltered fallen log patches and open patches using a Poisson distribution structure with block as random terms. When pulling count data from 2020 to 2022 together, we included time as a random term to avoid pseudo-replication.
+#### *Statistical Methods* <br> 
 
-2.	Diversity comparison
+1.	Abundance comparison 
 
-A 20-centimeter linear transect was set up for each plot in 2020. We recorded species identity and individual counts for all species occurring along the transects in 2020, 2021 and 2022 respectively. Comparison of plant diversity between log patches and open patches involves two types of data: (1) plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. 
+Comparison of plant abundance between log and open plots involves two types of data: (1) the total plant counts of individual plots of all plots in 2020 before the experiment set up, which includes two initial treatments - "log" and "open"; and (2) the total plant counts from insitu_log and insitu_open plots in 2021 and 2022 respectively. All count data used for abundance comparison includes species with unknown identity. We used a generalized linear mixed-effects model (GLMER) to model the abundance of plant individuals (2020, 2021 and 2022 data) in unaltered fallen log patches and open patches using a Poisson distribution structure with 'block' as a random term. 
 
-We used the Shannon diversity index to calculate the plant species diversity for each transect at the plot level.  A considerable number of zeros are generated in the computation of the Shannon diversity index. We first tried modelling diversity data with a linear mixed-effect model (LMER) assuming a Gaussian distribution. The resulting model was zero-inflated as testing with DHARMa.
+2.	Diversity comparison 
 
-As a solution, we used a two-component hurdle model on the truncated data set where the response diversity index was separated into zero and non-zero values. In the first component, we used a binomial GLMER to model the probability of zeros and non-zeros in the diversity index with blocks as random terms. For the second component, we assumed an approximate Gaussian distribution of the non-zero Shannon index and used a linear mixed-effects regression (LMER) to model the response non-zero diversity index with treatment as a fixed effect (log vs open) and block as a random factor. Specifically, for the hurdle model on composite diversity data (2020 to 2022), we also included year as a random factor. 
+ A 20-centimeter linear transect was set up for each plot in 2020. We recorded species identity and individual counts for all species occurring along the transects in 2020, 2021 and 2022 respectively. Comparison of plant diversity between log and open patches involves two types of data: 1. The count of plants for each species in individual plots of all plots in the year 2020, before the experiment setup. The data is differentiated based on the initial treatment of "log" and "open". 2. The count of plants for each species in individual plots from insitu_log and insitu_open plots in the years 2021 and 2022, respectively. All species with unknown identity have been excluded from the data used for diversity comparison. 
 
-3.	Composition
+The diversity of plants in each community (i.e. plot) was measured by Shannon diversity index (SDI). The distribution of SDI values is zero-inflated as testing with DHARMa. Note that a zero SDI could mean 0 plant in a community or one species without any neighbours. To account for the zero inflation, we used glmmTMB to model the diversity of plant community. We assumed that zeros are generated by different mechanisms in our model and the probability of having an extra zero is uniform for all observations by setting zi=~1. 
 
-Comparison of plant composition between log patches and open patches involves two types of data: (1) plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. For transects where no plants were found, an artificial species, "x," was added to the species composition matrix to represent zero plants.
+3.	Composition 
 
-We used Non-Metric Dimensional Scaling (NMDS) to analyse the differences in plant communities with Bray-Curtis dissimilarity metrics. We retained two dimensions in the NMDS ordination plot for the visualization and interpretation of plant community composition differences between plot types and blocks. 
+Comparison of plant composition between log patches and open patches involves two types of data: 1. The count of plants for each species in individual plots of all plots in the year 2020, before the experiment setup. The data is differentiated based on the initial treatment of "log" and "open". 2. The count of plants for each species in individual plots from insitu_log and insitu_open plots in the years 2021 and 2022, respectively. All data used for diversity comparison excludes species with unknown identity. For transects where no plants were found, an artificial species, "x," was added to the species composition matrix to represent zero plants. Data is structured at the plot level with each row representing the composition of plant species in an individual plot. There are 223 plots in 2020, 86 plots in 2021, and 84 plots in 2022, evenly nested in 7 blocks. 
 
-To identify the contribution of each species to the compositional changes amongst different sample plots, we extracted ordination scores for each species along NMDS axes 1 and 2. The species scores represent the weighted average of a species’ abundance score in a sample community along our selected NMDS axes. We also ran a partial Redundancy Analysis (RDA) to test the correlation between species composition (squared-root transformed) and plot type (log vs open patch) with block as a random term.
+We compared plant species composition between plot treatments (i.e. open vs log) with two separate streams of analyses (1) partial Redundancy Analysis (RDA) + permutation test (ANOVA.acc)+ variation partioning analysis (Venn diagram) and (2) NMDS + ANOSIM (Analysis of Similarities). 
+
+(3.1) We ran a partial Redundancy Analysis (RDA) to test the correlation between species composition (squared-root transformed) and plot treatment (log vs open patch) with 'block' as a conditional term. The effect of plot treatment on plant species composition was adjusted for the covariate 'block'. Significance of model and 'treatment' term were tested with a permutation test (anova.cca function from vegan package). Variation in plant composition explained by plot treatment and block were partitioned and reported in an adjusted R-squared value in a Venn diagram. 
+
+(3.2) Alternatively, we used Non-Metric Dimensional Scaling (NMDS) to analyse the differences in plant communities with Bray-Curtis dissimilarity metrics. For each combination of NMDS axes generated, we plotted a two-dimensional NMDS ordination plot to visualize and interpret the relative position of plant community between plot types and blocks. To better understand the contribution of each species to the compositional changes, we extracted and plotted the ordination scores for each species along each respective NMDS axis. These scores represent the weighted average of a species' abundance score in a sample community along each selected NMDS axes. To further test the degree of similarity in plant species composition between plot treatment types, we used the ANOSIM function, and the resulting R-statistic value depicts the proportion of dissimilarity. 
 
 #### *Analysis*<br>
 ##### Abundance analysis
@@ -440,9 +434,9 @@ dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
 
 # zi model using glmmTMB with Gaussian link
 # https://journal.r-project.org/archive/2017/RJ-2017-066/RJ-2017-066.pdf
-di.mod.allyear <- glmmTMB(diversity ~ init+(1|block), data=dat, ziformula=~1, family = gaussian)
+# di.mod.allyear <- glmmTMB(diversity ~ init+(1|block), data=dat, ziformula=~1, family = gaussian)
 # summary(di.mod.allyear) # significant! p=0.0132 
-tab_model(di.mod.allyear, dv.labels="SDI [all years]", title = "Shannon diversity index (SDI): 2020-2022")
+# tab_model(di.mod.allyear, dv.labels="SDI [all years]", title = "Shannon diversity index (SDI): 2020-2022")
 
 ###### Species diversity analysis for 2020 data (Shannon diversity on transect level) 
 # Hurdle model appraoch
@@ -567,9 +561,146 @@ mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
 names(mat) #check
 ```
 
-Composition dissimilarity * 2020 *
+Composition dissimilarity *2020*
 
-```{r, message=TRUE, warning=TRUE, include=FALSE, paged.print=FALSE, results='markup',echo=FALSE}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t0"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t0<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+
+# MDS 
+ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+# Redundancy analysis
+# can test for significance of contribution of the fraction of initial treatment
+# can look at significance of model where initial treatment and block explain variation in community
+trt_Frac<-rda(ass.rel.t0~init+Condition(block)) # run model using standardized data 
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac) #explanatory power
+
+result.df.t0 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("rda(formula = ass.rel.t0 ~ init + Condition(block)) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia  = c(" ", 0.86477, 0.07929, 0.01176, 0.77372),
+  Proportion = c("",1.00000, 0.09169, 0.01360, 0.89471),
+  Note = c(" ", "adj.r.squared = 0.009696575", "Variance explained by 'block'","Variance explained by 'treatment'", "Unexplained variance"),
+  Permutation_test = c("Model signif. = ***", "treatment", "Residual", " ", ""),
+  Df = c(" ", 1,215,"", ""),
+  Variance = c(" ", 0.01176, 0.77372,"", ""),
+  F = c(" ", 3.2671, " ", " ", " "),
+  P = c(" ", "0.001 ***", " ", " ", "")
+  )
+knitr::kable(result.df.t0, "simple")
+
+# Using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
+
+plot(var.mod2, bg=c("hotpink","skyblue"),
+     Xnames = c("Treatment", "Block"))
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp <- as.data.frame(sc_bp)
+sc_bp <- sc_bp[1,1:2]
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.2,.2), 
+     ylim = c(-.3,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("PC1 (", perc[2], "%)") 
+) 
+
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+block_levels <- as.numeric(factor(sc_si$block))
+sc_si$treatment <- as.factor(sc_si$treatment)
+points(sc_si, 
+       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
+       pch = block_levels, # Adding 1 to shift block levels to start from 1
+       cex = 0.8)
+ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
+         col =c("#63A088", "#56638A"),
+         draw = 'polygon')
+
+legend("topright", 
+       legend = c("log", "open"), 
+       col = c("#63A088", "#56638A"),
+       title = "Treatment",
+       pch = 20,  # Don't include point shapes
+       cex = 0.8,
+       box.lty=0)
+
+# Create legend for point shape
+legend("right",
+       legend = unique(sc_si$block),
+       pch = unique(block_levels),
+       title = "Block",
+       col = "black",  # Black color for legend text
+       pt.cex = 1.5,
+       cex = 0.8,
+       box.lty=0,
+      xjust = 0)
+
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] +0.08, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2], 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
+
+
+```
+
+
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -609,8 +740,7 @@ group_block<-blocksum$block
 ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
 ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t0_NMS) # check fit
-ano_t0 <- anosim(assemblies_t0, blocksum$init, distance = "bray", strata=blocksum$block, permutations = 9999)
-print(ano_t0)
+ano_t0 <- anosim(assemblies_t0, blocksum$init, distance = "bray", permutations = 9999)
 
 # scores
 mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
@@ -622,91 +752,6 @@ mds_scores_t0$block<-group_block # grouping factor 2
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 
-#### Redundancy analysis
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t0~init+block) # run model using standardized data 
-# summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
-```
-
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
-
-# Using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
-
-plot(var.mod2, bg=c("hotpink","skyblue"),
-     Xnames = c("Treatment", "Block"))
-
-# can test for significance of contribution of the fraction of initial treatment
-# do this with partial redundancy analysis
-trt_Frac<-rda(ass.rel.t0, init ,block)# partial rda model
-# summary(trt_Frac)     
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
-result.df.t0 <- data.frame(
-  stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("Call:rda(X = ass.rel.t0, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia = c("", 0.42624, 0.29429, 0.03551, 0.09643),
-  Proportion = c("",1.00000, 0.69045, 0.08332, 0.22624),
-  Note = c("Model signif. = *", "R2 = 0.08471055", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
-  )
-knitr::kable(result.df.t0, format = "html")
-
-# Plotting rda
-perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
-sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
-# site
-sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
-sc_si<-as.data.frame(sc_si) # extract scores
-sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
-sc_si$treatment<-group_init # grouping factor 1 
-sc_si$block<-group_block # grouping factor 2 
-sc_si$treatment <- as.factor(sc_si$treatment)
-
-plot(trt_Frac,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.3,.3),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("MDS1 (", perc[2], "%)") 
-) 
-
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
-
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
-
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = "open", 
-     col = "black", 
-     cex = 1, 
-     font = 2)
-```
-
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 # Extracting species scores and plotting 
 # Species scores
 species.scores<-as.data.frame(vegan::scores(ass.rel.t0_NMS,"species")) ## some species don't have scores
@@ -779,14 +824,149 @@ for (i in 1:num_axes) {
 
 ```
 
-
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=10, fig.height=12,echo=FALSE}
-((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
+print(ano_t0)
+((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2020] Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
 ```
 
-Composition dissimilarity * 2021 *
+Composition dissimilarity *2021*
 
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+# head(nublock)
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t1<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+
+# MDS 
+ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+# redundancy analysis
+trt_Frac<-rda(ass.rel.t1~init+ Condition(block)) # run model using standardized data 
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+
+result.df.t1 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("rda(formula = ass.rel.t1 ~ init + Condition(block))", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia  = c(" ", 0.82992, 0.11182, 0.01785, 0.70025),
+  Proportion = c("",1.00000, 0.13473, 0.02151, 0.84376),
+  Note = c(" ", "adj.r.squared = 0.01150461", "Variance explained by 'block'","Variance explained by 'treatment'", "Unexplained variance"),
+  Permutation_test = c("Model signif. = **", "treatment", "Residual", " ", ""),
+  Df = c(" ", 1,78,"", ""),
+  Variance = c(" ", 0.01785, 0.70025,"", ""),
+  F = c(" ", 1.9885, " ", " ", " "),
+  P = c(" ", "0.01 **", " ", " ", "")
+  )
+knitr::kable(result.df.t1, "simple")
+
+# can model using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"),
+     Xnames = c("Treatment", "Block"))
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp <- as.data.frame(sc_bp)
+sc_bp <- sc_bp[1,1:2]
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.2,.2), 
+     ylim = c(-.3,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("PC1 (", perc[2], "%)") 
+) 
+
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+block_levels <- as.numeric(factor(sc_si$block))
+sc_si$treatment <- as.factor(sc_si$treatment)
+points(sc_si, 
+       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
+       pch = block_levels, # Adding 1 to shift block levels to start from 1
+       cex = 0.8)
+ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
+         col =c("#63A088", "#56638A"),
+         draw = 'polygon')
+
+legend("topright", 
+       legend = c("log", "open"), 
+       col = c("#63A088", "#56638A"),
+       title = "Treatment",
+       pch = 20,  # Don't include point shapes
+       cex = 0.8,
+       box.lty=0)
+
+# Create legend for point shape
+legend("right",
+       legend = unique(sc_si$block),
+       pch = unique(block_levels),
+       title = "Block",
+       col = "black",  # Black color for legend text
+       pt.cex = 1.5,
+       cex = 0.8,
+       box.lty=0,
+      xjust = 0)
+
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2], 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
+```
+
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -826,8 +1006,7 @@ group_block<-blocksum$block
 ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
 ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 5, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t1_NMS) # check fit
-ano_t1 <- anosim(assemblies_t1, blocksum$init, distance = "bray", strata=blocksum$block, permutations = 9999)
-print(ano_t1)
+ano_t1 <- anosim(assemblies_t1, blocksum$init, distance = "bray", permutations = 9999)
 
 # scores
 mds_scores_t1<-as.data.frame(vegan::scores(ass.rel.t1_NMS)$sites) # extract scores
@@ -838,88 +1017,6 @@ mds_scores_t1$block<-group_block # grouping factor 2
 # explaining factors
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
-
-#### rda model analysis & results #### 
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t1~init+block) # run model using standardized data 
-# summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
-```
-
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
-# can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"),
-     Xnames = c("Treatment", "Block"))
-
-## can test for significance of contribution of the fraction of initial treatment
-# do this with partial redundancy analysis
-trt_Frac<-rda(ass.rel.t1, init, block) # partial rda model
-# summary(trt_Frac) 
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
-
-result.df.t1 <- data.frame(
-  stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("Call:rda(X = ass.rel.t1, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia = c("", 0.53262, 0.28621, 0.06436, 0.18206),
-  Proportion = c("",1.00000, 0.5373, 0.1208, 0.3418),
-  Note = c("Model signif. = .", "R2 = 0.1186067", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
-  )
-knitr::kable(result.df.t1, format = "html")
-
-# Plotting rda
-perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
-sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
-# site
-sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
-sc_si<-as.data.frame(sc_si) # extract scores
-sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
-sc_si$treatment<-group_init # grouping factor 1 
-sc_si$block<-group_block # grouping factor 2 
-sc_si$treatment <- as.factor(sc_si$treatment)
-
-plot(trt_Frac,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("MDS1 (", perc[2], "%)") 
-) 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
-
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
-
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
-
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = "open", 
-     col = "black", 
-     cex = 1, 
-     font = 2)
 
 ### extracting species scores and plotting 
 # species scores
@@ -994,12 +1091,149 @@ for (i in 1:num_axes) {
 ```
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16,echo=FALSE}
-(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
+print(ano_t1)
+(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("[2021] Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
 ```
 
-Composition dissimilarity * 2022 *
+Composition dissimilarity *2022*
 
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+
+# want to sum across transects in same block X init treatment
+nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
+# head(nublock)
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t2<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+
+# MDS 
+ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+# redundancy analysis
+trt_Frac<-rda(ass.rel.t2~init+ Condition(block)) # run model using standardized data 
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+
+result.df.t2 <- data.frame(
+  stringsAsFactors = FALSE,
+  Partitioning_of_variance = c("rda(formula = ass.rel.t2 ~ init + Condition(block))", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia  = c(" ", 0.81670, 0.10345, 0.02511, 0.68814),
+  Proportion = c("",1.00000, 0.12667, 0.03075, 0.84259),
+  Note = c(" ", "adj.r.squared = 0.02119015", "Variance explained by 'block'","Variance explained by 'treatment'", "Unexplained variance"),
+  Permutation_test = c("Model signif. = **", "treatment", "Residual", " ", ""),
+  Df = c(" ", 1,76,"", ""),
+  Variance = c(" ", 0.02511, 0.68814,"", ""),
+  F = c(" ", 2.7732, " ", " ", " "),
+  P = c(" ", "0.002 **", " ", " ", "")
+  )
+knitr::kable(result.df.t2, "simple")
+# can model using varpart to look at contributions of initial treatment and block
+var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
+plot(var.mod2, bg=c("hotpink","skyblue"),
+     Xnames = c("Treatment", "Block"))
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp <- as.data.frame(sc_bp)
+sc_bp <- sc_bp[1,1:2]
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+plot(trt_Frac,
+     scaling = 1, # set scaling type 
+     type = "none", # this excludes the plotting of any points from the results
+     frame = FALSE,
+     # set axis limits
+     xlim = c(-.2,.2), 
+     ylim = c(-.3,.5),
+     # label the plot (title, and axes)
+     main = "Triplot RDA - scaling 1",
+     xlab = paste0("RDA1 (", perc[1], "%)"), 
+     ylab = paste0("PC1 (", perc[2], "%)") 
+) 
+
+text(sc_sp, # adjust text coordinates to avoid overlap with points 
+     labels = rownames(sc_sp), 
+     col = "grey40", 
+     font = 2, # bold
+     cex = 0.6)
+
+block_levels <- as.numeric(factor(sc_si$block))
+sc_si$treatment <- as.factor(sc_si$treatment)
+points(sc_si, 
+       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
+       pch = block_levels, # Adding 1 to shift block levels to start from 1
+       cex = 0.8)
+ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
+         col =c("#63A088", "#56638A"),
+         draw = 'polygon')
+
+legend("topright", 
+       legend = c("log", "open"), 
+       col = c("#63A088", "#56638A"),
+       title = "Treatment",
+       pch = 20,  # Don't include point shapes
+       cex = 0.8,
+       box.lty=0)
+
+# Create legend for point shape
+legend("right",
+       legend = unique(sc_si$block),
+       pch = unique(block_levels),
+       title = "Block",
+       col = "black",  # Black color for legend text
+       pt.cex = 1.5,
+       cex = 0.8,
+       box.lty=0,
+      xjust = 0)
+
+# add arrows for effects of the expanatory variables
+arrows(0,0, # start them from (0,0)
+       sc_bp[,1], sc_bp[,2], # end them at the score value
+       col = "black", 
+       lwd = 2)
+# add text labels for arrows
+text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2], 
+     labels = "open", 
+     col = "black", 
+     cex = 1, 
+     font = 2)
+
+```
+
+
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
 mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -1039,8 +1273,7 @@ group_block<-blocksum$block
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
 ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t2_NMS) # check fit
-ano_t2 <- anosim(assemblies_t2, blocksum$init, distance = "bray", strata=blocksum$block, permutations = 9999)
-print(ano_t2)
+ano_t2 <- anosim(assemblies_t2, blocksum$init, distance = "bray", permutations = 9999)
 
 # scores
 mds_scores_t2<-as.data.frame(vegan::scores(ass.rel.t2_NMS)$sites) # extract scores
@@ -1051,86 +1284,27 @@ mds_scores_t2$block<-group_block # grouping factor 2
 # explaining factors
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
-```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
-#### rda model analysis & results #### 
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t2~init+block) # run model using standardized data 
-# summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t0"),]
+mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
 
-# can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"),
-     Xnames = c("Treatment", "Block"))
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
 
-## can test for significance of contribution of the fraction of initial treatment
-# do this with partial redundancy analysis
-trt_Frac<-rda(ass.rel.t2, init, block) # partial rda model
-# summary(trt_Frac) 
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
 
-result.df.t2 <- data.frame(
-  stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("Call:rda(X = ass.rel.t2, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia = c("", 0.53400, 0.29726, 0.06081, 0.17593),
-  Proportion = c("",1.00000, 0.5567, 0.1139, 0.3295),
-  Note = c("Model signif. = .", "R2 = 0.1095098", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
-  )
-knitr::kable(result.df.t2, format = "html")
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t0<-nublock[,c(1:87)]
 
-# Plotting rda
-perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
-sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
-# site
-sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
-sc_si<-as.data.frame(sc_si) # extract scores
-sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
-sc_si$treatment<-group_init # grouping factor 1 
-sc_si$block<-group_block # grouping factor 2 
-sc_si$treatment <- as.factor(sc_si$treatment)
-
-plot(trt_Frac,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("MDS1 (", perc[2], "%)") 
-) 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
-
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = "open", 
-     col = "black", 
-     cex = 1, 
-     font = 2)
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
 
 ### extracting species scores and plotting 
 # species scores
@@ -1210,12 +1384,12 @@ for (i in 1:num_axes) {
 ```
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12,echo=FALSE}
-((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
+print(ano_t2)
+((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2022] Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
 ```
 
-Composition dissimilarity * 2020 - 2022 *
-
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
+# Composition dissimilarity * 2020 - 2022 *
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat3 <- mat[which(mat$time=="t0" |  mat$treatment=="open" | mat$treatment=="insitu_log"),]
 mat3$grp<-apply(mat3[c(88,89,91)], 1, paste, collapse=":") # block, init as grouping
@@ -1270,15 +1444,9 @@ mds_scores_t012$time<-group_time # grouping factor 3
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 time<-as.factor(group_time)
-
-#### rda model analysis & results #### 
-# can look at significance of model where initial treatment and block explain variation in community
-# trt_tot_2<-rda(ass.rel.t012~init+block+time) # run model using standardized data 
-# summary(trt_tot_2)
-# anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 ```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
@@ -1287,25 +1455,32 @@ plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"),
 
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
-trt_Frac<-rda(ass.rel.t012~ init +Condition(block + time)) # partial rda model
+trt_Frac<-rda(ass.rel.t012~ init +block + Condition(time)) # partial rda model
 # summary(trt_Frac) 
 # RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# anova.cca(trt_Frac, by='terms') ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
 
 result.df.t012 <- data.frame(
   stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("Call:rda(X = ass.rel.t012, Y = init, Z = block) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia = c("", 0.56175, 0.24900, 0.03416, 0.27860),
-  Proportion = c("",1.0000, 0.4433, 0.0608, 0.4959),
-  Note = c("Model signif. = ***", "R2 = 0.05628909", "Variance explained by 'block'", "Variance explained by 'Treatment", "Unexplained variance")
+  Partitioning_of_variance = c("Call:rda(X = rda(formula = ass.rel.t012 ~ init + block + Condition(time)) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia = c("", 0.56175, 0.08841, 0.19475, 0.27860),
+  Proportion = c("",1.0000, 0.1574, 0.3467, 0.4959),
+  Note = c("Model signif. = ***", "R2 = 0.250412", "Variance explained by 'year'", "Variance explained by 'Treatment' and 'block'", "Unexplained variance"),
+  Permutation_test = c(" ", "treatment", "block", "Residual", " "),
+  Df = c(" ",  1,6,32, " "),
+  Variance = c(" ", 0.034157, 0.160594,0.278596, " "),
+  F = c(" ", 3.9233, 3.0743, " "," "),
+  P = c(" ", "0.001 ***", "0.001 ***", " "," ")
   )
-knitr::kable(result.df.t012, format = "html")
+knitr::kable(result.df.t012, "simple")
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
 sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
 sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
 # site
+sc_bp <- as.data.frame(sc_bp)
+sc_bp <- sc_bp[1,1:2]
 sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
 sc_si<-as.data.frame(sc_si) # extract scores
 sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
@@ -1323,7 +1498,7 @@ plot(trt_Frac,
      # label the plot (title, and axes)
      main = "Triplot RDA - scaling 1",
      xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("MDS1 (", perc[2], "%)") 
+     ylab = paste0("PC1 (", perc[2], "%)") 
 ) 
 text(sc_sp, # adjust text coordinates to avoid overlap with points 
      labels = rownames(sc_sp), 
@@ -1427,49 +1602,51 @@ for (i in 1:num_axes) {
 }
 
 ```
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16,echo=FALSE}
+
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE, fig.width=12, fig.height=16,echo=FALSE}
 (plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
 ### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
-#### *Overview of results* <br> 
+#### *Overview of results* <br>  
 
-1. Soil C is significantly higher in log patches than open patches.
-- Total soil carbon is significantly higher in log patches than open patches (Wilcoxon rank sum test, p<0.05).
+1. Soil K and P have similar PCA loadings. In subsequent analysis, we may simplify the model structure by keeping only either K or P and still be able to infer the effects of the other. 
 
-2. Plant abundance has a variable relationship with different nutrient elements: 
-- In 2020, we found more plants in C rich area. 
-- In 2021, we found more plants in P rich area. 
-- In 2022, plants abundance tend to drop with N but increase in C and base cations. 
-- Overall (2020-2022), N tends to have a negative relationship with plant abundance.
+2. Total soil C (Wilcoxon rank sum test, p = 0.025) and plant available N (Wilcoxon rank sum test, p = 0.031) are significantly higher in log patches than open patches 
 
-3. Relationship between plant diversity and soil elements are variable.
+2. Plant abundance and diversity have a variable relationship with different nutrient elements in different years.  
 
-4. There are no significant relationships found between plant composition and soil elements.
+4. No significant relationships have been found between the composition of plants and soil nutrient tested by post-hoc permutation analysis on RDA. However, it is worth noting that the data may not represent the true effect of soil nutrients on plant composition, as the degree of freedom for each soil nutrient observation is quite small (df=1). Therefore, it is difficult to disentangle the effects of each soil nutrient element on the overall plant species composition. On the other hand, soil nutrient variables are plotted on the NMDS plots by regressing each variable to the unconstrained axes. It means that we cannot use these projections on the NMDS plots to infer the explanatory effects of nutrient elements on plant species composition. 
 
-*2020-2022*
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
-1.	*Abundance* – the inclusive model includes all nutrient elements as additive fixed factors with block and year as random terms. As suggested by this inclusive model, the abundance of plants is significantly more likely to increase with soil carbon (C: p=0.004) level but decrease with plant-available nitrogen (NH4N: p<0.001) and basic exchangeable cations (CEC: p=0.008). [This seems to be a bit confounding as it does not make sense biologically. Maybe an artefact of collinearity?]
-2.	*Diversity* – the probability of having a positive Shannon diversity index in the plant community is significantly higher with higher levels of plant-available nitrogen (NO3N: p < 0.05) and potassium (K: p < 0.05) but lower with higher soil phosphorus (P: p <0.05). A similar pattern is observed for the level of diversity. The presented model has a structure of “diversity ~ elements (additive) + (1|block) + (1|year)”.
-3.	*Composition* – The composition of plant communities is not significantly explained by any of the nutrient elements. See print(en.nutrient).
+*2020* 
 
-*2020*
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
-1.	*Abundance* – the inclusive model includes all nutrient elements as additive fixed factors with block and year as random terms. As suggested by this inclusive model, the abundance of plants is significantly more likely to increase with soil carbon (C: p=0.04) level.
-2.	*Diversity* – the probability of having a positive Shannon diversity index in the plant community is significantly higher with higher levels of plant-available nitrogen (NO3N: p < 0.05) and potassium (K: p < 0.05). A similar pattern is observed for the level of diversity. The presented model has a structure of “diversity ~ elements (additive) + (1|block)”.
-3.	*Composition* – The composition of plant communities is not significantly explained by any of the nutrient elements. See print(en.nutrient).
+There are three response variables: count (Poisson), Shannon diversity index (zero-inflated glmer with Gaussian), and composition matrix. 
 
-*2021*
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
-1.	*Abundance* – the inclusive model includes all nutrient elements as additive fixed factors with block and year as random terms. As suggested by this inclusive model, the abundance of plants is significantly more likely to increase with plant-available phosphorus (P: p=0.03) level but decrease with plant-available nitrogen (NH4N: p=0.009). [Same comment]
-2.	*Diversity* – the level of plant diversity as represented by the Shannon diversity index and the probability of having a positive Shannon diversity index in the plant community are not significantly explained by any soil nutrient elements. The presented model has a structure of “diversity ~ elements (additive) + (1|block)”.
-3.	*Composition* – The composition of plant communities is not significantly explained by any of the nutrient elements. See print(en.nutrient).
+1.	*Abundance* – The best model suggested by model dredging includes all nutrient elements except soil K as additive fixed factors. According to this inclusive model, the abundance of plants is significantly affected by soil N (p=0.002), P (p=0.037), C (p=0.036), and CEC (p=0.020). However, the direction of slopes of each element varies. 
 
-*2022*
-There are three response variables: count (Poisson), Shannon diversity index (hurdle: binomial and Gaussian), and composition matrix.
-1.	*Abundance* – the inclusive model includes all nutrient elements as additive fixed factors with block and year as random terms. As suggested by this inclusive model, the abundance of plants is significantly more likely to decrease with plant-available nitrogen (NH4N: p<0.001) and potassium (K: p=0.03). [Same comment]
-2.	*Diversity* – the level of plant diversity as represented by the Shannon diversity index and the probability of having a positive Shannon diversity index in the plant community are not significantly explained by any soil nutrient elements. The presented model has a structure of “diversity ~ elements (additive) + (1|block)”.
-3.	*Composition* – The composition of plant communities is not significantly explained by any of the nutrient elements. See print(en.nutrient).
+2.	*Diversity* – The best model suggested by model dredging includes base cation (CEC), K and N as additive fixed factors. The Shannon diversity index in the plant community tends to be significantly higher with higher levels of plant-available nitrogen (p=0.001) and potassium (p=0.003).  
+
+3.	*Composition* – Permutation test performed on Redundancy analysis (RDA) shows that there is no significant correlation between any of the nutrient elements and the composition of plant species. 
+
+*2021* 
+
+There are three response variables: count (Poisson), Shannon diversity index (zero-inflated glmer with Gaussian), and composition matrix. 
+
+1.	*Abundance* – The best model suggested by model dredging includes only K, N and P as additive fixed factors. According to this inclusive model, the abundance of plants is only significantly affected by soil P (p=0.009) suggesting that plant abundance tends to increase in phosphorus rich soils. 
+
+2.	*Diversity* – The best model suggested by model dredging includes base cation (CEC) and P as additive fixed factors. The Shannon diversity index in the plant community tends to be significantly higher with higher levels of potassium (p=0.006). 
+
+3.	*Composition* – Permutation test performed on Redundancy analysis (RDA) shows that there is no significant correlation between any of the nutrient elements and the composition of plant species. There is only a very weak explanatory power observed in the base cation (CEC: p=0.099) 
+
+*2022* 
+
+There are three response variables: count (Poisson), Shannon diversity index (zero-inflated glmer with Gaussian), and composition matrix. 
+
+1.	*Abundance* – The best model suggested by model dredging includes only P and C as additive fixed factors. According to this inclusive model, the abundance of plants is only significantly affected by soil C (p=0.034) suggesting that plant abundance tends to increase in carbon rich soils. 
+
+2.	*Diversity* – The best model suggested by model dredging includes N, K and P as additive fixed factors. The Shannon diversity index in the plant community tends to be significantly higher with higher levels of plant-available nitrogen (p=0.026) and potassium (p=0.004) but lower levels of soil P (p=0.009). 
+
+3.	*Composition* – Permutation test performed on Redundancy analysis (RDA) shows that there is no significant correlation between any of the nutrient elements and the composition of plant species. 
 
 #### *Statistical Methods* <br>
 1. We performed a principal component analysis with correlation matrix on seven soil properties to understand the multivariate relationships among them. 
@@ -1494,6 +1671,7 @@ This analysis involves three types of data: (1) plant count for each species of 
 
 #### *Analysis*<br>
 
+##### PCA
 ```{r, warning=FALSE,message=FALSE, include=TRUE, results='hold',echo=FALSE}
 library(ggplot2)
 library(ggpubr)
@@ -1525,13 +1703,16 @@ Nu <- c("N", "P", "K", "C", "conductivity", "pH", "prewash.exch.ca", "prewash.ex
 #    )
 #}
 
-nutrient.for.pca <- nutrient[,c(7:12,17)]
+
+nutrient.for.pca <- nutrient[,c(7:10,12,17)]
+nutrient$blockinit <- paste(nutrient$block, nutrient$init)
+rownames(nutrient.for.pca) <- nutrient$blockinit
 nutrient.pca <- prcomp(nutrient.for.pca, center=TRUE, scale=TRUE)
-biplot(nutrient.pca)
+biplot(nutrient.pca, xlim=c(-0.5,.5), ylim=c(-0.5,.5), col=c("grey","red"))
 ```
 
-###### Nutrient composition comparison between log and open
-- Organic carbon in soil is significantly higher in fallen log patches.
+##### Nutrient composition comparison between log and open
+
 ```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
@@ -1712,18 +1893,18 @@ dat_t0_insitu <- inner_join(dat_t0_insitu, nutrient_join, by = c("init", "block"
 # see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
 
 # 2020 - 2022 #
-mod.dredge <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, family = poisson,na.action = "na.fail")
+# mod.dredge <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, family = poisson,na.action = "na.fail")
 # vif(mod.dredge) # no collinearity
-dredge_allyear <- dredge(mod.dredge, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
-best.allyear <- glm(total~ N+ C + CEC, data = dat_t0_insitu, family = poisson)
-tab_model(best.allyear,mod.dredge, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020-2022]")
+# dredge_allyear <- dredge(mod.dredge, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
+# best.allyear <- glm(total~ N+ C + CEC, data = dat_t0_insitu, family = poisson)
+# tab_model(best.allyear,mod.dredge, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020-2022]")
 # htmltools::includeHTML("mod.abun_nu_allyear.html")
 
 # only 2022 #
 mod.dredge.2022 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu,subset = (time == "t2"), family = poisson, na.action = "na.fail")
 # vif(mod.dredge.2022) # no collinearity
 dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
-best.2022 <- glm(total~ N+ P + C + CEC + conductivity, data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
+best.2022 <- glm(total~ N+ P + C + CEC , data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
 tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2022]")
 # htmltools::includeHTML("mod.abun_nu_2022.html")
 
@@ -1842,36 +2023,36 @@ dat_nonzerodat <- dat[dat$non_zero == 1, ]
 # 0 Shannon diversity index =/= zero plants
 
 # 2020-2022 #
-di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
-di.mod.t012 <- glmmTMB(diversity ~ N + P + K + C + CEC + (1|time), data=dat, ziformula=~1, family = gaussian, na.action = "na.fail")
-dredge_allyear <- dredge(di.mod.t012)
-best.allyear <- glmmTMB(diversity~ N + P + K + (1|time), data=dat, ziformula=~1, family = gaussian)
-tab_model(best.allyear, file="mod.diver_nu_allyear.html", dv.labels = c("Best model"), title="Shannon diversity index ~ soil nutrient[2020-2022]")
+# di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
+# di.mod.t012 <- glmmTMB(diversity ~ N + P + K + C + CEC + (1|time), data=dat, ziformula=~1, family = gaussian, na.action = "na.fail")
+# dredge_allyear <- dredge(di.mod.t012)
+# best.allyear <- glmmTMB(diversity~ N + P + K + (1|time), data=dat, ziformula=~1, family = gaussian)
+# tab_model(best.allyear, file="mod.diver_nu_allyear.html", dv.labels = c("Best model"), title="Shannon diversity index ~ soil nutrient[2020-2022]")
 # htmltools::includeHTML("mod.diver_nu_allyear.html")
-
-# 2022 #
-dat_t2 <- dat[dat$time == "t2",]
-di.mod.2022 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t2, ziformula=~1, family = gaussian, na.action= "na.fail")
-dredge_2022 <- dredge(di.mod.2022)
-best.t2 <- glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)
-tab_model(best.t2, file="mod.diver_nu_2022.html", dv.labels = "Best model", title="Shannon diversity index ~ soil nutrient[2022]", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("mod.diver_nu_2022.html")
-
-# 2021 #
-dat_t1 <- dat[dat$time == "t1",]
-di.mod.2021 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t1, ziformula=~1, family = gaussian, na.action= "na.fail")
-dredge_2021 <- dredge(di.mod.2021)
-best.t1 <- glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)
-tab_model(best.t1, file="mod.diver_nu_2021.html", dv.labels = "Best model", title="Shannon diversity index ~ soil nutrient[2021]", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("mod.diver_nu_2021.html")
 
 # 2020 #
 dat_t0 <- dat[dat$time == "t0",]
 di.mod.2020 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t0, ziformula=~1, family = gaussian, na.action= "na.fail")
 dredge_2020 <- dredge(di.mod.2020)
 best.t0 <- glmmTMB(diversity ~ CEC + K +N, data =dat_t0, ziformula=~1, family = gaussian)
-tab_model(best.t0, file="mod.diver_nu_2020.html", dv.labels = "Best model", title="Shannon diversity index ~ soil nutrient[2020]", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("mod.diver_nu_2020.html")
+tab_model(best.t0, file="mod.diver_nu_2020.html", dv.labels = "Best model", title="[2020]glmmTMB(diversity ~ CEC + K + N, data =dat_t0, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("mod.diver_nu_2020.html") 
+
+# 2021 #
+dat_t1 <- dat[dat$time == "t1",]
+di.mod.2021 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t1, ziformula=~1, family = gaussian, na.action= "na.fail")
+dredge_2021 <- dredge(di.mod.2021)
+best.t1 <- glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)
+tab_model(best.t1, file="mod.diver_nu_2021.html", dv.labels = "Best model", title="[2021]glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("mod.diver_nu_2021.html")
+
+# 2022 #
+dat_t2 <- dat[dat$time == "t2",]
+di.mod.2022 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t2, ziformula=~1, family = gaussian, na.action= "na.fail")
+dredge_2022 <- dredge(di.mod.2022)
+best.t2 <- glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)
+tab_model(best.t2, file="mod.diver_nu_2022.html", dv.labels = "Best model", title=" [2022]glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
+# htmltools::includeHTML("mod.diver_nu_2022.html")
 ```
 
 ##### Composition ~ nutrient composition
@@ -1898,7 +2079,7 @@ library(patchwork)
 ```
 
 *2020*
-- There is no significant correlation between nutrient elements and plant composition.
+
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
@@ -1967,7 +2148,7 @@ assemblies_t0<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,c(90:93,95)]
+group_nutrient<-blocksum[,c(90:95)]
 
 # MDS 
 ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
@@ -1976,7 +2157,6 @@ ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4, trace = FALSE) #
 en.nutrient = envfit(ass.rel.t0_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t0_NMS) 
 # plot(en.nutrient)
-print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 
 # scores
 mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
@@ -1991,7 +2171,7 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 #### Redundancy analysis
 # can look at significance of model where initial treatment and block explain variation in community
-trt_tot_2<-rda(ass.rel.t0 ~ ., data = blocksum[,c(90:93,95)]) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t0 ~ ., data = blocksum[,c(90:95)]) # run model using standardized data 
 # summary(trt_tot_2)
 anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 
@@ -2041,7 +2221,7 @@ arrows(0,0, # start them from (0,0)
        col = "black", 
        lwd = 2)
 # add text labels for arrows
-text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
+text(x = sc_bp[,1] -0.05, # adjust text coordinate to avoid overlap with arrow tip
      y = sc_bp[,2] , 
      labels = rownames(sc_bp), 
      col = "black", 
@@ -2049,9 +2229,9 @@ text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow t
      font = 2)
 
 # Using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"))
-mtext("X1= Treatment; X2=Block", side=3)
+# var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
+# plot(var.mod2, bg=c("hotpink","skyblue"))
+# mtext("X1= Treatment; X2=Block", side=3)
 
 # can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
@@ -2113,11 +2293,12 @@ nmds.plot.nutrient <- ggplot()+
        fontface = "bold", label = row.names(en_coord_cont))
 
 # put both nmds plots together
+print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 (nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
 ```
 
+
 *2021*
-- There is no significant correlation between nutrient elements and plant composition.
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unidentified species.
@@ -2186,7 +2367,7 @@ assemblies_t1<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,c(90:93,95)]
+group_nutrient<-blocksum[,c(90:95)]
 
 # MDS 
 ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
@@ -2195,7 +2376,6 @@ ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 4, trace=FALSE) # r
 en.nutrient = envfit(ass.rel.t1_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t1_NMS) 
 # plot(en.nutrient)
-print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 
 # scores
 mds_scores_t1<-as.data.frame(vegan::scores(ass.rel.t1_NMS)$sites) # extract scores
@@ -2209,7 +2389,7 @@ init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 #### rda model analysis & results #### 
-trt_tot_2<-rda(ass.rel.t1 ~ ., data = blocksum[,c(90:93,95)]) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t1 ~ ., data = blocksum[,c(90:95)]) # run model using standardized data 
 # summary(trt_tot_2)
 anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 
@@ -2267,9 +2447,9 @@ text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow t
      font = 2)
 
 # can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"))
-mtext("X1= Treatment; X2=Block", side=3)
+# var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
+# plot(var.mod2, bg=c("hotpink","skyblue"))
+# mtext("X1= Treatment; X2=Block", side=3)
 
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
@@ -2328,12 +2508,12 @@ nmds.plot.nutrient <- ggplot()+
      geom_text(data = en_coord_cont, aes(x = NMDS1, y = NMDS2), colour = "grey30", 
        fontface = "bold", label = row.names(en_coord_cont))+
   labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
-  
+
+print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 (nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
 ```
-
 *2022*
-- There is no significant correlation between nutrient elements and plant composition.
+
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
@@ -2403,7 +2583,7 @@ assemblies_t2<-blocksum[,c(1:87)]
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
 group_block<-blocksum$block
-group_nutrient<-blocksum[,c(90:93,95)]
+group_nutrient<-blocksum[,c(90:95)]
 
 # MDS 
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
@@ -2412,7 +2592,6 @@ ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4, trace = FALSE) #
 en.nutrient = envfit(ass.rel.t2_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t2_NMS) 
 # plot(en.nutrient)
-print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 
 # we have created our NMS as ass.rel.t2_NMS
 # scores
@@ -2429,7 +2608,7 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # nutri<-as.factor(group_nutrient) # this might be a mistake
 
 #### rda model analysis & results #### 
-trt_tot_2<-rda(ass.rel.t2 ~ ., data = blocksum[,c(90:93,95)]) # run model using standardized data 
+trt_tot_2<-rda(ass.rel.t2 ~ ., data = blocksum[,c(90:95)]) # run model using standardized data 
 # summary(trt_tot_2)
 anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 
@@ -2487,9 +2666,9 @@ text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow t
      font = 2)
 
 # can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"))
-mtext("X1= initial treatment; X2=Block", side=3)
+# var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
+# plot(var.mod2, bg=c("hotpink","skyblue"))
+# mtext("X1= initial treatment; X2=Block", side=3)
 
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
@@ -2546,14 +2725,13 @@ nmds.plot.nutrient <- ggplot()+
      geom_text(data = en_coord_cont, aes(x = NMDS1, y = NMDS2), colour = "grey30", 
        fontface = "bold", label = row.names(en_coord_cont))+
   labs(title=paste0("Stress: ", round(ass.rel.t2_NMS$stress,3)))
-  
+
+print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 (nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
 ```
 
 *2020-2022*
-- P and pH seem to be significantly affecting the compositions of log and open communities
-- I doubt it since envfit function do not take 'year' as a random effect.
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2706,9 +2884,9 @@ text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow t
      font = 2)
 
 # can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"))
-mtext("X1= Treatment; X2=Block; X3=time", side=3)
+# var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
+# plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"))
+# mtext("X1= Treatment; X2=Block; X3=time", side=3)
 
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
