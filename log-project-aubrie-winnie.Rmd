@@ -2,7 +2,7 @@
 title: "log-project-aubrie-winnie"
 output:
   html_document: default
-#  pdf_document: default
+  pdf_document: default
 date: "2024-02-21"
 ---
 
@@ -1648,26 +1648,31 @@ There are three response variables: count (Poisson), Shannon diversity index (ze
 
 3.	*Composition* – Permutation test performed on Redundancy analysis (RDA) shows that there is no significant correlation between any of the nutrient elements and the composition of plant species. 
 
-#### *Statistical Methods* <br>
-1. We performed a principal component analysis with correlation matrix on seven soil properties to understand the multivariate relationships among them. 
-2. We used the Wilcoxon rank sum test to compare soil nutrient levels between log and open plots.
-3. Effect of soil nutrient on plant abundance.
+#### *Statistical Methods* <br> 
 
-This analysis involves three types of data: (1) plant counts of all plots in 2020 before the experiment setup differentiated by the initial treatment "log" and "open"; (2) plant counts from insitu_log and insitu_open plots in 2021 and 2022 respectively, including species with unknown identity; and (3) soil nutrient data collected from one random log plot and one random open plot in each block. (N=??)
+1. We performed a principal component analysis using a correlation matrix to examine the multivariate relationships among six different soil properties. These soil properties are soil total carbon (C), potassium (K), phosphorus (P), plant available nitrogen (N), base cation (CEC), and pH. 
 
-Since independent nutrient variables were sampled at block level, this part of the analysis does not include block as the random term to avoid singularity issues. We used a generalized linear model (GLM) with a Poisson distribution structure to model the effect of different soil components on the abundance of plant individuals (data from 2020, 2021, and 2022). Additionally, we performed model dredging (using the MuMln package) to compare the best fitting model, the biologically sensible model, and the inclusive model with all nutrient elements.
+2. We used the Wilcoxon rank sum test to compare soil nutrient levels between log and open plots. 
 
-To avoid pseudo-replication, when pulling count data from 2020 to 2022 together, we included time as a random term.
+3. Effect of soil nutrient on plant abundance. 
 
-4. Effect of soil nutrient on plant diversity (Shannon diversity index = SDI)
-This analysis involves three types of data: (1) plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. (3) soil nutrient data. We used the Shannon diversity index to describe the plant species diversity for each transect at the plot level. Similarly, we used a hurdle model to model the effect of soil properties on plant diversity. 
+This analysis involves three types of data: (1) plant counts of all plots in 2020 (N = 221) before the experiment setup differentiated by the initial treatment "log" and "open"; (2) plant counts from insitu_log and insitu_open plots in 2021 (N = 86) and 2022 (N = 84) respectively, including species with unknown identity; and (3) soil nutrient data collected from one random log plot and one random open plot in each block (N = 14). 
 
-(1)	Model the probability of zero and non-zero Shannon diversity with a logistic regression. GLM for single-year data and GLMER for 2020-2022 data with year as random terms in 2020-2022 data. (Question for group: what approach should we take to multiyear data? Aubrie thinks using glmer and year as random intercept)
-(2)	Model the non-zero Shannon diversity with an LM for single-year data and LMER for 2020-2022 data with year as a random term since the distribution of non-zero data has an approximal Gaussian distribution.
-(3)	We also performed model dredging (using the MuMln package) to compare the best-fitting model, the biologically sensible model, and the inclusive model with all nutrient elements. 
+Since independent nutrient variables were sampled at block level, this part of the analysis does not include block as the random term to avoid singularity issues. Nutrient data is paired to abundance data summarize at plot level in this analysis. Although the estimate of the slope may remain unaffected, the strength of correlation (i.e. p value) may be magnified with an increase in N, which is a calculation artefact. One of the proposed solutions is to recalculate plant abundance at block level to improve the presentation of data. However, we should pay attention to the df (i.e. df =1) of each nutrient element and decide whether the result is representative of the effect (*We should have a discussion on this*). 
 
-5. We performed similar NMDS analyses as described in the previous section. We then used envfit analyses from the Vegan package to fit soil components onto the nondimensional space.
+We used a generalized linear model (GLM) with a Poisson distribution structure to model the effect of all soil components on the abundance of plant individuals (data from 2020, 2021, and 2022 respectively). Additionally, we performed a model dredging (using the MuMln package) to select the best model (delta =0) with a subset of soil variables that best describes the distribution of plant abundance. We approach the problem without bias by not holding prior assumptions about the important soil nutrient of interest. 
 
+4. Effect of soil nutrient on plant diversity (Shannon diversity index = SDI) 
+
+This analysis involves three types of data: (1) plot-level plant count for each species of all plots in 2020 before the experiment setup differentiated by the initial treatment “log” and “open”; and (2) plot-level plant count for each species from insitu_log and insitu_open plots in 2021 and 2022 respectively. All data used for diversity comparison excludes species with unknown identity. (3) soil nutrient data collected from one random log plot and one random open plot in each block (N = 14). (*Similar issue as described in 3.) 
+
+We used the Shannon diversity index to describe the plant species diversity for each transect at the plot level. Similarly to the approach used in Q1, we used a zero-inflated glmer with a Gaussian distribution function to model the effect of all soil properties as additive terms on plant diversity. We did not include 'block' as a random term in the model, but the function glmmTMB is able to handle models without a random term. Similarly, we performed a model dredging (using the MuMln package) to select the best model (delta =0) with a subset of soil variables that best describes the distribution of plant diversity. 
+
+5. Effect of soil nutrient on plant composition
+
+We performed NMDS analyses similar to those described in the previous section. However, to enhance the visualization of data, we decided to present the plant species composition data summarized at the block level (N=14). This means that we will have one value for log and one value for open within each block. Additionally, this approach will offer an alternative perspective on the issue highlighted in points 3 and 4. We utilized envfit analyses from the Vegan package to fit soil components onto the nondimensional space. However, it is important to note that soil variables are regressed onto the unconstrained axes in the nondimensional space, and this does not necessarily represent their explanatory power. 
+
+Similarly, as an alternative approach, we ran a Redundancy Analysis (RDA) to test the correlation between species composition (squared-root transformed) and all soil variables as additive terms. To avoid pseudo-replication, we excluded 'block' as either fixed effect or random effect. We tested the significance of the model and each soil variable term by using a permutation test (anova.cca function from vegan package). We plotted the first two RDA axes to visualize the impact of soil variables on plant species composition. 
 
 #### *Analysis*<br>
 
@@ -2354,7 +2359,7 @@ nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
 blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
 blocksum$grps<-rownames(blocksum)
 rownames(blocksum)<-NULL # remove rownames
-nrow(blocksum) # it is 14 rows as expected 
+# nrow(blocksum) # it is 14 rows as expected 
 
 ## expand again
 blocksum<-separate(blocksum, 88, c("block", "init"), ":")
@@ -2954,20 +2959,24 @@ nmds.plot.nutrient <- ggplot()+
 
 ### **Q3 Are/how are plant species performances affected by proximity to fallen logs?**<br>
 #### *Overview of results* <br> 
+
 **2021** 
 
 There are three response variables: presence (binomial), count (truncated poisson), and per capita biomass (gaussian).
 
 *Presence*
+
 - The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.32). I present the model analysis of the additive model. 
 - Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.03, TROR: p=0.01) 
 - Nutrient island does not significantly explain variation in presence/absence in any species. However, there is a trend across all species that they are more likely present in log-legacy plots. 
 
 *Count* 
+
 - The best fit model for count is nutrient island. 
 - Nutrient island does not strongly significantly explain variation in presence/absence in any species. However, TRCY is marginally significantly affected by nutrient island, where there are more TRCY in plots where there is a `log legacy' (there had been a decomposing log in the plot before the experiment began)
 
 *Biomass*
+
 - The best fit model for per capita biomass is the nutrient island, then physical barrier island, then the additive model. They are all within 2 AICc points of each other (deltaAIC=1.55 and 1.76, respectively). I present the model analysis of the additive model.
 - Nutrient island significantly explains variation GORO biomass, where there are larger GORO plants in plots where there is a `log legacy' (p=0.03).
 - Physical barrier does not explain variation in biomass for any species. 
@@ -2977,6 +2986,7 @@ There are three response variables: presence (binomial), count (truncated poisso
 There are again three response variables: presence (binomial), count (truncated poisson), and per capita biomass (gaussian).
 
 *Presence*
+
 1. The best fit model for presence is a tie between between physical barrier and the additive model of physical barrier + nutrient island (deltaAIC=0.24). I present the model analysis of the additive model. 
 
 2. Both TRCY and TROR are significantly more likely to be present where there is a physical barrier as compared to in the open (TRCY: p=0.007, TROR: p=0.03) 
@@ -2984,11 +2994,13 @@ There are again three response variables: presence (binomial), count (truncated 
 3. Nutrient island significantly explains the presence/absence of TRCY, where TRCY is more likely to be present in log legacy plots as compared to open legacy plots (p=0.02) 
 
 *Count* 
+
 1. The best fit model for count is a tie between nutrient island and physical barrier. I present the model analysis of the nutrient island model. 
 
 2. Nutrient island does not strongly significantly explain variation in presence/absence in any species. 
 
 *Biomass*
+
 1. The best fit model for per capita biomass is the nutrient island, then the additive model, then the physical barrier model. They are all within 1 AICc points of each other (deltaAIC=0.31 and 0.46, respectively). I present the model analysis of the additive model.
 
 2. Nutrient island significantly explains variation in TROR biomass, where log legacy plots have larger TROR as compared to open legacy plots (p=0.04)
