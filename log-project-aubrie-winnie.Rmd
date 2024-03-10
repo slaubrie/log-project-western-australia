@@ -3284,7 +3284,9 @@ pcwtmod_intxn<-lmer(log_wt~name*physical_barrier*initial+(1|block), data=pcwtdat
 # model - no intxn
 pcwtmod_add<-lmer(log_wt~name*physical_barrier+name*initial+(1|block), data=pcwtdat, REML=FALSE)
 
+```
 
+```{r 2021 model comp, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 #### 2021 model comparison for counts #### 
 ## zeros 
 zero_candmods<-list("Plot type"=zerofit, 
@@ -3293,7 +3295,9 @@ zero_candmods<-list("Plot type"=zerofit,
                     "Physical Barrier + Nutrient Island"=zerofit_add,
                     "Physical Barrier x Nutrient Island"=zerofit_intxn)
 aictab(zero_candmods) 
-pairs(emmeans(zerofit_add, ~physical_barrier|name|initial))
+#summary(zerofit_add)
+pairs(emmeans(zerofit_add, ~initial|name))
+pairs(emmeans(zerofit_add, ~physical_barrier|name))
 # best fit model is a tie between physical barrier and additive model (deltaAIC=0.32)
 # i will show results from additive model. 
 
@@ -3304,6 +3308,7 @@ count_candmods<-list("Plot type"=countfit,
                      "Physical Barrier + Nutrient Island"=countfit_add,
                      "Physical Barrier x Nutrient Island"=countfit_intxn)
 aictab(count_candmods) 
+#summary(countfit_leg)
 pairs(emmeans(countfit_leg, ~initial|name))
 # best fit model is nutrient island (next best deltaAIC=2.41 and it's physical barrier.)
 # I will show the results for nutrient island. 
@@ -3316,12 +3321,16 @@ pcwt_candmods<-list("Plot type"=pcwtmod,
                     "Physical Barrier + Nutrient Island" = pcwtmod_add,
                     "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
 aictab(pcwt_candmods) 
-pairs(emmeans(pcwtmod_phys, ~physical_barrier|name))
+#summary(pcwtmod_add)
+pairs(emmeans(pcwtmod_add, ~physical_barrier|name))
+pairs(emmeans(pcwtmod_add, ~initial|name))
 # best fit model is physical barrier by a hair, then nutrient island, then additive model. They are all within striking distance. 
 # deltaAIC physical barrier - nutrient island = 1.55
 # deltaAIC physical - nutrient island = 1.76
 # I will show the results for addivive model. 
+```
 
+```{r 2021 figcode, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
 
 ### figures ###
 # best fit models - zeros 
@@ -3337,9 +3346,12 @@ pl1<-ggplot(zfit_est,aes(physical_barrier, prob,group=initial),)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=initial), position=position_dodge(width=0.5))+
 #  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
-  facet_wrap(vars(name))+
+ facet_wrap(vars(name), labeller=labeller(name=
+                                             c("ngoro"="GORO",
+                                               "ntrcy"="TRCY",
+                                               "ntror"="TROR")))+
   theme_bw()+
-  theme(strip.text.x = element_text(size=0),
+  theme(strip.text.x = element_text(size=10),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
@@ -3369,9 +3381,12 @@ pl2<-ggplot(cfit_est,aes(initial, response, group=1))+
   geom_point(size=2, color="black")+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL),color="black")+
 #  geom_line(color="black")+
-  facet_wrap(vars(name))+
+facet_wrap(vars(name), labeller=labeller(name=
+                                             c("ngoro"="GORO",
+                                               "ntrcy"="TRCY",
+                                               "ntror"="TROR")))+
   theme_bw()+
-  theme(strip.text.x = element_text(size=0),
+  theme(strip.text.x = element_text(size=10),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
@@ -3389,12 +3404,14 @@ pcbfit_est<-as.data.frame(emmeans(pcwtmod_add,~physical_barrier|name|initial, ty
 
 pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
   scale_color_manual(values=mimiscols)+
-  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
 #  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
-  facet_wrap(vars(name))+
+  facet_wrap(vars(name), labeller=labeller(name=
+                                             c("wt_percapita_goro"="GORO",
+                                               "wt_percapita_trcy"="TRCY",
+                                               "wt_percapita_tror"="TROR")))+
   theme_bw()+
-  theme(strip.text.x = element_text(size=0),
+  theme(strip.text.x = element_text(size=10),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
@@ -3406,13 +3423,15 @@ pl3<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
   geom_jitter(data=pcwtdat,
               aes(x=physical_barrier, y=log_wt, color=initial), 
               height=0.1,
+              width=0.2,
               alpha=0.5)+
+  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   labs(color = "Initial Plot Type")
 # pl3
 ### altogether now
 ```
 
-```{r 2021 figure, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width =6, fig.height=12}
+```{r 2021 figure plot, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width =6, fig.height=12}
 ggarrange(pl1, pl2, pl3, ncol=1, common.legend = T)
 ```
 
@@ -3724,7 +3743,9 @@ summary(pcwtmod_add)
 emmip(pcwtmod_add,~physical_barrier|name|initial, type='response',CI=T)
 est<-emmeans(pcwtmod_add, ~initial|name, type='response')
 pairs(est)
+```
 
+```{r 2022 model comp, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE}
 ##### 2022 candidate model comparison ##### 
 
 ## zeros 
@@ -3734,6 +3755,10 @@ zero_candmods<-list("Plot type"=zerofit,
                     "Physical Barrier + Nutrient Island"=zerofit_add,
                     "Physical Barrier x Nutrient Island"=zerofit_intxn)
 aictab(zero_candmods)
+#summary(zerofit_add)
+pairs(emmeans(zerofit_add, ~initial|name))
+pairs(emmeans(zerofit_add, ~physical_barrier|name))
+
 
 # best fit model is a tie between physical barrier and physical barrier + nutrient island
 # i will show the results for physical barrier + nutrient island. 
@@ -3745,6 +3770,9 @@ count_candmods<-list("Plot type"=countfit,
                      "Physical Barrier + Nutrient Island"=countfit_add,
                      "Physical Barrier x Nutrient Island"=countfit_intxn)
 aictab(count_candmods)
+#summary(countfit_leg)
+pairs(emmeans(countfit_leg, ~initial|name))
+
 
 # best fit model is nutrient island, tied with physical barrier. 
 # i will show the results for nutrient island.
@@ -3755,11 +3783,16 @@ pcwt_candmods<-list("Plot type"=pcwtmod,
                     "Physical Barrier + Nutrient Island" = pcwtmod_add,
                     "Physical Barrier x Nutrient Island"=pcwtmod_intxn)
 aictab(pcwt_candmods)
-
+#summary(pcwtmod_add)
+pairs(emmeans(pcwtmod_add, ~physical_barrier|name))
+pairs(emmeans(pcwtmod_add, ~initial|name))
 # best fit model is nutrient island, tied with physical barrier + nutrient island, and then physical barrier.
 # i will show the results for the additive model. 
 
 # tror is bigger when the legacy of the log and the log is still present
+```
+
+```{r 2022 plot results, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=TRUE}
 
 ### figures ###
 # best fit models - zeros 
@@ -3769,14 +3802,22 @@ zerofit_add<-glmmTMB(presence~name*physical_barrier+name*initial+(1 | block), fa
 
 zfit_est<-as.data.frame(emmeans(zerofit_add,~initial|physical_barrier|name, type='response'))
 
+#facet_wrap(vars(time), labeller = labeller(time = 
+#    c("t0" = "2020",
+#      "t1" = "2021",
+#      "t2" = "2022")))+
+  
 pl4<-ggplot(zfit_est,aes(physical_barrier,prob,group=initial),)+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=initial), position=position_dodge(width=0.5))+
   #geom_line(aes(col=initial), position=position_dodge(width=0.5))+
-  facet_wrap(vars(name))+
+  facet_wrap(vars(name), labeller=labeller(name=
+                                             c("ngoro_tot"="GORO",
+                                               "ntrcy_tot"="TRCY",
+                                               "ntror_tot"="TROR")))+
   theme_bw()+
-  theme(strip.text.x = element_text(size=0),
+  theme(strip.text.x = element_text(size=10),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
@@ -3813,9 +3854,12 @@ pl5<-ggplot(cfit_est,aes(initial, response, group=1))+
   geom_point(size=2, color="black")+
   geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL),color="black")+
  # geom_line(color="black")+
-  facet_wrap(vars(name))+
+   facet_wrap(vars(name), labeller=labeller(name=
+                                             c("ngoro_tot"="GORO",
+                                               "ntrcy_tot"="TRCY",
+                                               "ntror_tot"="TROR")))+
   theme_bw()+
-  theme(strip.text.x = element_text(size=0),
+  theme(strip.text.x = element_text(size=10),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
@@ -3833,12 +3877,14 @@ pcbfit_est<-as.data.frame(emmeans(pcwtmod_add,~physical_barrier|name|initial, ty
 
 pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
   scale_color_manual(values=mimiscols)+
-  geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=initial), position=position_dodge(width=0.5))+
 #  geom_line(aes(col=initial), position=position_dodge(width=0.5))+
-  facet_wrap(vars(name))+
+   facet_wrap(vars(name), labeller=labeller(name=
+                                             c("wt_percapita_goro"="GORO",
+                                               "wt_percapita_trcy"="TRCY",
+                                               "wt_percapita_tror"="TROR")))+
   theme_bw()+
-  theme(strip.text.x = element_text(size=0),
+  theme(strip.text.x = element_text(size=10),
         strip.background = element_blank(),
         axis.text=element_text(size=15),
         axis.title=element_text(size=20),
@@ -3850,13 +3896,14 @@ pl6<-ggplot(pcbfit_est,aes(physical_barrier, emmean, group=initial))+
   geom_jitter(data=pcwtdat,
               aes(x=physical_barrier, y=log_wt, color=initial), 
               height=0.1,
+              width=0.2,
               alpha=0.5)+
+    geom_point(aes(col=initial), size=2, position=position_dodge(width=0.5))+
   labs(color = "Initial Plot Type")
 #pl6
 ```
 
 ```{r 2022 figure, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width =6, fig.height=12}
-
 
 ggarrange(pl4, pl5, pl6, ncol=1, common.legend = T)
 
