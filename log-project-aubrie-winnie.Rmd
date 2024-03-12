@@ -10,7 +10,7 @@ date: "2024-02-21"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Understanding how spatial variation is linked to diversity maintenance in natural communities is a pillar of plant community ecology. Theoretically, a variable landscape can maintain diversity via niche partitioning: different species can trade off in performing better or worse depending on the conditions of the patch they are growing in, and as a result, more species can sustainably coexist in a community than if it were spatially heterogeneous. In the hyperdiverse system of native annual plants in Western Australia, fallen logs may be one of the greatest contributors to generating spatial variation that could help maintain species diversity. Considerable anecdotal evidence suggests that fallen logs generate spatial variation, or patchiness, in the environment (Figure 1), and that species or assemblages of plants may respond differently depending on if they are near logs or not. Despite such anecdotal evidence, it is yet unknown if and how fallen logs contribute to maintaining species diversity in the native annual plant communities of the Western Australian wheat belt. 
+Understanding how spatial variation is linked to diversity maintenance in natural communities is a pillar of plant community ecology. Theoretically, a variable landscape can maintain diversity via niche partitioning: different species can trade off in performing better or worse depending on the conditions of the patch they are growing in, and as a result, more species can sustainably coexist in a community than if it were spatially homogeneous. In the hyperdiverse system of native annual plants in Western Australia, fallen logs may be one of the greatest contributors to generating spatial variation that could help maintain species diversity. Considerable anecdotal evidence suggests that fallen logs generate spatial variation, or patchiness, in the environment (Figure 1), and that species or assemblages of plants may respond differently depending on if they are near logs or not. Despite such anecdotal evidence, it is yet unknown if and how fallen logs contribute to maintaining species diversity in the native annual plant communities of the Western Australian wheat belt. 
 
 <center>
 ![Figure 1: image of annual plant halos around logs](example_winter.JPG){width=50%}
@@ -505,7 +505,7 @@ div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   theme_bw()+
   theme(legend.position="top",panel.grid = element_blank())+
   xlab("Plot type")+
-  ylab("Abundance")+
+  ylab("Diversity")+
   labs(color = "Initial Plot Type")+
   geom_jitter(data=dat,
              aes(x=init, y=diversity, color=init), 
