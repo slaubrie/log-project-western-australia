@@ -176,8 +176,8 @@ require(ggpubr)
 require(sjPlot)
 require(sjmisc)
 require(sjlabelled)
-# require(Matrix)
-# require(see) #doing this for aubrie because of some weird thing that happened when I installed new version of R 
+require(Matrix)
+require(see) #doing this for aubrie because of some weird thing that happened when I installed new version of R 
 
 ##### data wrangling #####
 
@@ -207,44 +207,92 @@ mat<-separate(commtry, 107, c("time","block","transect","init", "treatment"), ":
 # names(mat) #check
 
 # Add groupname using time, block, init columns.
-mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
-mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
+# mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
+# mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
 # names(mat) #check
 
 # Another df where the grouping variables are time, block, transect and initial state.
 # Each row is a transect in a certain year.
-df<-mat[,c(1:106,113)]
-# df2 = with treatment in the grouping
-df2 = df %>% mutate(across(.cols=1:106,.fns=as.numeric))
+df1 <- mat[which(mat$time=="t0"),]
+df1 = df1 %>% mutate(across(.cols=1:106,.fns=as.numeric))
+rownames(df1)<-NULL # remove rownames
+df1$grp1<-apply(df1[c(107:108,110)], 1, paste, collapse=":")
+
+df2 <- mat[which(mat$time=="t1"),]
+df2 <- df2[which(df2$treatment=="open" | df2$treatment=="insitu_log"), ]
+df2 = df2 %>% mutate(across(.cols=1:106,.fns=as.numeric))
 rownames(df2)<-NULL # remove rownames
+df2$grp1<-apply(df2[c(107:108,110:111)], 1, paste, collapse=":")
+
+df3 <- mat[which(mat$time=="t2"),]
+df3 <- df3[which(df3$treatment=="open" | df3$treatment=="insitu_log"), ]
+df3 = df3 %>% mutate(across(.cols=1:106,.fns=as.numeric))
+rownames(df3)<-NULL # remove rownames
+df3$grp1<-apply(df3[c(107:108,110:111)], 1, paste, collapse=":")
+
+# df2 = with treatment in the grouping
+# df2 = df %>% mutate(across(.cols=1:106,.fns=as.numeric))
+# rownames(df2)<-NULL # remove rownames
 
 ##### Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
 
-# Sum observations across initial X transect X time X  block X treatment (group variable).
-# This gives number of plants in each row observation (transect level).
-blocksum2<-rowsum(df2[,c(1:106)], group=df2$grp2)
-blocksum2$grps<-rownames(blocksum2)
-rownames(blocksum2)<-NULL # remove rownames
+# Sum observations across time X block X treatment (group variable).
+# This gives number of plants in each row observation (block level).
+## blocksum1<-rowsum(df1[,c(1:106)], group=df1$grp1) the original code
+grp1 <- df1[, "grp1"]
+blocksum1 <- aggregate(df1[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
+
+grp1 <- df2[, "grp1"]
+blocksum2 <- aggregate(df2[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
+
+grp1 <- df3[, "grp1"]
+blocksum3 <- aggregate(df3[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
 
 # Add in group vars.
-nublock2<-separate(blocksum2, 107, c("time","block","transect","init", "treatment"), ":")
-nublock2$total<-rowSums(nublock2[,c(1:106)])
+nublock1<-separate(blocksum1, 1, c("time","block", "init"), ":")
+nublock1$total<-rowSums(nublock1[,c(4:109)])
+nublock1$presence<-ifelse(nublock1$total > 0,  1, 0)
+
+nublock2<-separate(blocksum2, 1, c("time","block","init", "treatment"), ":")
+nublock2$total<-rowSums(nublock2[,c(5:110)])
 nublock2$presence<-ifelse(nublock2$total > 0,  1, 0)
+nublock2 <- nublock2[,c(1:3, 5:112)]
+
+nublock3<-separate(blocksum3, 1, c("time","block","init", "treatment"), ":")
+nublock3$total<-rowSums(nublock3[,c(5:110)])
+nublock3$presence<-ifelse(nublock3$total > 0,  1, 0)
+nublock3 <- nublock3[,c(1:3, 5:112)]
 
 # Subset data where before treatments installed (t0), in-situ log and in-situ open from t1 and t2 are included.
 # Hence only absolute log effect and absolute open effect are concerned
-dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
+## dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
 
 # look at plant abundance in log vs open 
 # look at range of data - what family should i use? 
-# range(dat_t0_insitu$total)
+range(nublock1$total)
+range(nublock2$total)
+range(nublock3$total)
 
+# distribution of data
+ggplot(nublock1, aes(sample=total)) + 
+  stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) + 
+  stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) # 2020 data fits a poisson dist.
+
+ggplot(nublock2, aes(sample=total)) + 
+     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) + 
+     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) # neither a normal/poisson distribution fit well 
+
+ggplot(nublock3, aes(sample=total)) + 
+     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) + 
+     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) # 2022 data fits a poisson dist.
+
+dat_t0_insitu <- rbind(nublock1, nublock2, nublock3)
 # since samples from t1 and t2 from are mainly from the same plots as t0. These are not independent replicates and tend to correlated with each other.
 # including year and block as random effects
 # (1|year) + (1|block) as we think the effect of init on total is the same (slope) but the intercept differ amongst block and year
 # but since we have a greater number of sample from t0, data from t0 will contribute more to the variance in abundance.
 # see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
-abun.mod.t012<- glmer(total~ init + (1|block) + (1|time), data=dat_t0_insitu, family = 'poisson')
+## abun.mod.t012<- glmer(total~ init + (1|block) + (1|time), data=dat_t0_insitu, family = 'poisson')
 
 # emmeans(abun.mod.t012, ~init, type='response') # plant abundance in log plots is higher by 0.04 plants - which is no higher
 
@@ -261,39 +309,26 @@ abun.mod.t012<- glmer(total~ init + (1|block) + (1|time), data=dat_t0_insitu, fa
 # (2) When we stratify the data by year, significance of the difference between log and open treatment is lost.
 # if the effect of log-open (slope) is the same across year, year only affecting the intercept.
 # since the slopes are similar, we include time as random intercept effect.
-abun.mod.t0 <- glmer(total ~ init + (1|block), data = subset(dat_t0_insitu, time == "t0"), family = poisson)
-abun.mod.t1 <- glmer(total ~ init + (1|block), data = subset(dat_t0_insitu, time == "t1"), family = poisson)
-abun.mod.t2 <- glmer(total ~ init + (1|block), data = subset(dat_t0_insitu, time == "t2"), family = poisson)
+abun.mod.t0 <- glm(total ~ init , data = nublock1, family = gaussian)
+abun.mod.t1 <- glm(total ~ init , data = nublock2, family = gaussian)
+abun.mod.t2 <- glm(total ~ init , data = nublock3, family = gaussian)
 
-tab_model(abun.mod.t012, abun.mod.t0, abun.mod.t1, abun.mod.t2, file="abundance_comparison.html", dv.labels = c("Abundance:2020-2022", "Abundance:2020", "Abundance:2021", "Abundance:2022"))
+# tab_model(abun.mod.t0, abun.mod.t1, abun.mod.t2, file="abundance_comparison.html", dv.labels = c("Abundance:2020", "Abundance:2021", "Abundance:2022"))
 
 # htmltools::includeHTML("abundance_comparison.html")
 
-time.names <- c("2020", "2021", "2022")
-names(time.names) <- c("t0", "t1", "t2")
-
-abun.plot.year <- ggplot(dat_t0_insitu, aes(x = as.factor(init), y = total, fill = as.factor(init))) +
-  geom_boxplot(position = "dodge", alpha = 0.5) +
-  labs(x = "Initial plot treatment",
-       y = "Abundance") +
-  scale_fill_discrete(name = 'Plot type') +
-  theme_classic() +
-  facet_grid(. ~ time, labeller = labeller(time=time.names)) + 
-  stat_compare_means(comparisons = list(c("log", "open")), label = "p.format", method="wilcox.test")
-
-
 mimiscols<-c("#D66972","#108780")
 
-em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "0.355") %>% mutate(group1="log") %>% mutate(group2="open")
-em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "0.322") %>% mutate(group1="log") %>% mutate(group2="open")
-em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "0.642") %>% mutate(group1="log") %>% mutate(group2="open")
+em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "0.504") %>% mutate(group1="log") %>% mutate(group2="open")
+em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "0.597") %>% mutate(group1="log") %>% mutate(group2="open")
+em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "0.712") %>% mutate(group1="log") %>% mutate(group2="open")
 abun.mod <- bind_rows(em.0, em.1, em.2) %>%
-  mutate(y.position = 27)
+  mutate(y.position = 15)
 
-abun.emmeans.plot <- ggplot(abun.mod,aes(init, rate, group=time))+
+abun.emmeans.plot <- ggplot(abun.mod,aes(init, emmean, group=time))+
   scale_color_manual(values=mimiscols)+
   geom_point(aes(col=init), size=4, position=position_dodge(width=0.5))+
-  geom_linerange(aes(ymin=asymp.LCL, ymax=asymp.UCL, col=init), position=position_dodge(width=0.5))+
+  geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=init), position=position_dodge(width=0.5))+
  # geom_line(position=position_dodge(width=0.5))+
   facet_wrap(vars(time), labeller = labeller(time = 
     c("t0" = "2020",
@@ -346,7 +381,7 @@ commsub<-comm[,c(15,10,13)]
 commsub <-as.data.frame(commsub)
 commtry<-labdsv::matrify(commsub) # make it an expanded species matrix 
 commtry$x[which(is.na(commtry$x))] <- 1  # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
-# ncol(commtry) # how many species are we working with in our community matrix
+# ncol(commtry) # 42
 
 # Store grouping row names as a column, then remove rownames.
 commtry$grps<-rownames(commtry)
@@ -354,39 +389,34 @@ rownames(commtry)<-NULL
 # names(commtry)
 
 # Split group info into columns for each variable
-mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
+mat<-separate(commtry, 88, c("time","block", "transect", "init", "treatment"), ":")
 # names(mat) #check
 
 # Add groupname using time, block, init columns
 mat$grp<-apply(mat[c(88:92)], 1, paste, collapse=":")
-# ynames(mat) #check
+# names(mat) #check
 
 # Another df where the grouping variables are time, block, transect and initial state.
-# Each row is a transect in a certain year.
-df<-mat[,c(1:87,93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
-rownames(df2)<-NULL # remove rownames
-
-###### Species diversity analysis for 2020 - 2022 data (Shannon diversity on transect level) 
+# Each row is a block in a certain year.
 numat = mat %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+numat<-numat[which(numat$time=="t0" |  numat$treatment=="open" |  numat$treatment=="insitu_log"),]
 
-# sum species for each group (grouped by init, transect, block, time)
+# sum species for each group (grouped by init, block, time)
 nudat<-numat%>% 
-  group_by(time, block, transect, init, treatment) %>% summarise(across(where(is.numeric), sum))
+  group_by(time, block, init) %>% summarise(across(where(is.numeric), sum)) #42rows
 
 # make a data frame
 dat<-as.data.frame(nudat) # this df contains transect levels from all years
-dat<-dat[which(dat$time=="t0" |  dat$treatment=="open" |  dat$treatment=="insitu_log"),]
 
 #estimate diversity for each row/group. don't include 'x' 
 
 # no groups, just estimate diversity of each row
-est<-dat[,c(6:91)]
+est<-dat[,c(4:89)]
 dat$diversity<-diversity(est, index='shannon') 
 
 ###### We used a hurdle model since the data is zero-inflated
 # separate into zero and non-zero observations
-dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
+# dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
 
 # what does our data look like? 
 # hist(dat$diversity, xlab = "Shannon diversity", main = "Histogram of Shannon diversity index (all years, transect level)") # zero-inflated
@@ -445,10 +475,13 @@ dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
 ## random effect (1|block) removed since it's close to zero
 # anova(Hurd.mod.2.2020)
 
-di.mod.2020 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t0"), ziformula=~1, family = gaussian)
+## di.mod.2020 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t0"), ziformula=~1, family = gaussian)
 # summary(di.mod.2020)
-tab_model(di.mod.2020, dv.labels="SDI [2020]", title = "Shannon diversity index (SDI): 2020")
+## tab_model(di.mod.2020, dv.labels="SDI [2020]", title = "Shannon diversity index (SDI): 2020")
 
+di.mod.2020 <- glm(diversity ~ init, data=subset(dat, time == "t0"), family = gaussian)
+di.mod.2021 <- glm(diversity ~ init, data=subset(dat, time == "t1"), family = gaussian)
+di.mod.2022 <- glm(diversity ~ init, data=subset(dat, time == "t2"), family = gaussian)
 # Check residual
 # residuals <- resid(di.mod.2020) # Extract residuals
 # plot(residuals, main="2020")
@@ -460,9 +493,9 @@ tab_model(di.mod.2020, dv.labels="SDI [2020]", title = "Shannon diversity index 
 # Random effect (1|block) removed since it's close to zero.
 # Hurd.mod.2.2021 <- lmer(diversity ~ init + (1|block), data=subset(dat_2021, non_zero == 1))
 
-di.mod.2021 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t1"), ziformula=~1, family = gaussian)
+## di.mod.2021 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t1"), ziformula=~1, family = gaussian)
 # summary(di.mod.2021)
-tab_model(di.mod.2021, dv.labels="SDI [2021]", title = "Shannon diversity index (SDI): 2021")
+## tab_model(di.mod.2021, dv.labels="SDI [2021]", title = "Shannon diversity index (SDI): 2021")
 
 # Check residual
 # residuals <- resid(di.mod.2021) # Extract residuals
@@ -474,17 +507,19 @@ tab_model(di.mod.2021, dv.labels="SDI [2021]", title = "Shannon diversity index 
 # Hurd.mod.1.2022 <- glmer(non_zero ~ init + (1|block), data = dat_2022, family = binomial, )
 # Hurd.mod.2.2022 <- lmer(diversity ~ init + (1|block), data=subset(dat_2022, non_zero == 1))
 
-di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
+## di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
 # summary(di.mod.2022)
-tab_model(di.mod.2022, dv.labels="SDI [2022]", title = "Shannon diversity index (SDI): 2022")
+## tab_model(di.mod.2022, dv.labels="SDI [2022]", title = "Shannon diversity index (SDI): 2022")
 
 # Check residual
 # residuals <- resid(Hurd.mod.2) # Extract residuals
 # plot(residuals, main="2022")
 # abline(0,0)
-em.0 <- as.data.frame(emmeans(di.mod.2020, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "p = 0.063")
-em.1 <- as.data.frame(emmeans(di.mod.2021, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "p = 0.822")
-em.2 <- as.data.frame(emmeans(di.mod.2022, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "p < 0.001")
+
+
+em.0 <- as.data.frame(emmeans(di.mod.2020, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "p = 0.209")
+em.1 <- as.data.frame(emmeans(di.mod.2021, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "p = 0.642")
+em.2 <- as.data.frame(emmeans(di.mod.2022, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "p = 0.659")
 div.mod <- bind_rows(em.0, em.1, em.2) %>% mutate(group1="log") %>% mutate(group2="open") 
 
 mimiscols<-c("#D66972","#108780")
@@ -510,15 +545,14 @@ div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   geom_jitter(data=dat,
              aes(x=init, y=diversity, color=init), 
              height=0.1,
-             alpha=0.5) + stat_pvalue_manual(div.mod, size = 3.5, linetype = 1, y.position = 2)
+             alpha=0.5) + stat_pvalue_manual(div.mod, size = 3.5, linetype = 1, y.position = 2.8)
 
 print(div.emmeans.plot)
 ```
 
 ##### Composition analysis
 ```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8, echo=FALSE}
-# Run this chunk before running any year specific chunk below
-# packages
+# Run this chunk before running any year specific chunk below packages
 library(tidyverse)
 require(vegan)
 require(dplyr)
@@ -542,7 +576,8 @@ comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
 comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
 
 # Make a group name for each row
-comm$grp<-apply(comm[c(1,3,5,6,7)], 1, paste, collapse=":") # timepoint, block, transect_name, initial state
+comm <- comm[which(comm$year =="t0" | comm$treatment_type=="open" | comm$treatment_type=="insitu_log"),]
+comm$grp<-apply(comm[c(1,3,6)], 1, paste, collapse=":") # timepoint, block, initial state
 
 # Need to make each row a community using matrify.
 commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
@@ -557,7 +592,7 @@ rownames(commtry)<-NULL
 names(commtry)
 
 # Split group info into columns for each variable
-mat<-separate(commtry, 88, c("time","block","transect","init","treatment"), ":")
+mat<-separate(commtry, 70, c("time","block","init"), ":")
 names(mat) #check
 ```
 
@@ -566,20 +601,20 @@ Composition dissimilarity *2020*
 ```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+mat2$grp<-apply(mat2[c(71,72)], 1, paste, collapse=":") # block, init as grouping
 # names(mat2) #check
 
 # another df where the grouping variables are time, block and initial state
 # each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+df<-mat2[,c(1:69, 73)]
+df2 = df %>% mutate(across(.cols=1:69,.fns=as.numeric)) # make everything numeric
 rownames(df2)<-NULL # remove rownames
 
 ## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
+nublock<-separate(df2, 70, c("block", "init"), ":") # just looking at time, block & initial treatment
 
 # at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t0<-nublock[,c(1:87)]
+assemblies_t0<-nublock[,c(1:69)]
 
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-nublock$init
@@ -595,31 +630,33 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # Redundancy analysis
 # can test for significance of contribution of the fraction of initial treatment
 # can look at significance of model where initial treatment and block explain variation in community
-trt_Frac<-rda(ass.rel.t0~init+Condition(block)) # run model using standardized data 
-# summary(trt_Frac)
-# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
-# anova.cca(trt_Frac)
-# RsquareAdj(trt_Frac) #explanatory power
+trt_Frac<-rda(ass.rel.t0~init+block) # run model using standardized data 
+summary(trt_Frac)
+anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+anova.cca(trt_Frac)
+RsquareAdj(trt_Frac) #explanatory power
 
 result.df.t0 <- data.frame(
   stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("rda(formula = ass.rel.t0 ~ init + Condition(block)) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia  = c(" ", 0.86477, 0.07929, 0.01176, 0.77372),
-  Proportion = c("",1.00000, 0.09169, 0.01360, 0.89471),
-  Note = c(" ", "adj.r.squared = 0.009696575", "Variance explained by 'block'","Variance explained by 'treatment'", "Unexplained variance"),
-  Permutation_test = c("Model signif. = ***", "treatment", "Residual", " ", ""),
-  Df = c(" ", 1,215,"", ""),
-  Variance = c(" ", 0.01176, 0.77372,"", ""),
-  F = c(" ", 3.2671, " ", " ", " "),
-  P = c(" ", "0.001 ***", " ", " ", "")
+  Partitioning_of_variance = c("rda(formula = ass.rel.t0 ~ init + block) ", "Total", "Constrained", "Unconstrained"),
+  Inertia  = c(" ", 0.5901, 0.3817, 0.2084),
+  Proportion = c("", 1.0000, 0.6469,0.3531),
+  Note = c(" ", "adj.r.squared = 0.2349251", "Variance explained by 'treatment' + 'block", "Unexplained variance"),
+  Permutation_test = c("Model signif. = 0.006 **", "Treatment", "Block", "Residual"),
+  Df = c(" ", 1,6, 6),
+  Variance = c(" ", 0.05094, 0.33078,0.20837),
+  F = c(" ", 1.4670, 1.5875, " "),
+  P = c(" ", "0.099", "0.010 **", "")
   )
 knitr::kable(result.df.t0, "simple")
 
 # Using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
+var.mod.t0 <-varpart(ass.rel.t0, init, block) # run model on standardized data
 
-plot(var.mod2, bg=c("hotpink","skyblue"),
+plot(var.mod.t0, bg=c("hotpink","skyblue"),
      Xnames = c("Treatment", "Block"))
+
+var.mod.t0$part # varpart shows adj. rsquared
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
@@ -640,12 +677,12 @@ plot(trt_Frac,
      type = "none", # this excludes the plotting of any points from the results
      frame = FALSE,
      # set axis limits
-     xlim = c(-.2,.2), 
-     ylim = c(-.3,.5),
+     xlim = c(-1,1), 
+     ylim = c(-.4,.5),
      # label the plot (title, and axes)
      main = "Triplot RDA - scaling 1",
      xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("PC1 (", perc[2], "%)") 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
 ) 
 
 text(sc_sp, # adjust text coordinates to avoid overlap with points 
@@ -681,7 +718,7 @@ legend("right",
        pt.cex = 1.5,
        cex = 0.8,
        box.lty=0,
-      xjust = 0)
+      xjust = 1.3)
 
 # add arrows for effects of the expanatory variables
 arrows(0,0, # start them from (0,0)
@@ -701,46 +738,11 @@ text(x = sc_bp[,1] +0.08, # adjust text coordinate to avoid overlap with arrow t
 
 
 ```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
-# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t0"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
-# names(mat2) #check
-
-# another df where the grouping variables are time, block and initial state
-# each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
-rownames(df2)<-NULL # remove rownames
-
-## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
-
-# want to sum across transects in same block X init treatment
-nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
-# head(nublock)
-
-# sum observations across initial X  block (group variable)
-# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
-blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
-blocksum$grps<-rownames(blocksum)
-rownames(blocksum)<-NULL # remove rownames
-# nrow(blocksum) # it is 14 rows as expected 
-
-## expand again
-blocksum<-separate(blocksum, 88, c("block", "init"), ":")
-
-# at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t0<-blocksum[,c(1:87)]
-
-# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
-group_init<-blocksum$init
-group_block<-blocksum$block
-
 # MDS 
-ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
-ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4, trace = FALSE) # run MDS 
-# stressplot(ass.rel.t0_NMS) # check fit
-ano_t0 <- anosim(assemblies_t0, blocksum$init, distance = "bray", permutations = 9999)
+ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 2, trace = FALSE) # run MDS 
+stressplot(ass.rel.t0_NMS) # check fit
+ano_t0 <- anosim(assemblies_t0, mat2$init, distance = "bray", permutations = 9999)
+print(ano_t0) # marginally different
 
 # scores
 mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
@@ -782,76 +784,70 @@ nmds.plot<- ggplot()+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
   labs(title=paste0("Stress: ", round(ass.rel.t0_NMS$stress,3)))
 
-# print(nmds.plot)
+print(nmds.plot)
 
-# All other NMDS pairs
-treatments <- unique(mds_scores_t0$treatment)
-plots <- list()
-num_axes <- 4  
+# Plotting all combination of NMDS axes when k > 2
+# treatments <- unique(mds_scores_t0$treatment)
+# plots <- list()
+# num_axes <- 4  
 
-for (i in 1:num_axes) {
-  for (j in (i+1):num_axes) {  
-    if (j <= num_axes && i != j) {  
-      log <- mds_scores_t0[mds_scores_t0$treatment == "log", ]
-      open <- mds_scores_t0[mds_scores_t0$treatment == "open", ]
+#  for (i in 1:num_axes) {
+#  for (j in (i+1):num_axes) {  
+#    if (j <= num_axes && i != j) {  
+#      log <- mds_scores_t0[mds_scores_t0$treatment == "log", ]
+#      open <- mds_scores_t0[mds_scores_t0$treatment == "open", ]
       
-      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
+#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
+#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
       
-      hulldat <- rbind(log_hull, open_hull)
+#      hulldat <- rbind(log_hull, open_hull)
       
-      plot_name <- paste0(i, "+", j)
+#      plot_name <- paste0(i, "+", j)
       
-      plots[[plot_name]] <- ggplot() +
-        theme_bw() +
-        theme(panel.background = element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              plot.background = element_blank(),
-              axis.text = element_text(size = 15),
-              axis.title = element_text(size = 15),
-              legend.title = element_text(size = 15),
-              legend.text = element_text(size = 10)) +
-        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        geom_point(data = mds_scores_t0, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        xlab(paste0("NMDS", i)) +
-        ylab(paste0("NMDS", j))
-    }
-  }
-}
+#      plots[[plot_name]] <- ggplot() +
+#        theme_bw() +
+#        theme(panel.background = element_blank(),
+#              panel.grid.major = element_blank(),
+#              panel.grid.minor = element_blank(),
+#              plot.background = element_blank(),
+#              axis.text = element_text(size = 15),
+#              axis.title = element_text(size = 15),
+#              legend.title = element_text(size = 15),
+#              legend.text = element_text(size = 10)) +
+#        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
+#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        geom_point(data = mds_scores_t0, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
+#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        xlab(paste0("NMDS", i)) +
+#        ylab(paste0("NMDS", j))
+#    }
+#  }
+#}
 
-```
+#((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2020] Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=10, fig.height=12,echo=FALSE}
-print(ano_t0)
-((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2020] Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
+
 ```
 
 Composition dissimilarity *2021*
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+mat2 <- mat[which(mat$time=="t1"),]
+mat2$grp<-apply(mat2[c(71,72)], 1, paste, collapse=":") # block, init as grouping
 # names(mat2) #check
 
 # another df where the grouping variables are time, block and initial state
 # each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+df<-mat2[,c(1:69, 73)]
+df2 = df %>% mutate(across(.cols=1:69,.fns=as.numeric)) # make everything numeric
 rownames(df2)<-NULL # remove rownames
 
 ## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
-
-# want to sum across transects in same block X init treatment
-nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
-# head(nublock)
+nublock<-separate(df2, 70, c("block", "init"), ":") # just looking at time, block & initial treatment
 
 # at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t1<-nublock[,c(1:87)]
+assemblies_t1<-nublock[,c(1:69)]
 
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-nublock$init
@@ -865,30 +861,32 @@ init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 # redundancy analysis
-trt_Frac<-rda(ass.rel.t1~init+ Condition(block)) # run model using standardized data 
-# summary(trt_Frac)
-# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
-# anova.cca(trt_Frac)
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+trt_Frac<-rda(ass.rel.t1~init+block) # run model using standardized data 
+summary(trt_Frac)
+anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+anova.cca(trt_Frac)
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 
 result.df.t1 <- data.frame(
   stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("rda(formula = ass.rel.t1 ~ init + Condition(block))", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia  = c(" ", 0.82992, 0.11182, 0.01785, 0.70025),
-  Proportion = c("",1.00000, 0.13473, 0.02151, 0.84376),
-  Note = c(" ", "adj.r.squared = 0.01150461", "Variance explained by 'block'","Variance explained by 'treatment'", "Unexplained variance"),
-  Permutation_test = c("Model signif. = **", "treatment", "Residual", " ", ""),
-  Df = c(" ", 1,78,"", ""),
-  Variance = c(" ", 0.01785, 0.70025,"", ""),
-  F = c(" ", 1.9885, " ", " ", " "),
-  P = c(" ", "0.01 **", " ", " ", "")
+  Partitioning_of_variance = c("rda(formula = ass.rel.t1 ~ init + block)", "Total", "Constrained", "Unconstrained"),
+  Inertia  = c(" ", 0.5326, 0.3506, 0.1821),
+  Proportion = c("",1.0000, 0.6582, 0.3418),
+  Note = c(" ", "adj.r.squared = 0.2593985", "Variance explained by 'treatment' + 'block", "Unexplained variance"),
+  Permutation_test = c("Model signif. = 0.001 ***", "Treatment", "Block", "Residual"),
+  Df = c(" ", 1,6,6),
+  Variance = c(" ", 0.064359, 0.286205,0.182059),
+  F = c(" ", 2.121, 1.572, " "),
+  P = c(" ", "0.007 **", "0.002 **", " ")
   )
 knitr::kable(result.df.t1, "simple")
 
 # can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"),
+var.mod.t1<-varpart(ass.rel.t1, init, block) # run model on standardized data
+plot(var.mod.t1, bg=c("hotpink","skyblue"),
      Xnames = c("Treatment", "Block"))
+
+var.mod.t1$part
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
@@ -909,12 +907,12 @@ plot(trt_Frac,
      type = "none", # this excludes the plotting of any points from the results
      frame = FALSE,
      # set axis limits
-     xlim = c(-.2,.2), 
-     ylim = c(-.3,.5),
+     xlim = c(-1,1), 
+     ylim = c(-.5,.5),
      # label the plot (title, and axes)
      main = "Triplot RDA - scaling 1",
      xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("PC1 (", perc[2], "%)") 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
 ) 
 
 text(sc_sp, # adjust text coordinates to avoid overlap with points 
@@ -950,7 +948,7 @@ legend("right",
        pt.cex = 1.5,
        cex = 0.8,
        box.lty=0,
-      xjust = 0)
+      xjust = 0.8)
 
 # add arrows for effects of the expanatory variables
 arrows(0,0, # start them from (0,0)
@@ -959,7 +957,7 @@ arrows(0,0, # start them from (0,0)
        lwd = 2)
 # add text labels for arrows
 text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2], 
+     y = sc_bp[,2] +0.01, 
      labels = "open", 
      col = "black", 
      cex = 1, 
@@ -967,46 +965,12 @@ text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow t
 ```
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
-# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t1" &  mat$treatment=="open" | mat$time=="t1" & mat$treatment=="insitu_log"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
-# names(mat2) #check
-
-# another df where the grouping variables are time, block and initial state
-# each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
-rownames(df2)<-NULL # remove rownames
-
-## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
-
-# want to sum across transects in same block X init treatment
-nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
-# head(nublock)
-
-# sum observations across initial X  block (group variable)
-# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
-blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
-blocksum$grps<-rownames(blocksum)
-rownames(blocksum)<-NULL # remove rownames
-# nrow(blocksum) # it is 14 rows as expected 
-
-##  expand again
-blocksum<-separate(blocksum, 88, c("block", "init"), ":")
-
-# at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t1<-blocksum[,c(1:87)]
-
-# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
-group_init<-blocksum$init
-group_block<-blocksum$block
-
 # MDS 
-ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
-ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 5, trace = FALSE) # run MDS 
+# ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 2, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t1_NMS) # check fit
-ano_t1 <- anosim(assemblies_t1, blocksum$init, distance = "bray", permutations = 9999)
+ano_t1 <- anosim(assemblies_t1, mat2$init, distance = "bray", permutations = 9999)
+print(ano_t1)
 
 # scores
 mds_scores_t1<-as.data.frame(vegan::scores(ass.rel.t1_NMS)$sites) # extract scores
@@ -1048,76 +1012,68 @@ nmds.plot <- ggplot()+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
   labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
 
-# print(nmds.plot)
+print(nmds.plot)
 
-# All other NMDS pairs
-treatments <- unique(mds_scores_t1$treatment)
-plots <- list()
-num_axes <- 5  
+# Plotting all combination of NMDS axes when k > 2
+# treatments <- unique(mds_scores_t1$treatment)
+#plots <- list()
+#num_axes <- 5  
 
-for (i in 1:num_axes) {
-  for (j in (i+1):num_axes) {  
-    if (j <= num_axes && i != j) {  
-      log <- mds_scores_t1[mds_scores_t1$treatment == "log", ]
-      open <- mds_scores_t1[mds_scores_t1$treatment == "open", ]
+#for (i in 1:num_axes) {
+#  for (j in (i+1):num_axes) {  
+#    if (j <= num_axes && i != j) {  
+#      log <- mds_scores_t1[mds_scores_t1$treatment == "log", ]
+#      open <- mds_scores_t1[mds_scores_t1$treatment == "open", ]
       
-      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
+#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
+#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
       
-      hulldat <- rbind(log_hull, open_hull)
+#      hulldat <- rbind(log_hull, open_hull)
       
-      plot_name <- paste0(i, "+", j)
+#      plot_name <- paste0(i, "+", j)
       
-      plots[[plot_name]] <- ggplot() +
-        theme_bw() +
-        theme(panel.background = element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              plot.background = element_blank(),
-              axis.text = element_text(size = 15),
-              axis.title = element_text(size = 15),
-              legend.title = element_text(size = 15),
-              legend.text = element_text(size = 10)) +
-        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        geom_point(data = mds_scores_t1, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        xlab(paste0("NMDS", i)) +
-        ylab(paste0("NMDS", j))
-    }
-  }
-}
+#      plots[[plot_name]] <- ggplot() +
+#        theme_bw() +
+#        theme(panel.background = element_blank(),
+#              panel.grid.major = element_blank(),
+#              panel.grid.minor = element_blank(),
+#              plot.background = element_blank(),
+#              axis.text = element_text(size = 15),
+#              axis.title = element_text(size = 15),
+#              legend.title = element_text(size = 15),
+#              legend.text = element_text(size = 10)) +
+#        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
+#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        geom_point(data = mds_scores_t1, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
+#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        xlab(paste0("NMDS", i)) +
+#        ylab(paste0("NMDS", j))
+#    }
+#  }
+#}
 
-```
-
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=16,echo=FALSE}
-print(ano_t1)
-(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("[2021] Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
+#(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("[2021] Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
 ```
 
 Composition dissimilarity *2022*
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
+mat2 <- mat[which(mat$time=="t2"),]
+mat2$grp<-apply(mat2[c(71,72)], 1, paste, collapse=":") # block, init as grouping
 # names(mat2) #check
 
 # another df where the grouping variables are time, block and initial state
 # each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+df<-mat2[,c(1:69, 73)]
+df2 = df %>% mutate(across(.cols=1:69,.fns=as.numeric)) # make everything numeric
 rownames(df2)<-NULL # remove rownames
 
 ## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
-
-# want to sum across transects in same block X init treatment
-nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
-# head(nublock)
+nublock<-separate(df2, 70, c("block", "init"), ":") # just looking at time, block & initial treatment
 
 # at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t2<-nublock[,c(1:87)]
+assemblies_t2<-nublock[,c(1:69)]
 
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-nublock$init
@@ -1131,28 +1087,29 @@ init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 # redundancy analysis
-trt_Frac<-rda(ass.rel.t2~init+ Condition(block)) # run model using standardized data 
-# summary(trt_Frac)
-# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
-# anova.cca(trt_Frac)
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+trt_Frac<-rda(ass.rel.t2~init+ block) # run model using standardized data 
+summary(trt_Frac)
+anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+anova.cca(trt_Frac)
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 
 result.df.t2 <- data.frame(
   stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("rda(formula = ass.rel.t2 ~ init + Condition(block))", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia  = c(" ", 0.81670, 0.10345, 0.02511, 0.68814),
-  Proportion = c("",1.00000, 0.12667, 0.03075, 0.84259),
-  Note = c(" ", "adj.r.squared = 0.02119015", "Variance explained by 'block'","Variance explained by 'treatment'", "Unexplained variance"),
-  Permutation_test = c("Model signif. = **", "treatment", "Residual", " ", ""),
-  Df = c(" ", 1,76,"", ""),
-  Variance = c(" ", 0.02511, 0.68814,"", ""),
-  F = c(" ", 2.7732, " ", " ", " "),
-  P = c(" ", "0.002 **", " ", " ", "")
+  Partitioning_of_variance = c("rda(formula = ass.rel.t2 ~ init + block)", "Total", "Constrained", "Unconstrained"),
+  Inertia  = c(" ", 0.5340, 0.3581, 0.1759),
+  Proportion = c("",1.0000, 0.6705, 0.3295),
+  Note = c(" ", "adj.r.squared = 0.2861857", "Variance explained by 'treatment + block'", "Unexplained variance"),
+  Permutation_test = c("Model signif. = 0.002 **", "Treatment", "Block", "Residual"),
+  Df = c(" ", 1,6,6),
+  Variance = c(" ", 0.06081, 0.29726,0.17593),
+  F = c(" ", 2.0739, 1.6897, " "),
+  P = c(" ", "0.017 *", "0.003 **", " ")
   )
 knitr::kable(result.df.t2, "simple")
+
 # can model using varpart to look at contributions of initial treatment and block
-var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
-plot(var.mod2, bg=c("hotpink","skyblue"),
+var.mod.t2<-varpart(ass.rel.t2, init, block) # run model on standardized data
+plot(var.mod.t2, bg=c("hotpink","skyblue"),
      Xnames = c("Treatment", "Block"))
 
 # Plotting rda
@@ -1174,12 +1131,12 @@ plot(trt_Frac,
      type = "none", # this excludes the plotting of any points from the results
      frame = FALSE,
      # set axis limits
-     xlim = c(-.2,.2), 
-     ylim = c(-.3,.5),
+     xlim = c(-.5,.5), 
+     ylim = c(-.5,.5),
      # label the plot (title, and axes)
      main = "Triplot RDA - scaling 1",
      xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("PC1 (", perc[2], "%)") 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
 ) 
 
 text(sc_sp, # adjust text coordinates to avoid overlap with points 
@@ -1224,7 +1181,7 @@ arrows(0,0, # start them from (0,0)
        lwd = 2)
 # add text labels for arrows
 text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2], 
+     y = sc_bp[,2] + 0.02, 
      labels = "open", 
      col = "black", 
      cex = 1, 
@@ -1234,46 +1191,12 @@ text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow t
 
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
-# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t2" &  mat$treatment=="open" | mat$time=="t2" & mat$treatment=="insitu_log"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
-# names(mat2) #check
-
-# another df where the grouping variables are time, block and initial state
-# each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
-rownames(df2)<-NULL # remove rownames
-
-## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
-
-# want to sum across transects in same block X init treatment
-nublock$sumgrp<-apply(mat2[c(89, 91)], 1, paste, collapse=":")
-# head(nublock)
-
-# sum observations across initial X  block (group variable)
-# this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
-blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
-blocksum$grps<-rownames(blocksum)
-rownames(blocksum)<-NULL # remove rownames
-# nrow(blocksum) # it is 14 rows as expected 
-
-##  expand again
-blocksum<-separate(blocksum, 88, c("block", "init"), ":")
-
-# at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t2<-blocksum[,c(1:87)]
-
-# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
-group_init<-blocksum$init
-group_block<-blocksum$block
-
 # MDS 
-ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
-ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4, trace=FALSE) # run MDS 
-# stressplot(ass.rel.t2_NMS) # check fit
-ano_t2 <- anosim(assemblies_t2, blocksum$init, distance = "bray", permutations = 9999)
+# ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
+ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 2, trace=FALSE) # run MDS 
+stressplot(ass.rel.t2_NMS) # check fit
+ano_t2 <- anosim(assemblies_t2, mat2$init, distance = "bray", permutations = 9999)
+print(ano_t2)
 
 # scores
 mds_scores_t2<-as.data.frame(vegan::scores(ass.rel.t2_NMS)$sites) # extract scores
@@ -1284,23 +1207,6 @@ mds_scores_t2$block<-group_block # grouping factor 2
 # explaining factors
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
-
-# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat2 <- mat[which(mat$time=="t0"),]
-mat2$grp<-apply(mat2[c(89,91)], 1, paste, collapse=":") # block, init as grouping
-# names(mat2) #check
-
-# another df where the grouping variables are time, block and initial state
-# each row is a transect in a certain year.
-df<-mat2[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
-rownames(df2)<-NULL # remove rownames
-
-## new with group vars
-nublock<-separate(df2, 88, c("block", "init"), ":") # just looking at time, block & initial treatment
-
-# at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t0<-nublock[,c(1:87)]
 
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-nublock$init
@@ -1336,90 +1242,87 @@ nmds.plot <- ggplot()+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
   labs(title=paste0("Stress: ", round(ass.rel.t2_NMS$stress,3)))
   
-# print(nmds.plot)
+print(nmds.plot)
 
 
-# All other NMDS pairs
-treatments <- unique(mds_scores_t2$treatment)
-plots <- list()
-num_axes <- 4  
+# Plotting all combination of NMDS axes when k > 2
+# treatments <- unique(mds_scores_t2$treatment)
+# plots <- list()
+# num_axes <- 4  
 
-for (i in 1:num_axes) {
-  for (j in (i+1):num_axes) {  
-    if (j <= num_axes && i != j) {  
-      log <- mds_scores_t2[mds_scores_t2$treatment == "log", ]
-      open <- mds_scores_t2[mds_scores_t2$treatment == "open", ]
-      
-      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
-      
-      hulldat <- rbind(log_hull, open_hull)
-      
-      plot_name <- paste0(i, "+", j)
-      
-      plots[[plot_name]] <- ggplot() +
-        theme_bw() +
-        theme(panel.background = element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              plot.background = element_blank(),
-              axis.text = element_text(size = 15),
-              axis.title = element_text(size = 15),
-              legend.title = element_text(size = 15),
-              legend.text = element_text(size = 10)) +
-        geom_text_repel(data = species.scores.t2, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), 
-                                                      label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) +
-        scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        geom_point(data = mds_scores_t2, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + 
-        scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        xlab(paste0("NMDS", i)) +
-        ylab(paste0("NMDS", j))
-    }
-  }
-}
+#for (i in 1:num_axes) {
+#  for (j in (i+1):num_axes) {  
+#    if (j <= num_axes && i != j) {  
+#      log <- mds_scores_t2[mds_scores_t2$treatment == "log", ]
+#      open <- mds_scores_t2[mds_scores_t2$treatment == "open", ]
+#      
+#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
+#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
+#      
+#      hulldat <- rbind(log_hull, open_hull)
+#      
+#      plot_name <- paste0(i, "+", j)
+#      
+#      plots[[plot_name]] <- ggplot() +
+#       theme_bw() +
+#        theme(panel.background = element_blank(),
+#              panel.grid.major = element_blank(),
+#              panel.grid.minor = element_blank(),
+#              plot.background = element_blank(),
+#              axis.text = element_text(size = 15),
+#              axis.title = element_text(size = 15),
+#              legend.title = element_text(size = 15),
+#              legend.text = element_text(size = 10)) +
+#        geom_text_repel(data = species.scores.t2, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), 
+#                                                      label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
+#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = #treatment), alpha = 0.3) +
+#        scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        geom_point(data = mds_scores_t2, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + 
+#        scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
+#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        xlab(paste0("NMDS", i)) +
+#        ylab(paste0("NMDS", j))
+#    }
+# }
+#}
 
+#((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2022] Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
 
 ```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE, fig.width=12, fig.height=12,echo=FALSE}
-print(ano_t2)
-((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2022] Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
-```
-
+Composition dissimilarity *2020 - 2022*
 ```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 # Composition dissimilarity * 2020 - 2022 *
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
-mat3 <- mat[which(mat$time=="t0" |  mat$treatment=="open" | mat$treatment=="insitu_log"),]
-mat3$grp<-apply(mat3[c(88,89,91)], 1, paste, collapse=":") # block, init as grouping
+mat3 <- mat
+mat3$grp<-apply(mat3[c(70,71,72)], 1, paste, collapse=":") # block, init as grouping
 # names(mat3) #check
 
 # another df where the grouping variables are time, block and initial state
 # each row is a transect in a certain year.
-df<-mat3[,c(1:87, 93)]
-df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+df<-mat3[,c(1:69, 73)]
+df2 = df %>% mutate(across(.cols=1:69,.fns=as.numeric)) # make everything numeric
 # rownames(df2)<-NULL # remove rownames
 
 ## new with group vars
-nublock<-separate(df2, 88, c("time", "block", "init"), ":") # just looking at time, block & initial treatment
+nublock<-separate(df2, 70, c("time", "block", "init"), ":") # just looking at time, block & initial treatment
 
 # want to sum across transects in same block X init treatment
-nublock$sumgrp<-apply(mat3[c(88,89, 91)], 1, paste, collapse=":")
+nublock$sumgrp<-apply(nublock[c(70:72)], 1, paste, collapse=":")
 # head(nublock)
 
 # sum observations across initial X  block (group variable)
 # this gives number of plants in each transect TYPE for each year in each block. should be 2 types X 3 years X 7 blocks rows 
-blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
+blocksum<-rowsum(nublock[,c(1:69)], group=nublock$sumgrp)
 blocksum$grps<-rownames(blocksum)
 rownames(blocksum)<-NULL # remove rownames
-# nrow(blocksum) # it is 42 rows as expected 
+nrow(blocksum) # it is 42 rows as expected 
 
 ##  expand again
-blocksum<-separate(blocksum, 88, c("time", "block", "init"), ":")
+blocksum<-separate(blocksum, 70, c("time", "block", "init"), ":")
 
 # at the moment this includes where there were no plants ("x" column in matrix)
-assemblies_t012<-blocksum[,c(1:87)]
+assemblies_t012<-blocksum[,c(1:69)]
 
 # group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
 group_init<-blocksum$init
@@ -1428,9 +1331,9 @@ group_time<-blocksum$time
 
 # MDS 
 ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
-ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 5, trace=FALSE) # run MDS 
+ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 2, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t012_NMS) # check fit
-ano_t012 <- anosim(assemblies_t012, blocksum$init, distance = "bray", strata=interaction(blocksum$block, blocksum$time), permutations = 9999)
+ano_t012 <- anosim(assemblies_t012, blocksum$init, distance = "bray", strata=blocksum$time, permutations = 9999)
 print(ano_t012)
 
 # scores
@@ -1444,9 +1347,6 @@ mds_scores_t012$time<-group_time # grouping factor 3
 init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 time<-as.factor(group_time)
-```
-
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
@@ -1456,20 +1356,21 @@ plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"),
 ## can test for significance of contribution of the fraction of initial treatment
 # do this with partial redundancy analysis
 trt_Frac<-rda(ass.rel.t012~ init +block + Condition(time)) # partial rda model
-# summary(trt_Frac) 
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac, by='terms') ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+summary(trt_Frac) 
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+anova.cca(trt_Frac, by='terms') ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+anova.cca(trt_Frac)
 
 result.df.t012 <- data.frame(
   stringsAsFactors = FALSE,
-  Partitioning_of_variance = c("Call:rda(X = rda(formula = ass.rel.t012 ~ init + block + Condition(time)) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
-  Inertia = c("", 0.56175, 0.08841, 0.19475, 0.27860),
-  Proportion = c("",1.0000, 0.1574, 0.3467, 0.4959),
-  Note = c("Model signif. = ***", "R2 = 0.250412", "Variance explained by 'year'", "Variance explained by 'Treatment' and 'block'", "Unexplained variance"),
-  Permutation_test = c(" ", "treatment", "block", "Residual", " "),
+  Partitioning_of_variance = c("rda(formula = ass.rel.t012 ~ init + block + Condition(time)) ", "Total", "Conditioned", "Constrained", "Unconstrained"),
+  Inertia = c("", 0.61523, 0.08993, 0.20243, 0.32287),
+  Proportion = c("",1.0000, 0.1462, 0.3290, 0.5248),
+  Note = c(" ", "adj.r.squared = 0.2252166", "Variance explained by 'year'", "Variance explained by 'treatment' and 'block'", "Unexplained variance"),
+  Permutation_test = c("Model signif. = 0.001 ***", "Treatment", "Block", "Residual", " "),
   Df = c(" ",  1,6,32, " "),
-  Variance = c(" ", 0.034157, 0.160594,0.278596, " "),
-  F = c(" ", 3.9233, 3.0743, " "," "),
+  Variance = c(" ", 0.03848, 0.16395,0.32287, " "),
+  F = c(" ", 3.8134, 2.7083, " "," "),
   P = c(" ", "0.001 ***", "0.001 ***", " "," ")
   )
 knitr::kable(result.df.t012, "simple")
@@ -1477,10 +1378,10 @@ knitr::kable(result.df.t012, "simple")
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
 sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
-# site
 sc_bp <- as.data.frame(sc_bp)
 sc_bp <- sc_bp[1,1:2]
+sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
 sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
 sc_si<-as.data.frame(sc_si) # extract scores
 sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
@@ -1493,37 +1394,57 @@ plot(trt_Frac,
      type = "none", # this excludes the plotting of any points from the results
      frame = FALSE,
      # set axis limits
-     xlim = c(-.3,.3), 
+     xlim = c(-.5,.5), 
      ylim = c(-.5,.5),
      # label the plot (title, and axes)
      main = "Triplot RDA - scaling 1",
      xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("PC1 (", perc[2], "%)") 
+     ylab = paste0("RDA2 (", perc[2], "%)") 
 ) 
+
 text(sc_sp, # adjust text coordinates to avoid overlap with points 
      labels = rownames(sc_sp), 
      col = "grey40", 
      font = 2, # bold
      cex = 0.6)
 
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+block_levels <- as.numeric(factor(sc_si$block))
+sc_si$treatment <- as.factor(sc_si$treatment)
+points(sc_si, 
+       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
+       pch = block_levels, # Adding 1 to shift block levels to start from 1
+       cex = 0.8)
+ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
+         col =c("#63A088", "#56638A"),
+         draw = 'polygon')
 
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
+legend("topright", 
+       legend = c("log", "open"), 
+       col = c("#63A088", "#56638A"),
+       title = "Treatment",
+       pch = 20,  # Don't include point shapes
+       cex = 0.8,
+       box.lty=0)
 
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
+# Create legend for point shape
+legend("right",
+       legend = unique(sc_si$block),
+       pch = unique(block_levels),
+       title = "Block",
+       col = "black",  # Black color for legend text
+       pt.cex = 1.5,
+       cex = 0.8,
+       box.lty=0,
+      xjust = 0)
+
 # add arrows for effects of the expanatory variables
 arrows(0,0, # start them from (0,0)
        sc_bp[,1], sc_bp[,2], # end them at the score value
        col = "black", 
        lwd = 2)
 # add text labels for arrows
-text(x = sc_bp[,1] +0.1, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
+text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
+     y = sc_bp[,2] + 0.02, 
      labels = "open", 
      col = "black", 
      cex = 1, 
@@ -1560,51 +1481,48 @@ nmds.plot <- ggplot()+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
   labs(title=paste0("Stress: ", round(ass.rel.t012_NMS$stress,3)))
  
-# print(nmds.plot)
+print(nmds.plot)
 
 # All other NMDS pairs
-treatments <- unique(mds_scores_t012$treatment)
-plots <- list()
-num_axes <- 5  
+# treatments <- unique(mds_scores_t012$treatment)
+# plots <- list()
+# num_axes <- 5  
 
-for (i in 1:num_axes) {
-  for (j in (i+1):num_axes) {  
-    if (j <= num_axes && i != j) {  
-      log <- mds_scores_t012[mds_scores_t012$treatment == "log", ]
-      open <- mds_scores_t012[mds_scores_t012$treatment == "open", ]
+# for (i in 1:num_axes) {
+#  for (j in (i+1):num_axes) {  
+#    if (j <= num_axes && i != j) {  
+#      log <- mds_scores_t012[mds_scores_t012$treatment == "log", ]
+#      open <- mds_scores_t012[mds_scores_t012$treatment == "open", ]
+#      
+#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
+#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
+#      
+#      hulldat <- rbind(log_hull, open_hull)
+#      
+#      plot_name <- paste0(i, "+", j)
       
-      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
-      
-      hulldat <- rbind(log_hull, open_hull)
-      
-      plot_name <- paste0(i, "+", j)
-      
-      plots[[plot_name]] <- ggplot() +
-        theme_bw() +
-        theme(panel.background = element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              plot.background = element_blank(),
-              axis.text = element_text(size = 15),
-              axis.title = element_text(size = 15),
-              legend.title = element_text(size = 15),
-              legend.text = element_text(size = 10)) +
-        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + 
-        scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        geom_point(data = mds_scores_t012, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-        xlab(paste0("NMDS", i)) +
-        ylab(paste0("NMDS", j))
-    }
-  }
-}
+#      plots[[plot_name]] <- ggplot() +
+#        theme_bw() +
+#        theme(panel.background = element_blank(),
+#              panel.grid.major = element_blank(),
+#              panel.grid.minor = element_blank(),
+#              plot.background = element_blank(),
+#              axis.text = element_text(size = 15),
+#              axis.title = element_text(size = 15),
+#              legend.title = element_text(size = 15),
+#              legend.text = element_text(size = 10)) +
+#        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
+#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + 
+#        scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        geom_point(data = mds_scores_t012, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
+#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+#        xlab(paste0("NMDS", i)) +
+#        ylab(paste0("NMDS", j))
+#    }
+#  }
+#}
 
-```
-
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE, fig.width=12, fig.height=16,echo=FALSE}
-(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
+#(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
 ### **Q2 Why are plant communities in fallen log patches different from patches in the open?**<br>
@@ -1850,45 +1768,118 @@ commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individua
 commtry$grps<-rownames(commtry)
 rownames(commtry)<-NULL
 # names(commtry)
-
+#here#
 # Split group info into columns for each variable.
 mat<-separate(commtry, 107, c("time","block","transect","init", "treatment"), ":")
 # names(mat) #check
 
 # Add groupname using time, block, init columns.
-mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
-mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
+# mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
+# mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
 # names(mat) #check
 
-# Another df where the grouping variables are time, block, transect and initial state.
-# Each row is a transect in a certain year.
-df<-mat[,c(1:106,113)]
-# df2 = with treatment in the grouping
-df2 = df %>% mutate(across(.cols=1:106,.fns=as.numeric))
-rownames(df2)<-NULL # remove rownames
-
 ##### Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
+# 2020 df: the grouping variables kept are time X block X initial state.
+# 2021 & 2022 df: the grouping variables kept are time X block X initial state X treatment.
+# Each row is still a transect in a certain year.
+df1 <- mat[which(mat$time=="t0"),]
+df1 = df1 %>% mutate(across(.cols=1:106,.fns=as.numeric))
+rownames(df1)<-NULL # remove rownames
+df1$grp1<-apply(df1[c(107:108,110)], 1, paste, collapse=":")
 
-# Sum observations across initial X transect X time X  block X treatment (group variable).
-# This gives number of plants in each row observation (transect level).
-blocksum2<-rowsum(df2[,c(1:106)], group=df2$grp2)
-blocksum2$grps<-rownames(blocksum2)
-rownames(blocksum2)<-NULL # remove rownames
+df2 <- mat[which(mat$time=="t1"),]
+df2 <- df2[which(df2$treatment=="open" | df2$treatment=="insitu_log"), ]
+df2 = df2 %>% mutate(across(.cols=1:106,.fns=as.numeric))
+rownames(df2)<-NULL # remove rownames
+df2$grp1<-apply(df2[c(107:108,110:111)], 1, paste, collapse=":")
+
+df3 <- mat[which(mat$time=="t2"),]
+df3 <- df3[which(df3$treatment=="open" | df3$treatment=="insitu_log"), ]
+df3 = df3 %>% mutate(across(.cols=1:106,.fns=as.numeric))
+rownames(df3)<-NULL # remove rownames
+df3$grp1<-apply(df3[c(107:108,110:111)], 1, paste, collapse=":")
+
+# Average out observations across time X block X treatment (group variable).
+# This gives average number of plants in each treatment in each block.
+## Original code sum the observations blocksum1<-rowsum(df1[,c(1:106)], group=df1$grp1)
+grp1 <- df1[, "grp1"]
+blocksum1 <- aggregate(df1[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
+
+grp1 <- df2[, "grp1"]
+blocksum2 <- aggregate(df2[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
+
+grp1 <- df3[, "grp1"]
+blocksum3 <- aggregate(df3[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
 
 # Add in group vars.
-nublock2<-separate(blocksum2, 107, c("time","block","transect","init", "treatment"), ":")
-nublock2$total<-rowSums(nublock2[,c(1:106)])
-nublock2$presence<-ifelse(nublock2$total > 0,  1, 0)
+nublock1<-separate(blocksum1, 1, c("time","block", "init"), ":")
+nublock1$total<-rowSums(nublock1[,c(4:109)])
+nublock1$presence<-ifelse(nublock1$total > 0,  1, 0)
 
-# Subset data where before treatments installed (t0), in-situ log and in-situ open from t1 and t2 are included.
-# Hence only absolute log effect and absolute open effect are concerned
-dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
+nublock2<-separate(blocksum2, 1, c("time","block","init", "treatment"), ":")
+nublock2$total<-rowSums(nublock2[,c(5:110)])
+nublock2$presence<-ifelse(nublock2$total > 0,  1, 0)
+nublock2 <- nublock2[,c(1:3, 5:112)]
+
+nublock3<-separate(blocksum3, 1, c("time","block","init", "treatment"), ":")
+nublock3$total<-rowSums(nublock3[,c(5:110)])
+nublock3$presence<-ifelse(nublock3$total > 0,  1, 0)
+nublock3 <- nublock3[,c(1:3, 5:112)]
+
+# Put all data in one df
+dat_t0_insitu <- rbind(nublock1, nublock2, nublock3)
+
+# Look at plant abundance in log vs open 
+# Look at range of data
+# range(nublock1$total)
+# range(nublock2$total)
+# range(nublock3$total)
+
+# distribution of data
+# ggplot(nublock1, aes(sample=total)) + 
+#  stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) + 
+#  stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) +
+#    ggtitle("Poisson")# 2020 data fits a poisson dist.
+
+# ggplot(nublock1, aes(sample = total)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
+
+# ggplot(nublock2, aes(sample=total)) + 
+#     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) + 
+#     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) +
+#     ggtitle("Poisson")
+
+# ggplot(nublock2, aes(sample = total)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
+
+# ggplot(nublock3, aes(sample=total)) + 
+#     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) + 
+#     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) +
+#     ggtitle("Poisson") # 2022 data fits a poisson dist.
+
+#ggplot(nublock3, aes(sample = total)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
+
+## Original code with two #
+## Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
+
+## Sum observations across initial X transect X time X  block X treatment (group variable).
+## This gives number of plants in each row observation (transect level).
+## blocksum2<-rowsum(df2[,c(1:106)], group=df2$grp2)
+## blocksum2$grps<-rownames(blocksum2)
+## rownames(blocksum2)<-NULL # remove rownames
+
+## Add in group vars.
+## nublock2<-separate(blocksum2, 107, c("time","block","transect","init", "treatment"), ":")
+## nublock2$total<-rowSums(nublock2[,c(1:106)])
+## nublock2$presence<-ifelse(nublock2$total > 0,  1, 0)
+
+## Subset data where before treatments installed (t0), in-situ log and in-situ open from t1 and t2 are included.
+## Hence only absolute log effect and absolute open effect are concerned
+## dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
 
 # look at plant abundance in log vs open 
 # look at range of data - what family should i use? 
 # range(dat_t0_insitu$total)
-nutrient_join <- nutrient[,c(1,3, 7:12,17)]
-nutrient_join[,3:9] <- scale(nutrient_join[,3:9])
+nutrient_join <- nutrient[,c(1,3, 7:8,10,12,17)]
+nutrient_join$P <- log10(nutrient_join$P)
 dat_t0_insitu <- inner_join(dat_t0_insitu, nutrient_join, by = c("init", "block"))
 
 # since samples from t1 and t2 from are mainly from the same plots as t0. These are not independent replicates and tend to correlated with each other.
@@ -1896,38 +1887,66 @@ dat_t0_insitu <- inner_join(dat_t0_insitu, nutrient_join, by = c("init", "block"
 # (1|year) + (1|block) as we think the effect of init on total is the same (slope) but the intercept differ amongst block and year
 # but since we have a greater number of sample from t0, data from t0 will contribute more to the variance in abundance.
 # see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
+# model avg https://uoftcoders.github.io/rcourse/lec09-model-selection.html
 
 # 2020 - 2022 #
-# mod.dredge <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, family = poisson,na.action = "na.fail")
+dat_t0_insitu$time <- as.factor(dat_t0_insitu$time)
+mod.dredge.allyear <- lmer(total~ N+ P + C + CEC + pH + (1|time), 
+                         data = dat_t0_insitu, 
+                         na.action = "na.fail")
 # vif(mod.dredge) # no collinearity
-# dredge_allyear <- dredge(mod.dredge, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
-# best.allyear <- glm(total~ N+ C + CEC, data = dat_t0_insitu, family = poisson)
-# tab_model(best.allyear,mod.dredge, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020-2022]")
-# htmltools::includeHTML("mod.abun_nu_allyear.html")
+dredge_allyear <- dredge(mod.dredge.allyear, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
+avg_allyear<- summary(model.avg(dredge_allyear, cumsum(weight) <= .95))
+print(as.data.frame(avg_allyear$coefmat.full))
+print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
+# dredgetable_allyear <- subset(dredge_allyear, cumsum(weight) <= .95) # look at how many tables are included
+
+## best.allyear <- glm(total~ N, data = dat_t0_insitu, family = gaussian)
+## tab_model(best.allyear,mod.dredge.allyear, file="mod.abun_nu_allyear.html",  dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020-2022]")
+## htmltools::includeHTML("mod.abun_nu_allyear.html")
 
 # only 2022 #
-mod.dredge.2022 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu,subset = (time == "t2"), family = poisson, na.action = "na.fail")
+mod.dredge.2022 <- glm(total ~ N + P + C + CEC + pH, 
+                        data = dat_t0_insitu,
+                        subset = (time == "t2"),
+                        family = gaussian, 
+                        na.action = "na.fail")
 # vif(mod.dredge.2022) # no collinearity
 dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
-best.2022 <- glm(total~ N+ P + C + CEC , data = dat_t0_insitu,subset = (time == "t2"), family = poisson)
-tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Selected inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2022]")
-# htmltools::includeHTML("mod.abun_nu_2022.html")
+avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
+print(as.data.frame(avg_2022$coefmat.full))
+print(sw(model.avg(dredge_2022, cumsum(weight) <= .95))) # relative importance, sum of Akaike Weigths for each variable across all models including that variable
+## best.2022 <- glm(total~ pH , data = dat_t0_insitu,subset = (time == "t2"), family = gaussian)
+## tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2022]")
+## htmltools::includeHTML("mod.abun_nu_2022.html")
 
 # only 2021 #
-mod.dredge.2021 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, subset = (time == "t1"), family = poisson ,na.action = "na.fail")
+mod.dredge.2021 <- glm(total~ N+ P + C + CEC + pH,
+                       data = dat_t0_insitu, 
+                       subset = (time == "t1"), 
+                       family = gaussian,
+                       na.action = "na.fail")
+
 # vif(mod.dredge.2021) # no collinearity
 dredge_2021 <- dredge(mod.dredge.2021, extra = "adjR^2")
-best.2021 <- glm(total~ K + N + P, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
-selected.2021 <- glm(total~ N+ P + K + C, data = dat_t0_insitu, subset = (time == "t1"), family = poisson)
-tab_model(best.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2021]")
+avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
+print(as.data.frame(avg_2021$coefmat.full))
+print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
+# tab_model(best.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2021]")
 # htmltools::includeHTML("mod.abun_nu_2021.html")
 
 # only 2020 #
-mod.dredge.2020 <- glm(total~ N+ P + K + C + CEC, data = dat_t0_insitu, subset = (time == "t0"), family = poisson,na.action = "na.fail")
+mod.dredge.2020 <- glm(total~ N+ P + C + CEC + pH, 
+                       data = dat_t0_insitu, 
+                       subset = (time == "t0"), 
+                       family = gaussian,
+                       na.action = "na.fail")
 # vif(mod.dredge.2020) # no collinearity
 dredge_2020 <- dredge(mod.dredge.2020, extra = "adjR^2")
-best.2020 <- glm(total~ P + C, data = dat_t0_insitu, subset = (time == "t0"), family = poisson)
-tab_model(best.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020]")
+avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
+print(as.data.frame(avg_2020$coefmat.full))
+print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
+# tab_model(best.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020]")
 # htmltools::includeHTML("mod.abun_nu_2020.html")
 ```
 
@@ -1994,38 +2013,37 @@ rownames(df2)<-NULL # remove rownames
 
 ###### Species diversity analysis for 2020 - 2022 data (Shannon diversity on transect level) 
 numat = mat %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+numat<-numat[which(numat$time=="t0" |  numat$treatment=="open" |  numat$treatment=="insitu_log"),]
 
-# sum species for each group (grouped by init, transect, block, time)
+# sum species for each group (grouped by init, block, time)
 nudat<-numat%>% 
-  group_by(time, block, transect, init, treatment) %>% summarise(across(where(is.numeric), sum))
+  group_by(time, block, init) %>% summarise(across(where(is.numeric), sum)) #42rows
 
 # make a data frame
 dat<-as.data.frame(nudat) # this df contains transect levels from all years
-dat<-dat[which(dat$time=="t0" |  dat$treatment=="open" |  dat$treatment=="insitu_log"),]
 
 #estimate diversity for each row/group. don't include 'x' 
 
 # no groups, just estimate diversity of each row
-est<-dat[,c(6:91)]
+est<-dat[,c(4:89)]
 dat$diversity<-diversity(est, index='shannon') 
-nutrient_join <- nutrient[,c(1,3,7:12,17)]
-nutrient_join[,3:9] <- scale(nutrient_join[,3:9])
+nutrient_join <- nutrient[,c(1,3,7:8, 10, 12,17)]
+nutrient_join$P <- log10(nutrient_join$P)
 dat <- inner_join(dat, nutrient_join, by = c("init", "block"))
 
-###### We used a hurdle model since the data is zero-inflated
-# separate into zero and non-zero observations
-dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
+# distribution of data is pretty normal
+# hist(dat$diversity)
+
+## We used a hurdle model since the data is zero-inflated
+## separate into zero and non-zero observations
+## dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
 
 # Non-zero data is an approximal Gaussian distribution
 # hist(dat$diversity[dat$non_zero ==1], xlab = "Shannon diversity index (non-zero)", main = "Histogram of Shannon diversity index (non-zero, all years, transect level)") # visually it resembles a lot like a Gaussian distribution 
 
-# Gaussian distribution produced the best-fitting ggplot
-dat_nonzerodat <- dat[dat$non_zero == 1, ]
-# ggplot(dat_nonzerodat, aes(sample = diversity)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
-
-# Hurdle model part 1. Logistic regression to predict the probability of non-zero.
-# Ppen and log environment does determine the probability of non-zero diversity index
-# 0 Shannon diversity index =/= zero plants
+## Gaussian distribution produced the best-fitting ggplot
+## dat_nonzerodat <- dat[dat$non_zero == 1, ]
+## ggplot(dat_nonzerodat, aes(sample = diversity)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
 
 # 2020-2022 #
 # di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
@@ -2034,30 +2052,49 @@ dat_nonzerodat <- dat[dat$non_zero == 1, ]
 # best.allyear <- glmmTMB(diversity~ N + P + K + (1|time), data=dat, ziformula=~1, family = gaussian)
 # tab_model(best.allyear, file="mod.diver_nu_allyear.html", dv.labels = c("Best model"), title="Shannon diversity index ~ soil nutrient[2020-2022]")
 # htmltools::includeHTML("mod.diver_nu_allyear.html")
+di.mod.allyear <- lmer(diversity ~ N + P + C + CEC + pH + (1|time),
+                    data =dat, 
+                    na.action= "na.fail")
+dredge_allyear <- dredge(di.mod.allyear, extra = "adjR^2")
+avg_allyear<- summary(model.avg(dredge_allyear, cumsum(weight) <= .95))
+print(as.data.frame(avg_allyear$coefmat.full))
+print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
 
 # 2020 #
-dat_t0 <- dat[dat$time == "t0",]
-di.mod.2020 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t0, ziformula=~1, family = gaussian, na.action= "na.fail")
-dredge_2020 <- dredge(di.mod.2020)
-best.t0 <- glmmTMB(diversity ~ CEC + K +N, data =dat_t0, ziformula=~1, family = gaussian)
-tab_model(best.t0, file="mod.diver_nu_2020.html", dv.labels = "Best model", title="[2020]glmmTMB(diversity ~ CEC + K + N, data =dat_t0, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("mod.diver_nu_2020.html") 
+di.mod.2020 <- lm(diversity ~ N + P + C + CEC + pH,
+                    data =dat, 
+                    subset = (time == "t0"),
+                    na.action= "na.fail")
+dredge_2020 <- dredge(di.mod.2020, extra = "adjR^2")
+avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
+print(as.data.frame(avg_2020$coefmat.full))
+print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
+## tab_model(best.t0, file="mod.diver_nu_2020.html", dv.labels = "Best model", title="[2020]glmmTMB(diversity ~ CEC + K + N, data =dat_t0, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
+## htmltools::includeHTML("mod.diver_nu_2020.html") 
 
 # 2021 #
-dat_t1 <- dat[dat$time == "t1",]
-di.mod.2021 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t1, ziformula=~1, family = gaussian, na.action= "na.fail")
-dredge_2021 <- dredge(di.mod.2021)
-best.t1 <- glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)
-tab_model(best.t1, file="mod.diver_nu_2021.html", dv.labels = "Best model", title="[2021]glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("mod.diver_nu_2021.html")
+di.mod.2021 <- lm(diversity ~ N + P + C + CEC + pH,
+                    data =dat, 
+                    subset = (time == "t1"),
+                    na.action= "na.fail")
+dredge_2021 <- dredge(di.mod.2021, extra = "adjR^2")
+avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
+print(as.data.frame(avg_2021$coefmat.full))
+print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
+## tab_model(best.t1, file="mod.diver_nu_2021.html", dv.labels = "Best model", title="[2021]glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
+## htmltools::includeHTML("mod.diver_nu_2021.html")
 
 # 2022 #
-dat_t2 <- dat[dat$time == "t2",]
-di.mod.2022 <- glmmTMB(diversity ~ N + P + K + C + CEC, data =dat_t2, ziformula=~1, family = gaussian, na.action= "na.fail")
-dredge_2022 <- dredge(di.mod.2022)
-best.t2 <- glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)
-tab_model(best.t2, file="mod.diver_nu_2022.html", dv.labels = "Best model", title=" [2022]glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("mod.diver_nu_2022.html")
+di.mod.2022 <- lm(diversity ~ N + P + C + CEC + pH,
+                    data =dat, 
+                    subset = (time == "t2"),
+                    na.action= "na.fail")
+dredge_2022 <- dredge(di.mod.2022, extra = "adjR^2")
+avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
+print(as.data.frame(avg_2022$coefmat.full))
+print(sw(model.avg(dredge_2022, cumsum(weight) <= .95)))
+## tab_model(best.t2, file="mod.diver_nu_2022.html", dv.labels = "Best model", title=" [2022]glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
+## htmltools::includeHTML("mod.diver_nu_2022.html")
 ```
 
 ##### Composition ~ nutrient composition
@@ -2157,7 +2194,7 @@ group_nutrient<-blocksum[,c(90:95)]
 
 # MDS 
 ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
-ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 4, trace = FALSE) # run MDS 
+ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 2, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t0_NMS) # check fit
 en.nutrient = envfit(ass.rel.t0_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t0_NMS) 
@@ -2302,8 +2339,8 @@ print(en.nutrient) ########## it is basically saying most of the nutrient does n
 (nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
 ```
 
-
 *2021*
+
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unidentified species.
@@ -2376,7 +2413,7 @@ group_nutrient<-blocksum[,c(90:95)]
 
 # MDS 
 ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
-ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 4, trace=FALSE) # run MDS 
+ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 2, trace=FALSE) # run MDS 
 # stressplot(ass.rel.t1_NMS) # check fit
 en.nutrient = envfit(ass.rel.t1_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t1_NMS) 
@@ -2517,6 +2554,7 @@ nmds.plot.nutrient <- ggplot()+
 print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
 (nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
 ```
+
 *2022*
 
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
@@ -2592,7 +2630,7 @@ group_nutrient<-blocksum[,c(90:95)]
 
 # MDS 
 ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
-ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 4, trace = FALSE) # run MDS 
+ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 2, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t2_NMS) # check fit
 en.nutrient = envfit(ass.rel.t2_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t2_NMS) 
@@ -2809,7 +2847,7 @@ group_nutrient<-blocksum[,c(91:94,96)]
 
 # MDS 
 ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
-ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 5, trace = FALSE) # run MDS 
+ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 2, trace = FALSE) # run MDS 
 # stressplot(ass.rel.t012_NMS) # check fit
 en.nutrient = envfit(ass.rel.t012_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t012_NMS) 
