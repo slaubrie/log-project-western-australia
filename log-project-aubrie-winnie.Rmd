@@ -737,7 +737,7 @@ text(x = sc_bp[,1] +0.08, # adjust text coordinate to avoid overlap with arrow t
 ```
 
 
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+```{r 2020 NMDS, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
 # MDS 
 ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 2, trace = FALSE) # run MDS 
 stressplot(ass.rel.t0_NMS) # check fit
@@ -964,7 +964,7 @@ text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow t
      font = 2)
 ```
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r 2021 NMDS, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
 # MDS 
 # ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
 ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 2, trace = FALSE) # run MDS 
@@ -1394,8 +1394,8 @@ plot(trt_Frac,
      type = "none", # this excludes the plotting of any points from the results
      frame = FALSE,
      # set axis limits
-     xlim = c(-.5,.5), 
-     ylim = c(-.5,.5),
+     xlim = c(-.8,.8), 
+     ylim = c(-.6,.6),
      # label the plot (title, and axes)
      main = "Triplot RDA - scaling 1",
      xlab = paste0("RDA1 (", perc[1], "%)"), 
@@ -1418,16 +1418,20 @@ ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
          col =c("#63A088", "#56638A"),
          draw = 'polygon')
 
-legend("topright", 
+legend(x = 0.8,
+       y = 0.3,
        legend = c("log", "open"), 
        col = c("#63A088", "#56638A"),
        title = "Treatment",
        pch = 20,  # Don't include point shapes
        cex = 0.8,
-       box.lty=0)
+       box.lty=0,
+       xjust = 0.5,
+      yjust = 0.5)
 
 # Create legend for point shape
-legend("right",
+legend(x = 0.8,
+       y = -0.2,
        legend = unique(sc_si$block),
        pch = unique(block_levels),
        title = "Block",
@@ -1435,7 +1439,8 @@ legend("right",
        pt.cex = 1.5,
        cex = 0.8,
        box.lty=0,
-      xjust = 0)
+      xjust = 0.5,
+      yjust = 0.5)
 
 # add arrows for effects of the expanatory variables
 arrows(0,0, # start them from (0,0)
@@ -1444,13 +1449,20 @@ arrows(0,0, # start them from (0,0)
        lwd = 2)
 # add text labels for arrows
 text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] + 0.02, 
+     y = sc_bp[,2] -0.01, 
      labels = "open", 
      col = "black", 
      cex = 1, 
      font = 2)
 
 ### extracting species scores and plotting 
+# time
+time_arrows <- data.frame(
+  x = c(-0.87417680, 1), # X-coordinates of the arrow (start and end points)
+  y = c(0, 1), # Y-coordinates of the arrow (start and end points)
+  time = c("Time 1", "Time 2") # Time labels for the arrows
+)
+
 # species scores
 species.scores<-as.data.frame(vegan::scores(ass.rel.t012_NMS,"species")) ## some species don't have scores
 species.scores$species<-rownames(species.scores) 
@@ -1464,7 +1476,15 @@ open<-mds_scores_t012[mds_scores_t012$treatment == "open", ][chull(mds_scores_t0
 
 hulldat<-rbind(log,open)
 
-options(ggrepel.max.overlaps = Inf)
+year2020 <- mds_scores_t012[mds_scores_t012$time == "t0", ][chull(mds_scores_t012[mds_scores_t012$time == 
+                                                          "t0", c("NMDS1", "NMDS2")]), ]
+year2021<- mds_scores_t012[mds_scores_t012$time == "t1", ][chull(mds_scores_t012[mds_scores_t012$time == 
+                                                          "t1", c("NMDS1", "NMDS2")]), ]
+year2022<- mds_scores_t012[mds_scores_t012$time == "t2", ][chull(mds_scores_t012[mds_scores_t012$time == 
+                                                          "t2", c("NMDS1", "NMDS2")]), ]
+hulldatyear<-rbind(year2020,year2021,year2022)
+
+options(ggrepel.max.overlaps = 6)
 nmds.plot <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
@@ -1482,6 +1502,7 @@ nmds.plot <- ggplot()+
   labs(title=paste0("Stress: ", round(ass.rel.t012_NMS$stress,3)))
  
 print(nmds.plot)
+
 
 # All other NMDS pairs
 # treatments <- unique(mds_scores_t012$treatment)
@@ -1687,7 +1708,7 @@ for (element in c(Nu)) {
       scale_x_discrete(labels=c('log', 'open')) +
       geom_signif(comparisons = list(c("log", "open")),
                   map_signif_level = TRUE,
-                  textsize = 5, vjust = 0.5, tip_length = 0) + 
+                  textsize = 5, vjust = 0.6, tip_length = 0) + 
       scale_y_continuous(expand = c(0,0.1))+
       theme(
     plot.background = element_blank(),
@@ -1897,7 +1918,7 @@ mod.dredge.allyear <- lmer(total~ N+ P + C + CEC + pH + (1|time),
 # vif(mod.dredge) # no collinearity
 dredge_allyear <- dredge(mod.dredge.allyear, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
 avg_allyear<- summary(model.avg(dredge_allyear, cumsum(weight) <= .95))
-print(as.data.frame(avg_allyear$coefmat.full))
+avg_allyear_full <- as.data.frame(avg_allyear$coefmat.full)
 print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
 # dredgetable_allyear <- subset(dredge_allyear, cumsum(weight) <= .95) # look at how many tables are included
 
@@ -1914,7 +1935,7 @@ mod.dredge.2022 <- glm(total ~ N + P + C + CEC + pH,
 # vif(mod.dredge.2022) # no collinearity
 dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
 avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
-print(as.data.frame(avg_2022$coefmat.full))
+avg_2022_full <- as.data.frame(avg_2022$coefmat.full)
 print(sw(model.avg(dredge_2022, cumsum(weight) <= .95))) # relative importance, sum of Akaike Weigths for each variable across all models including that variable
 ## best.2022 <- glm(total~ pH , data = dat_t0_insitu,subset = (time == "t2"), family = gaussian)
 ## tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2022]")
@@ -1930,7 +1951,7 @@ mod.dredge.2021 <- glm(total~ N+ P + C + CEC + pH,
 # vif(mod.dredge.2021) # no collinearity
 dredge_2021 <- dredge(mod.dredge.2021, extra = "adjR^2")
 avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
-print(as.data.frame(avg_2021$coefmat.full))
+avg_2021_full <- as.data.frame(avg_2021$coefmat.full)
 print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
 # tab_model(best.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2021]")
 # htmltools::includeHTML("mod.abun_nu_2021.html")
@@ -1944,7 +1965,7 @@ mod.dredge.2020 <- glm(total~ N+ P + C + CEC + pH,
 # vif(mod.dredge.2020) # no collinearity
 dredge_2020 <- dredge(mod.dredge.2020, extra = "adjR^2")
 avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
-print(as.data.frame(avg_2020$coefmat.full))
+avg_2020_full <- as.data.frame(avg_2020$coefmat.full)
 print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
 # tab_model(best.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020]")
 # htmltools::includeHTML("mod.abun_nu_2020.html")
