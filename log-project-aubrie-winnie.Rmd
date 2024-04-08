@@ -3,7 +3,7 @@ title: "log-project-aubrie-winnie"
 output:
   html_document: default
   pdf_document: default
-date: "2024-02-21"
+date: "2024-04-09"
 ---
 
 ```{r setup, include=FALSE}
@@ -159,10 +159,10 @@ We compared plant species composition between plot treatments (i.e. open vs log)
 #### *Analysis*<br>
 ##### Abundance analysis
 ** 2020 - 2022 **
+
 ```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 # packages
-
 require(vegan)
 require(dplyr)
 require(tidyr)
@@ -206,11 +206,6 @@ rownames(commtry)<-NULL
 mat<-separate(commtry, 107, c("time","block","transect","init", "treatment"), ":")
 # names(mat) #check
 
-# Add groupname using time, block, init columns.
-# mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
-# mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
-# names(mat) #check
-
 # Another df where the grouping variables are time, block, transect and initial state.
 # Each row is a transect in a certain year.
 df1 <- mat[which(mat$time=="t0"),]
@@ -230,15 +225,10 @@ df3 = df3 %>% mutate(across(.cols=1:106,.fns=as.numeric))
 rownames(df3)<-NULL # remove rownames
 df3$grp1<-apply(df3[c(107:108,110:111)], 1, paste, collapse=":")
 
-# df2 = with treatment in the grouping
-# df2 = df %>% mutate(across(.cols=1:106,.fns=as.numeric))
-# rownames(df2)<-NULL # remove rownames
-
 ##### Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
 
 # Sum observations across time X block X treatment (group variable).
 # This gives number of plants in each row observation (block level).
-## blocksum1<-rowsum(df1[,c(1:106)], group=df1$grp1) the original code
 grp1 <- df1[, "grp1"]
 blocksum1 <- aggregate(df1[, c(1:106)], by = list(grp1), FUN = function(x) rowMeans(t(x)))
 
@@ -263,65 +253,35 @@ nublock3$total<-rowSums(nublock3[,c(5:110)])
 nublock3$presence<-ifelse(nublock3$total > 0,  1, 0)
 nublock3 <- nublock3[,c(1:3, 5:112)]
 
-# Subset data where before treatments installed (t0), in-situ log and in-situ open from t1 and t2 are included.
-# Hence only absolute log effect and absolute open effect are concerned
-## dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
+dat_t0_insitu <- rbind(nublock1, nublock2, nublock3)
 
 # look at plant abundance in log vs open 
-# look at range of data - what family should i use? 
-range(nublock1$total)
-range(nublock2$total)
-range(nublock3$total)
+# look at range of data
+# range(nublock1$total)
+# range(nublock2$total)
+# range(nublock3$total)
 
-# distribution of data
-ggplot(nublock1, aes(sample=total)) + 
-  stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) + 
-  stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) # 2020 data fits a poisson dist.
+# visualize distribution of data
+# we used a gaussian distribution since the data contains decimal values
+# ggplot(nublock1, aes(sample=total)) + 
+#  stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) + 
+#  stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock1$total)))
 
-ggplot(nublock2, aes(sample=total)) + 
-     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) + 
-     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) # neither a normal/poisson distribution fit well 
+# ggplot(nublock1, aes(sample=total)) + 
+# geom_qq(distribution = qnorm) + 
+# geom_qq_line(distribution = qnorm) +
+# ggtitle("normal")
 
-ggplot(nublock3, aes(sample=total)) + 
-     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) + 
-     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) # 2022 data fits a poisson dist.
-
-dat_t0_insitu <- rbind(nublock1, nublock2, nublock3)
-# since samples from t1 and t2 from are mainly from the same plots as t0. These are not independent replicates and tend to correlated with each other.
-# including year and block as random effects
-# (1|year) + (1|block) as we think the effect of init on total is the same (slope) but the intercept differ amongst block and year
-# but since we have a greater number of sample from t0, data from t0 will contribute more to the variance in abundance.
-# see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
-## abun.mod.t012<- glmer(total~ init + (1|block) + (1|time), data=dat_t0_insitu, family = 'poisson')
-
-# emmeans(abun.mod.t012, ~init, type='response') # plant abundance in log plots is higher by 0.04 plants - which is no higher
-
-# abun.plot <- emmip(abun.mod.t012, ~init, type='response', CI=T)+theme_bw()+labs(x="Initial condition", y="Number of plants")
-# print(abun.plot)
-
-##### Reason: why we need to include 'time' as random effect?
-
-# (1) Samples from t1 and t2 from are from the same plots as t0. These are not independent replicates and tend to correlated with each other.
-# We included year and block as random effects to alleviate the effect of temporal pseudo-replication.
-
-# summary(aov(total ~ time, data = dat_t0_insitu)) # plant abundance differs between years
-
-# (2) When we stratify the data by year, significance of the difference between log and open treatment is lost.
-# if the effect of log-open (slope) is the same across year, year only affecting the intercept.
-# since the slopes are similar, we include time as random intercept effect.
+# glm with separate data
 abun.mod.t0 <- glm(total ~ init , data = nublock1, family = gaussian)
 abun.mod.t1 <- glm(total ~ init , data = nublock2, family = gaussian)
 abun.mod.t2 <- glm(total ~ init , data = nublock3, family = gaussian)
 
-# tab_model(abun.mod.t0, abun.mod.t1, abun.mod.t2, file="abundance_comparison.html", dv.labels = c("Abundance:2020", "Abundance:2021", "Abundance:2022"))
-
-# htmltools::includeHTML("abundance_comparison.html")
-
 mimiscols<-c("#D66972","#108780")
 
-em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "0.504") %>% mutate(group1="log") %>% mutate(group2="open")
-em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "0.597") %>% mutate(group1="log") %>% mutate(group2="open")
-em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "0.712") %>% mutate(group1="log") %>% mutate(group2="open")
+em.0 <- as.data.frame(emmeans(abun.mod.t0, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "p = 0.504") %>% mutate(group1="log") %>% mutate(group2="open")
+em.1 <- as.data.frame(emmeans(abun.mod.t1, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "p = 0.597") %>% mutate(group1="log") %>% mutate(group2="open")
+em.2 <- as.data.frame(emmeans(abun.mod.t2, ~init, type='response')) %>% mutate(time = "t2") %>% mutate(p = "p = 0.712") %>% mutate(group1="log") %>% mutate(group2="open")
 abun.mod <- bind_rows(em.0, em.1, em.2) %>%
   mutate(y.position = 15)
 
@@ -414,71 +374,7 @@ dat<-as.data.frame(nudat) # this df contains transect levels from all years
 est<-dat[,c(4:89)]
 dat$diversity<-diversity(est, index='shannon') 
 
-###### We used a hurdle model since the data is zero-inflated
-# separate into zero and non-zero observations
-# dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
-
-# what does our data look like? 
-# hist(dat$diversity, xlab = "Shannon diversity", main = "Histogram of Shannon diversity index (all years, transect level)") # zero-inflated
-
-# ggplot(dat, aes(x = diversity, fill = as.factor(non_zero))) +
-#  geom_histogram(position = "identity", alpha = 1, bins = 30) +
-#  labs(x = "Diversity",
-#       y = "Frequency") +
-#  scale_fill_discrete(name = 'non_zero') +
-#  theme_bw()
-
-# shapiro.test((dat$diversity[dat$non_zero == 1])) # non-zero data is not normal
-
-# Non-zero data is, however, an approximate Gaussian distribution
-# hist(dat$diversity[dat$non_zero ==1], xlab = "Shannon diversity index (non-zero)", main = "Histogram of Shannon diversity index (non-zero, all years, transect level)") # visually it resembles a lot like a Gaussian distribution 
-
-# Gaussian distribution produced the best-fitting ggplot
-# dat_nonzerodat <- dat[dat$non_zero == 1, ]
-# ggplot(dat_nonzerodat, aes(sample = diversity)) + 
-#                   geom_qq(distribution = qnorm) + 
-#                  geom_qq_line(distribution = qnorm) +
-#                  ggtitle("normal")
-
-# Hurdle model part 1. Logistic regression to predict the probability of non-zero.
-# Plot treatment does determine the probability of non-zero diversity index.
-# We included block and time as random terms.
-# 0 Shannon diversity index =/= zero plants
-# Hurd.mod.1 <- glmer(non_zero ~ init + (1|block) + (1|time), data = dat, family = binomial)
-# summary(Hurd.mod.1) # significant
-
-# Open and log environment is significant in explaining the plant diversity in transect levels.
-# Lmer was used because the distribution of non-zero data is approximally normal.
-# Hurd.mod.2 <- lmer(diversity ~ init + (1|block)+ (1|time), data=subset(dat, non_zero == 1))
-# summary(Hurd.mod.2)
-# anova(Hurd.mod.2) # lmer on non-zero diversity values is significant
-
-# tab_model(Hurd.mod.1, Hurd.mod.2, dv.labels=c("Prob. SDI>0", "Pron. when SDI>0"), title = "Shannon diversity index (SDI): 2020-2022", file = "sdi_openlog_allyear.html", transform = NULL, show.est = TRUE, show.se = TRUE)
-# htmltools::includeHTML("sdi_openlog_allyear.html")
-
-# Check residual
-# residuals <- resid(Hurd.mod.2) # Extract residuals
-# plot(residuals)
-# abline(0,0)
-# check_model(Hurd.mod.2)
-
-# zi model using glmmTMB with Gaussian link
-# https://journal.r-project.org/archive/2017/RJ-2017-066/RJ-2017-066.pdf
-# di.mod.allyear <- glmmTMB(diversity ~ init+(1|block), data=dat, ziformula=~1, family = gaussian)
-# summary(di.mod.allyear) # significant! p=0.0132 
-# tab_model(di.mod.allyear, dv.labels="SDI [all years]", title = "Shannon diversity index (SDI): 2020-2022")
-
-###### Species diversity analysis for 2020 data (Shannon diversity on transect level) 
-# Hurdle model appraoch
-# Hurd.mod.1.2020 <- glmer(non_zero ~ init + (1|block), data = dat_2020, family = binomial)
-# Hurd.mod.2.2020 <- lm(diversity ~ init, data=subset(dat_2020, non_zero == 1))
-## random effect (1|block) removed since it's close to zero
-# anova(Hurd.mod.2.2020)
-
-## di.mod.2020 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t0"), ziformula=~1, family = gaussian)
-# summary(di.mod.2020)
-## tab_model(di.mod.2020, dv.labels="SDI [2020]", title = "Shannon diversity index (SDI): 2020")
-
+# glm with separate data
 di.mod.2020 <- glm(diversity ~ init, data=subset(dat, time == "t0"), family = gaussian)
 di.mod.2021 <- glm(diversity ~ init, data=subset(dat, time == "t1"), family = gaussian)
 di.mod.2022 <- glm(diversity ~ init, data=subset(dat, time == "t2"), family = gaussian)
@@ -486,36 +382,6 @@ di.mod.2022 <- glm(diversity ~ init, data=subset(dat, time == "t2"), family = ga
 # residuals <- resid(di.mod.2020) # Extract residuals
 # plot(residuals, main="2020")
 # abline(0,0)
-
-###### Species diversity analysis for 2021 data (Shannon diversity on transect level)
-# Hurdle model appraoch
-# Hurd.mod.1.2021 <- glm(non_zero ~ init, data = dat_2021, family = binomial)
-# Random effect (1|block) removed since it's close to zero.
-# Hurd.mod.2.2021 <- lmer(diversity ~ init + (1|block), data=subset(dat_2021, non_zero == 1))
-
-## di.mod.2021 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t1"), ziformula=~1, family = gaussian)
-# summary(di.mod.2021)
-## tab_model(di.mod.2021, dv.labels="SDI [2021]", title = "Shannon diversity index (SDI): 2021")
-
-# Check residual
-# residuals <- resid(di.mod.2021) # Extract residuals
-# plot(residuals, main="2021")
-# abline(0,0)
-
-###### Species diversity analysis for 2022 data (Shannon diversity on transect level) 
-# Hurdle model appraoch
-# Hurd.mod.1.2022 <- glmer(non_zero ~ init + (1|block), data = dat_2022, family = binomial, )
-# Hurd.mod.2.2022 <- lmer(diversity ~ init + (1|block), data=subset(dat_2022, non_zero == 1))
-
-## di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
-# summary(di.mod.2022)
-## tab_model(di.mod.2022, dv.labels="SDI [2022]", title = "Shannon diversity index (SDI): 2022")
-
-# Check residual
-# residuals <- resid(Hurd.mod.2) # Extract residuals
-# plot(residuals, main="2022")
-# abline(0,0)
-
 
 em.0 <- as.data.frame(emmeans(di.mod.2020, ~init, type='response')) %>% mutate(time = "t0") %>% mutate(p = "p = 0.209")
 em.1 <- as.data.frame(emmeans(di.mod.2021, ~init, type='response')) %>% mutate(time = "t1") %>% mutate(p = "p = 0.642")
@@ -540,7 +406,7 @@ div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   theme_bw()+
   theme(legend.position="top",panel.grid = element_blank())+
   xlab("Plot type")+
-  ylab("Diversity")+
+  ylab("Shannon Diversity Index")+
   labs(color = "Initial Plot Type")+
   geom_jitter(data=dat,
              aes(x=init, y=diversity, color=init), 
@@ -598,7 +464,7 @@ names(mat) #check
 
 Composition dissimilarity *2020*
 
-```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+```{r, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE, fig.width=6, fig.height=5}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t0"),]
 mat2$grp<-apply(mat2[c(71,72)], 1, paste, collapse=":") # block, init as grouping
@@ -631,10 +497,10 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 # can test for significance of contribution of the fraction of initial treatment
 # can look at significance of model where initial treatment and block explain variation in community
 trt_Frac<-rda(ass.rel.t0~init+block) # run model using standardized data 
-summary(trt_Frac)
-anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
-anova.cca(trt_Frac)
-RsquareAdj(trt_Frac) #explanatory power
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac) #explanatory power
 
 result.df.t0 <- data.frame(
   stringsAsFactors = FALSE,
@@ -653,96 +519,65 @@ knitr::kable(result.df.t0, "simple")
 # Using varpart to look at contributions of initial treatment and block
 var.mod.t0 <-varpart(ass.rel.t0, init, block) # run model on standardized data
 
-plot(var.mod.t0, bg=c("hotpink","skyblue"),
-     Xnames = c("Treatment", "Block"))
+# plot(var.mod.t0, bg=c("hotpink","skyblue"),
+#     Xnames = c("Treatment", "Block"))
 
 var.mod.t0$part # varpart shows adj. rsquared
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
-sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_bp <- as.data.frame(sc_bp)
-sc_bp <- sc_bp[1,1:2]
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+sc_bp_2020 <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp_2020 <- as.data.frame(sc_bp_2020)
+sc_bp_2020 <- sc_bp_2020[1,1:2]
+sc_sp_2020 <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
 # site
-sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
-sc_si<-as.data.frame(sc_si) # extract scores
-sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
-sc_si$treatment<-group_init # grouping factor 1 
-sc_si$block<-group_block # grouping factor 2 
-sc_si$treatment <- as.factor(sc_si$treatment)
+sc_si_2020 <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si_2020<-as.data.frame(sc_si_2020) # extract scores
+sc_si_2020$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si_2020$treatment<-group_init # grouping factor 1 
+sc_si_2020$block<-group_block # grouping factor 2 
+sc_si_2020$treatment <- as.factor(sc_si_2020$treatment)
 
-plot(trt_Frac,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-1,1), 
-     ylim = c(-.4,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
+sc_si_2020$treatment <- as.factor(sc_si_2020$treatment)
 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
+log<-sc_si_2020[sc_si_2020$treatment == "log", ][chull(sc_si_2020[sc_si_2020$treatment == 
+                                                          "log", c("RDA1", "RDA2")]), ]
 
-block_levels <- as.numeric(factor(sc_si$block))
-sc_si$treatment <- as.factor(sc_si$treatment)
-points(sc_si, 
-       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
-       pch = block_levels, # Adding 1 to shift block levels to start from 1
-       cex = 0.8)
-ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
-         col =c("#63A088", "#56638A"),
-         draw = 'polygon')
+open<-sc_si_2020[sc_si_2020$treatment == "open", ][chull(sc_si_2020[sc_si_2020$treatment == 
+                                                               "open", c("RDA1", "RDA2")]), ]
 
-legend("topright", 
-       legend = c("log", "open"), 
-       col = c("#63A088", "#56638A"),
-       title = "Treatment",
-       pch = 20,  # Don't include point shapes
-       cex = 0.8,
-       box.lty=0)
+hulldat_2020<-rbind(log,open)
 
-# Create legend for point shape
-legend("right",
-       legend = unique(sc_si$block),
-       pch = unique(block_levels),
-       title = "Block",
-       col = "black",  # Black color for legend text
-       pt.cex = 1.5,
-       cex = 0.8,
-       box.lty=0,
-      xjust = 1.3)
+# Plot the scores
+biplot_2020 <- ggplot(sc_sp_2020, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si_2020, aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_text(data = sc_sp_2020, aes(label = rownames(sc_sp_2020)), color = "grey40", fontface = 2, size = 3, vjust = 1.5) +
+  geom_polygon(data = hulldat_2020, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  geom_segment(data = sc_bp_2020, aes(x = 0, y = 0, xend = sc_bp_2020[,1], yend = sc_bp_2020[,2]), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp_2020, aes(x = sc_bp_2020[,1] + 0.1, y = sc_bp_2020[,2] +0.01, label = "open"), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "RDA biplot [2020]") +
+  scale_color_manual(values = c("#63A088", "#56638A"),guide = FALSE) +
+  scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si_2020$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  # Add horizontal dotted line at y = 0
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.grid.major.x = element_blank(),  # Add dotted grid lines for x-axis
+        panel.grid.major.y = element_blank())
 
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.08, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2], 
-     labels = "open", 
-     col = "black", 
-     cex = 1, 
-     font = 2)
-
-
+#biplot_2020
 ```
 
-
-```{r 2020 NMDS, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE}
+```{r 2020 NMDS, message=TRUE, warning=TRUE, include=TRUE, paged.print=FALSE, results='markup',echo=FALSE, fig.width=8, fig.height=6}
 # MDS 
 ass.rel.t0_NMS <- metaMDS(ass.rel.t0, distance = 'bray', k = 2, trace = FALSE) # run MDS 
-stressplot(ass.rel.t0_NMS) # check fit
+# stressplot(ass.rel.t0_NMS) # check fit
 ano_t0 <- anosim(assemblies_t0, mat2$init, distance = "bray", permutations = 9999)
-print(ano_t0) # marginally different
+# print(ano_t0) # marginally different
 
 # scores
 mds_scores_t0<-as.data.frame(vegan::scores(ass.rel.t0_NMS)$sites) # extract scores
@@ -768,7 +603,7 @@ open<-mds_scores_t0[mds_scores_t0$treatment == "open", ][chull(mds_scores_t0[mds
 
 hulldat<-rbind(log,open)
 
-nmds.plot<- ggplot()+
+nmds.plot.2020 <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
         panel.grid.major = element_blank(),  #remove major-grid labels
@@ -782,56 +617,14 @@ nmds.plot<- ggplot()+
   geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
   geom_point(data=mds_scores_t0, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
-  labs(title=paste0("Stress: ", round(ass.rel.t0_NMS$stress,3)))
+  labs(title=paste0("[2020] Stress: ", round(ass.rel.t0_NMS$stress,3)))
 
-print(nmds.plot)
-
-# Plotting all combination of NMDS axes when k > 2
-# treatments <- unique(mds_scores_t0$treatment)
-# plots <- list()
-# num_axes <- 4  
-
-#  for (i in 1:num_axes) {
-#  for (j in (i+1):num_axes) {  
-#    if (j <= num_axes && i != j) {  
-#      log <- mds_scores_t0[mds_scores_t0$treatment == "log", ]
-#      open <- mds_scores_t0[mds_scores_t0$treatment == "open", ]
-      
-#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
-      
-#      hulldat <- rbind(log_hull, open_hull)
-      
-#      plot_name <- paste0(i, "+", j)
-      
-#      plots[[plot_name]] <- ggplot() +
-#        theme_bw() +
-#        theme(panel.background = element_blank(),
-#              panel.grid.major = element_blank(),
-#              panel.grid.minor = element_blank(),
-#              plot.background = element_blank(),
-#              axis.text = element_text(size = 15),
-#              axis.title = element_text(size = 15),
-#              legend.title = element_text(size = 15),
-#              legend.text = element_text(size = 10)) +
-#        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        geom_point(data = mds_scores_t0, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        xlab(paste0("NMDS", i)) +
-#        ylab(paste0("NMDS", j))
-#    }
-#  }
-#}
-
-#((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2020] Stress:",round(ass.rel.t0_NMS$stress,3), " (k = 4)"))
-
-
+# print(nmds.plot.2020)
 ```
 
 Composition dissimilarity *2021*
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE, fig.width=6, fig.height=5}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t1"),]
 mat2$grp<-apply(mat2[c(71,72)], 1, paste, collapse=":") # block, init as grouping
@@ -862,10 +655,10 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 # redundancy analysis
 trt_Frac<-rda(ass.rel.t1~init+block) # run model using standardized data 
-summary(trt_Frac)
-anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
-anova.cca(trt_Frac)
-RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 
 result.df.t1 <- data.frame(
   stringsAsFactors = FALSE,
@@ -883,88 +676,60 @@ knitr::kable(result.df.t1, "simple")
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod.t1<-varpart(ass.rel.t1, init, block) # run model on standardized data
-plot(var.mod.t1, bg=c("hotpink","skyblue"),
-     Xnames = c("Treatment", "Block"))
+# plot(var.mod.t1, bg=c("hotpink","skyblue"),
+#     Xnames = c("Treatment", "Block"))
 
 var.mod.t1$part
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
-sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_bp <- as.data.frame(sc_bp)
-sc_bp <- sc_bp[1,1:2]
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+sc_bp_2021 <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp_2021 <- as.data.frame(sc_bp_2021)
+sc_bp_2021 <- sc_bp_2021[1,1:2]
+sc_sp_2021 <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
 # site
-sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
-sc_si<-as.data.frame(sc_si) # extract scores
-sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
-sc_si$treatment<-group_init # grouping factor 1 
-sc_si$block<-group_block # grouping factor 2 
-sc_si$treatment <- as.factor(sc_si$treatment)
+sc_si_2021 <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si_2021<-as.data.frame(sc_si_2021) # extract scores
+sc_si_2021$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si_2021$treatment<-group_init # grouping factor 1 
+sc_si_2021$block<-group_block # grouping factor 2 
+sc_si_2021$treatment <- as.factor(sc_si_2021$treatment)
 
-plot(trt_Frac,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-1,1), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
+sc_si_2021$treatment <- as.factor(sc_si_2021$treatment)
 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
+log<-sc_si_2021[sc_si_2021$treatment == "log", ][chull(sc_si_2021[sc_si_2021$treatment == 
+                                                          "log", c("RDA1", "RDA2")]), ]
 
-block_levels <- as.numeric(factor(sc_si$block))
-sc_si$treatment <- as.factor(sc_si$treatment)
-points(sc_si, 
-       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
-       pch = block_levels, # Adding 1 to shift block levels to start from 1
-       cex = 0.8)
-ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
-         col =c("#63A088", "#56638A"),
-         draw = 'polygon')
+open<-sc_si_2021[sc_si_2021$treatment == "open", ][chull(sc_si_2021[sc_si_2021$treatment == 
+                                                               "open", c("RDA1", "RDA2")]), ]
 
-legend("topright", 
-       legend = c("log", "open"), 
-       col = c("#63A088", "#56638A"),
-       title = "Treatment",
-       pch = 20,  # Don't include point shapes
-       cex = 0.8,
-       box.lty=0)
+hulldat_2021<-rbind(log,open)
 
-# Create legend for point shape
-legend("right",
-       legend = unique(sc_si$block),
-       pch = unique(block_levels),
-       title = "Block",
-       col = "black",  # Black color for legend text
-       pt.cex = 1.5,
-       cex = 0.8,
-       box.lty=0,
-      xjust = 0.8)
+# Plot the scores
+biplot_2021 <- ggplot(sc_sp_2021, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si_2021, aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_text(data = sc_sp_2021, aes(label = rownames(sc_sp_2021)), color = "grey40", fontface = 2, size = 3, vjust = 1.5) +
+  geom_polygon(data = hulldat_2021, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  geom_segment(data = sc_bp_2021, aes(x = 0, y = 0, xend = sc_bp_2021[,1], yend = sc_bp_2021[,2]), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp_2021, aes(x = sc_bp_2021[,1] -0.08, y = sc_bp_2021[,2] +0.05, label = "open"), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "RDA biplot [2021]") +
+  scale_color_manual(values = c("#63A088", "#56638A"),guide = FALSE) +
+  scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si_2021$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  # Add horizontal dotted line at y = 0
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.grid.major.x = element_blank(),  # Add dotted grid lines for x-axis
+        panel.grid.major.y = element_blank())
 
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] +0.01, 
-     labels = "open", 
-     col = "black", 
-     cex = 1, 
-     font = 2)
+# biplot_2021
 ```
 
-```{r 2021 NMDS, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r 2021 NMDS, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE, fig.width=8, fig.height=6}
 # MDS 
 # ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
 ass.rel.t1_NMS <- metaMDS(ass.rel.t1, distance = 'bray', k = 2, trace = FALSE) # run MDS 
@@ -996,7 +761,7 @@ open<-mds_scores_t1[mds_scores_t1$treatment == "open", ][chull(mds_scores_t1[mds
 
 hulldat<-rbind(log,open)
  
-nmds.plot <- ggplot()+
+nmds.plot.2021 <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
         panel.grid.major = element_blank(),  #remove major-grid labels
@@ -1010,54 +775,14 @@ nmds.plot <- ggplot()+
   geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
   geom_point(data=mds_scores_t1, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
-  labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
+  labs(title=paste0("[2021] Stress: ", round(ass.rel.t1_NMS$stress,3)))
 
-print(nmds.plot)
-
-# Plotting all combination of NMDS axes when k > 2
-# treatments <- unique(mds_scores_t1$treatment)
-#plots <- list()
-#num_axes <- 5  
-
-#for (i in 1:num_axes) {
-#  for (j in (i+1):num_axes) {  
-#    if (j <= num_axes && i != j) {  
-#      log <- mds_scores_t1[mds_scores_t1$treatment == "log", ]
-#      open <- mds_scores_t1[mds_scores_t1$treatment == "open", ]
-      
-#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
-      
-#      hulldat <- rbind(log_hull, open_hull)
-      
-#      plot_name <- paste0(i, "+", j)
-      
-#      plots[[plot_name]] <- ggplot() +
-#        theme_bw() +
-#        theme(panel.background = element_blank(),
-#              panel.grid.major = element_blank(),
-#              panel.grid.minor = element_blank(),
-#              plot.background = element_blank(),
-#              axis.text = element_text(size = 15),
-#              axis.title = element_text(size = 15),
-#              legend.title = element_text(size = 15),
-#              legend.text = element_text(size = 10)) +
-#        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        geom_point(data = mds_scores_t1, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        xlab(paste0("NMDS", i)) +
-#        ylab(paste0("NMDS", j))
-#    }
-#  }
-#}
-
-#(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("[2021] Stress:",round(ass.rel.t1_NMS$stress,3), " (k = 5)"))
+# print(nmds.plot.2021)
 ```
 
 Composition dissimilarity *2022*
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE,fig.width=6, fig.height=5}
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat2 <- mat[which(mat$time=="t2"),]
 mat2$grp<-apply(mat2[c(71,72)], 1, paste, collapse=":") # block, init as grouping
@@ -1088,10 +813,10 @@ block<-as.factor(group_block) # grouping factor 2- convert to factor
 
 # redundancy analysis
 trt_Frac<-rda(ass.rel.t2~init+ block) # run model using standardized data 
-summary(trt_Frac)
-anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
-anova.cca(trt_Frac)
-RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
 
 result.df.t2 <- data.frame(
   stringsAsFactors = FALSE,
@@ -1109,92 +834,62 @@ knitr::kable(result.df.t2, "simple")
 
 # can model using varpart to look at contributions of initial treatment and block
 var.mod.t2<-varpart(ass.rel.t2, init, block) # run model on standardized data
-plot(var.mod.t2, bg=c("hotpink","skyblue"),
-     Xnames = c("Treatment", "Block"))
+# plot(var.mod.t2, bg=c("hotpink","skyblue"),
+#     Xnames = c("Treatment", "Block"))
 
 # Plotting rda
 perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
-sc_bp <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
-sc_bp <- as.data.frame(sc_bp)
-sc_bp <- sc_bp[1,1:2]
-sc_sp <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+sc_bp_2022 <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp_2022 <- as.data.frame(sc_bp_2022)
+sc_bp_2022 <- sc_bp_2022[1,1:2]
+sc_sp_2022 <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
 # site
-sc_si <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
-sc_si<-as.data.frame(sc_si) # extract scores
-sc_si$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
-sc_si$treatment<-group_init # grouping factor 1 
-sc_si$block<-group_block # grouping factor 2 
-sc_si$treatment <- as.factor(sc_si$treatment)
+sc_si_2022 <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si_2022<-as.data.frame(sc_si_2022) # extract scores
+sc_si_2022$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si_2022$treatment<-group_init # grouping factor 1 
+sc_si_2022$block<-group_block # grouping factor 2 
+sc_si_2022$treatment <- as.factor(sc_si_2022$treatment)
 
-plot(trt_Frac,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.5,.5), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
+sc_si_2022$treatment <- as.factor(sc_si_2022$treatment)
 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
+log<-sc_si_2022[sc_si_2022$treatment == "log", ][chull(sc_si_2022[sc_si_2022$treatment == 
+                                                          "log", c("RDA1", "RDA2")]), ]
 
-block_levels <- as.numeric(factor(sc_si$block))
-sc_si$treatment <- as.factor(sc_si$treatment)
-points(sc_si, 
-       col = ifelse(sc_si$treatment == "log", "#63A088", "#56638A"), 
-       pch = block_levels, # Adding 1 to shift block levels to start from 1
-       cex = 0.8)
-ordihull(sc_si[,1:2], groups = sc_si$treatment, show.group = sc_si$treatment,
-         col =c("#63A088", "#56638A"),
-         draw = 'polygon')
+open<-sc_si_2022[sc_si_2022$treatment == "open", ][chull(sc_si_2022[sc_si_2022$treatment == 
+                                                               "open", c("RDA1", "RDA2")]), ]
 
-legend("topright", 
-       legend = c("log", "open"), 
-       col = c("#63A088", "#56638A"),
-       title = "Treatment",
-       pch = 20,  # Don't include point shapes
-       cex = 0.8,
-       box.lty=0)
+hulldat_2022<-rbind(log,open)
 
-# Create legend for point shape
-legend("right",
-       legend = unique(sc_si$block),
-       pch = unique(block_levels),
-       title = "Block",
-       col = "black",  # Black color for legend text
-       pt.cex = 1.5,
-       cex = 0.8,
-       box.lty=0,
-      xjust = 0)
+# Plot the scores
+biplot_2022 <- ggplot(sc_sp_2022, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si_2022, aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_text(data = sc_sp_2022, aes(label = rownames(sc_sp_2022)), color = "grey40", fontface = 2, size = 3, vjust = 1.5) +
+  geom_polygon(data = hulldat_2022, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  geom_segment(data = sc_bp_2022, aes(x = 0, y = 0, xend = sc_bp_2022[,1], yend = sc_bp_2022[,2]), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp_2022, aes(x = sc_bp_2022[,1] + 0.15, y = sc_bp_2022[,2] + 0.05, label = "open"), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "RDA biplot [2022]") +
+  scale_color_manual(values = c("#63A088", "#56638A"),guide = FALSE) +
+  scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si_2022$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  # Add horizontal dotted line at y = 0
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.grid.major.x = element_blank(),  # Add dotted grid lines for x-axis
+        panel.grid.major.y = element_blank())
 
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] -0.08, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] + 0.02, 
-     labels = "open", 
-     col = "black", 
-     cex = 1, 
-     font = 2)
-
+#biplot_2022
 ```
 
-
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE}
+```{r 2022 NMDS, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE,fig.width=8, fig.height=6}
 # MDS 
 # ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
 ass.rel.t2_NMS <- metaMDS(ass.rel.t2, distance = 'bray', k = 2, trace=FALSE) # run MDS 
-stressplot(ass.rel.t2_NMS) # check fit
+# stressplot(ass.rel.t2_NMS) # check fit
 ano_t2 <- anosim(assemblies_t2, mat2$init, distance = "bray", permutations = 9999)
 print(ano_t2)
 
@@ -1226,7 +921,7 @@ open<-mds_scores_t2[mds_scores_t2$treatment == "open", ][chull(mds_scores_t2[mds
 
 hulldat<-rbind(log,open)
  
-nmds.plot <- ggplot()+
+nmds.plot.2022 <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
         panel.grid.major = element_blank(),  #remove major-grid labels
@@ -1240,58 +935,18 @@ nmds.plot <- ggplot()+
   geom_polygon(data=hulldat, aes(NMDS1, NMDS2, fill=treatment, group=treatment), alpha=0.3)+scale_fill_manual(values=c("#63A088","#56638A"), name="Treatment")+
   geom_point(data=mds_scores_t2, aes(NMDS1, NMDS2, shape=block, col=treatment), size=6)+ scale_shape_manual(values = c(14,15,16,17,11,18,8), name='Block')+
   scale_colour_manual(values=c("#63A088","#56638A"), name="Treatment") +
-  labs(title=paste0("Stress: ", round(ass.rel.t2_NMS$stress,3)))
+  labs(title=paste0("[2022] Stress: ", round(ass.rel.t2_NMS$stress,3)))
   
-print(nmds.plot)
+# print(nmds.plot.2022)
+```
 
-
-# Plotting all combination of NMDS axes when k > 2
-# treatments <- unique(mds_scores_t2$treatment)
-# plots <- list()
-# num_axes <- 4  
-
-#for (i in 1:num_axes) {
-#  for (j in (i+1):num_axes) {  
-#    if (j <= num_axes && i != j) {  
-#      log <- mds_scores_t2[mds_scores_t2$treatment == "log", ]
-#      open <- mds_scores_t2[mds_scores_t2$treatment == "open", ]
-#      
-#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
-#      
-#      hulldat <- rbind(log_hull, open_hull)
-#      
-#      plot_name <- paste0(i, "+", j)
-#      
-#      plots[[plot_name]] <- ggplot() +
-#       theme_bw() +
-#        theme(panel.background = element_blank(),
-#              panel.grid.major = element_blank(),
-#              panel.grid.minor = element_blank(),
-#              plot.background = element_blank(),
-#              axis.text = element_text(size = 15),
-#              axis.title = element_text(size = 15),
-#              legend.title = element_text(size = 15),
-#              legend.text = element_text(size = 10)) +
-#        geom_text_repel(data = species.scores.t2, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), 
-#                                                      label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = #treatment), alpha = 0.3) +
-#        scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        geom_point(data = mds_scores_t2, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + 
-#        scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        xlab(paste0("NMDS", i)) +
-#        ylab(paste0("NMDS", j))
-#    }
-# }
-#}
-
-#((plots$`1+2` + plots$`1+3`)/(plots$`1+4` + plots$`2+3`)/(plots$`2+4` + plots$`3+4`)) + plot_layout(guides ="collect") + plot_annotation(paste0("[2022] Stress:",round(ass.rel.t2_NMS$stress,3), " (k = 4)"))
-
+```{r all nmds and rda plots,message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE,fig.width=18, fig.height=6}
+(nmds.plot.2020 + nmds.plot.2021 + nmds.plot.2022) + plot_layout(guides ="collect")
+(biplot_2020 + biplot_2021 + biplot_2022)+ plot_layout(guides ="collect")
 ```
 
 Composition dissimilarity *2020 - 2022*
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
+```{r 2020-2022 pooled composition, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 # Composition dissimilarity * 2020 - 2022 *
 # subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
 mat3 <- mat
@@ -1503,46 +1158,6 @@ nmds.plot <- ggplot()+
  
 print(nmds.plot)
 
-
-# All other NMDS pairs
-# treatments <- unique(mds_scores_t012$treatment)
-# plots <- list()
-# num_axes <- 5  
-
-# for (i in 1:num_axes) {
-#  for (j in (i+1):num_axes) {  
-#    if (j <= num_axes && i != j) {  
-#      log <- mds_scores_t012[mds_scores_t012$treatment == "log", ]
-#      open <- mds_scores_t012[mds_scores_t012$treatment == "open", ]
-#      
-#      log_hull <- log[chull(log[[paste0("NMDS", i)]], log[[paste0("NMDS", j)]]), ]
-#      open_hull <- open[chull(open[[paste0("NMDS", i)]], open[[paste0("NMDS", j)]]), ]
-#      
-#      hulldat <- rbind(log_hull, open_hull)
-#      
-#      plot_name <- paste0(i, "+", j)
-      
-#      plots[[plot_name]] <- ggplot() +
-#        theme_bw() +
-#        theme(panel.background = element_blank(),
-#              panel.grid.major = element_blank(),
-#              panel.grid.minor = element_blank(),
-#              plot.background = element_blank(),
-#              axis.text = element_text(size = 15),
-#              axis.title = element_text(size = 15),
-#              legend.title = element_text(size = 15),
-#              legend.text = element_text(size = 10)) +
-#        geom_text_repel(data = species.scores, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), label = species), alpha = 0.9, size = 3, col = 'darkgray', na.rm = TRUE) +
-#        geom_polygon(data = hulldat, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), fill = treatment, group = treatment), alpha = 0.3) + 
-#        scale_fill_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        geom_point(data = mds_scores_t012, aes(x = !!sym(paste0("NMDS", i)), y = !!sym(paste0("NMDS", j)), shape = block, col = treatment), size = 6) + scale_shape_manual(values = c(14, 15, 16, 17, 11, 18, 8), name = 'Block') +
-#        scale_colour_manual(values = c("#63A088", "#56638A"), name = "Treatment") +
-#        xlab(paste0("NMDS", i)) +
-#        ylab(paste0("NMDS", j))
-#    }
-#  }
-#}
-
 #(plots$`1+2`+ plots$`1+3`)/ (plots$`1+4`+ plots$`1+5`)/(plots$`2+3` + plots$`2+4`)/ (plots$`2+5`+ plots$`3+4`)/ (plots$`3+5`+ plots$`4+5`) + plot_layout(guides ="collect") + plot_annotation(paste0("Stress:",round(ass.rel.t012_NMS$stress,3), " (k = 5)"))
 ```
 
@@ -1616,7 +1231,7 @@ Similarly, as an alternative approach, we ran a Redundancy Analysis (RDA) to tes
 #### *Analysis*<br>
 
 ##### PCA
-```{r, warning=FALSE,message=FALSE, include=TRUE, results='hold',echo=FALSE}
+```{r, warning=FALSE,message=FALSE, include=TRUE, results='hold',echo=FALSE, fig.width=5, fig.height=5}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1629,6 +1244,7 @@ library(DHARMa)
 library(ggplot2)
 library(AICcmodavg)
 library(ggpubr)
+library(ggbiplot)
 
 # Set up nutrient analysis data
 nutrient <- read.csv("Nutrient.csv", header = T)
@@ -1652,12 +1268,29 @@ nutrient.for.pca <- nutrient[,c(7:10,12,17)]
 nutrient$blockinit <- paste(nutrient$block, nutrient$init)
 rownames(nutrient.for.pca) <- nutrient$blockinit
 nutrient.pca <- prcomp(nutrient.for.pca, center=TRUE, scale=TRUE)
-biplot(nutrient.pca, xlim=c(-0.5,.5), ylim=c(-0.5,.5), col=c("grey","red"))
+
+df <- as.data.frame(nutrient.pca$x)
+df$plot <- rownames(nutrient.for.pca)
+pcaloading <- data.frame(Variables = rownames(nutrient.pca$rotation), nutrient.pca$rotation)
+s <- summary(nutrient.pca)
+
+ggplot(df, aes(x = PC1, y = PC2)) +
+  geom_text(aes(label = plot, x = PC1/2, y = PC2/2), hjust = 0, vjust = 0, color="grey") +  
+  geom_segment(data = pcaloading, 
+               aes(x = 0, y = 0, xend = (PC1*1.5), yend = (PC2*1.5)), arrow = arrow(length = unit(1/2, "picas")),
+               color = "black") +
+  geom_text(data = pcaloading, aes(label = Variables, x = PC1*1.6, y = PC2*1.6), hjust = ifelse(pcaloading$PC1 > 0, 0, 1), vjust = 0) + 
+  theme_bw()+
+  xlab(paste("PCA 1 (", round(s$importance[2]*100, 1), "%)", sep = "")) +
+  ylab(paste("PCA 2 (", round(s$importance[5]*100, 1), "%)", sep = "")) +
+  xlim(-1.5, 1.5) +  # Set x-axis limits
+  ylim(-1.5, 1.5) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ```
 
 ##### Nutrient composition comparison between log and open
 
-```{r, include=TRUE, results='hold', fig.width = 8, fig.height = 8, warning=FALSE, message=FALSE,echo=FALSE}
+```{r, include=TRUE, results='hold', fig.width = 5, fig.height = 5, warning=FALSE, message=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
 library(dplyr)
@@ -1697,6 +1330,30 @@ for (element in Nu) {
 
 print(wilcox_results) # only organic carbon is significantly different between the two plot types
 
+# Perform ANOVA for each element between blocks
+wilcox_block <- data.frame(
+  element = character(),
+  p_value = numeric(),
+  stringsAsFactors = FALSE
+)
+
+nutrient$block <- as.factor(nutrient$block)
+
+for (element in Nu) {
+  result <- aov(get(element) ~ block, data = nutrient)
+  wilcox_block <- rbind(wilcox_block, 
+                        data.frame(
+                          element = element,
+                          p_value = summary(result)[[1]]$`Pr(>F)`,
+                          stringsAsFactors = FALSE,
+                          row.names = NULL
+                        ))
+}
+wilcox_block <- na.omit(wilcox_block)
+print(wilcox_block)
+
+
+# boxplot
 plots_list <- list()
 
 for (element in c(Nu)) {
@@ -1704,12 +1361,13 @@ for (element in c(Nu)) {
     plot <- ggplot(nutrient, aes(x = init, y = !!rlang::sym(element))) +
       geom_boxplot() + 
       theme_bw() +
-      labs(x = NULL, y = element) + 
+      labs(x = NULL, y = ifelse(element == "C", "C (%)", "N (mg/kg)")) +
+      labs(x = NULL, y = ifelse(element == "C", "C (%)", "N (mg/kg)")) +
       scale_x_discrete(labels=c('log', 'open')) +
       geom_signif(comparisons = list(c("log", "open")),
                   map_signif_level = TRUE,
-                  textsize = 5, vjust = 0.6, tip_length = 0) + 
-      scale_y_continuous(expand = c(0,0.1))+
+                  textsize = 5, vjust = 0.6, tip_length = 0, y_position = ifelse(element=="C", 1.6, 6)) + 
+      scale_y_continuous(expand = c(0,0.1), limits= if (element == "N") c(2.5, 6.3)) +
       theme(
     plot.background = element_blank(),
     panel.grid.major = element_blank(),
@@ -1718,10 +1376,17 @@ for (element in c(Nu)) {
       theme(axis.line = element_line(color = 'black'))
     
   } else {
+    if (element %in% c("P", "K")) {
+      unit_label <- "mg/kg"
+    } else if (element == "CEC") {
+      unit_label <- "meq/100g"
+    } else {
+      unit_label <- ""
+    }
     plot <- ggplot(nutrient, aes(x = init, y = !!rlang::sym(element))) +
       geom_boxplot() + 
       theme_bw() +
-      labs(x = NULL, y = element) + 
+      labs(x = NULL, y = paste(element, ifelse(unit_label != "", paste(" (", unit_label, ")", sep = ""), ""), sep = "")) +
       scale_x_discrete(labels=c('log', 'open')) +
       theme(
     plot.background = element_blank(),
@@ -1733,6 +1398,8 @@ for (element in c(Nu)) {
   plots_list[[element]] <- plot
 }
 
+# Access plots_list to see or use the plots
+
 all.bp <- ggarrange(plotlist=plots_list, ncol=3, nrow=2, common.legend =TRUE, legend="bottom",align = "v")
 
 all.bp <- annotate_figure(all.bp, bottom = "Plot treatment")
@@ -1741,6 +1408,8 @@ print(all.bp)
 ```
 
 ##### Abundance ~ nutrient composition 
+[2020-2022 composite data] An averaged model is created by averaging a set of models that have a cumulative sum of Akaike Information Criterion (AIC) weights equal to 0.95. Each element's total weight is the sum of its weights in all models containing it.
+
 ```{r, include=TRUE, results='hold', warning=FALSE, message=FALSE,echo=FALSE}
 library(ggplot2)
 library(ggpubr)
@@ -1754,10 +1423,10 @@ library(DHARMa)
 library(ggplot2)
 library(AICcmodavg)
 library(ggpubr)
-require(vegan)
-require(labdsv)
-require(stringr)
-require(ggrepel)
+library(vegan)
+library(labdsv)
+library(stringr)
+library(ggrepel)
 library(car)
 library(sjPlot)
 library(sjmisc)
@@ -1789,14 +1458,9 @@ commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individua
 commtry$grps<-rownames(commtry)
 rownames(commtry)<-NULL
 # names(commtry)
-#here#
+
 # Split group info into columns for each variable.
 mat<-separate(commtry, 107, c("time","block","transect","init", "treatment"), ":")
-# names(mat) #check
-
-# Add groupname using time, block, init columns.
-# mat$grp1<-apply(mat[c(107:110)], 1, paste, collapse=":")
-# mat$grp2<-apply(mat[c(107:111)], 1, paste, collapse=":")
 # names(mat) #check
 
 ##### Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
@@ -1856,70 +1520,38 @@ dat_t0_insitu <- rbind(nublock1, nublock2, nublock3)
 # range(nublock2$total)
 # range(nublock3$total)
 
-# distribution of data
-# ggplot(nublock1, aes(sample=total)) + 
-#  stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) + 
-#  stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock1$total))) +
-#    ggtitle("Poisson")# 2020 data fits a poisson dist.
-
-# ggplot(nublock1, aes(sample = total)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
-
-# ggplot(nublock2, aes(sample=total)) + 
-#     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) + 
-#     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock2$total))) +
-#     ggtitle("Poisson")
-
-# ggplot(nublock2, aes(sample = total)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
-
-# ggplot(nublock3, aes(sample=total)) + 
-#     stat_qq(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) + 
-#     stat_qq_line(distribution=qpois, dparams = c(lambda=mean(nublock3$total))) +
-#     ggtitle("Poisson") # 2022 data fits a poisson dist.
-
-#ggplot(nublock3, aes(sample = total)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
-
-## Original code with two #
-## Abundance analysis for 2020 (t0) AND in-situ log and in-situ open plots in 2021 (t1) and 2022 (t2)
-
-## Sum observations across initial X transect X time X  block X treatment (group variable).
-## This gives number of plants in each row observation (transect level).
-## blocksum2<-rowsum(df2[,c(1:106)], group=df2$grp2)
-## blocksum2$grps<-rownames(blocksum2)
-## rownames(blocksum2)<-NULL # remove rownames
-
-## Add in group vars.
-## nublock2<-separate(blocksum2, 107, c("time","block","transect","init", "treatment"), ":")
-## nublock2$total<-rowSums(nublock2[,c(1:106)])
-## nublock2$presence<-ifelse(nublock2$total > 0,  1, 0)
-
-## Subset data where before treatments installed (t0), in-situ log and in-situ open from t1 and t2 are included.
-## Hence only absolute log effect and absolute open effect are concerned
-## dat_t0_insitu<-nublock2[which(nublock2$time=="t0" |  nublock2$treatment=="open" |  nublock2$treatment=="insitu_log"),]
-
-# look at plant abundance in log vs open 
-# look at range of data - what family should i use? 
+# look at range of data
 # range(dat_t0_insitu$total)
 nutrient_join <- nutrient[,c(1,3, 7:8,10,12,17)]
 nutrient_join$P <- log10(nutrient_join$P)
 dat_t0_insitu <- inner_join(dat_t0_insitu, nutrient_join, by = c("init", "block"))
 
-# since samples from t1 and t2 from are mainly from the same plots as t0. These are not independent replicates and tend to correlated with each other.
-# including year and block as random effects
-# (1|year) + (1|block) as we think the effect of init on total is the same (slope) but the intercept differ amongst block and year
-# but since we have a greater number of sample from t0, data from t0 will contribute more to the variance in abundance.
-# see https://bookdown.org/steve_midway/DAR/random-effects.html#pld-example
 # model avg https://uoftcoders.github.io/rcourse/lec09-model-selection.html
 
 # 2020 - 2022 #
+set.seed(824)
 dat_t0_insitu$time <- as.factor(dat_t0_insitu$time)
 mod.dredge.allyear <- lmer(total~ N+ P + C + CEC + pH + (1|time), 
                          data = dat_t0_insitu, 
                          na.action = "na.fail")
-# vif(mod.dredge) # no collinearity
 dredge_allyear <- dredge(mod.dredge.allyear, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
 avg_allyear<- summary(model.avg(dredge_allyear, cumsum(weight) <= .95))
+# print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
 avg_allyear_full <- as.data.frame(avg_allyear$coefmat.full)
-print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
+
+avg_allyear_full <- rownames_to_column(avg_allyear_full, "Variable")
+sum_weights_df <- data.frame(
+  Variable = c("P", "pH", "N", "C", "CEC"),
+  `Sum of weights` = c(0.72, 0.52, 0.48, 0.47, 0.30)
+)
+
+avg_allyear_full <- merge(avg_allyear_full, sum_weights_df, by = "Variable", all.x = TRUE)
+
+avg_allyear_full <- avg_allyear_full %>% 
+  slice(1) %>%
+  bind_rows(avg_allyear_full %>% slice(-1) %>% arrange(desc(Sum.of.weights)))
+
+knitr::kable(avg_allyear_full, "simple")
 # dredgetable_allyear <- subset(dredge_allyear, cumsum(weight) <= .95) # look at how many tables are included
 
 ## best.allyear <- glm(total~ N, data = dat_t0_insitu, family = gaussian)
@@ -1927,52 +1559,43 @@ print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
 ## htmltools::includeHTML("mod.abun_nu_allyear.html")
 
 # only 2022 #
-mod.dredge.2022 <- glm(total ~ N + P + C + CEC + pH, 
-                        data = dat_t0_insitu,
-                        subset = (time == "t2"),
-                        family = gaussian, 
-                        na.action = "na.fail")
-# vif(mod.dredge.2022) # no collinearity
-dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
-avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
-avg_2022_full <- as.data.frame(avg_2022$coefmat.full)
-print(sw(model.avg(dredge_2022, cumsum(weight) <= .95))) # relative importance, sum of Akaike Weigths for each variable across all models including that variable
-## best.2022 <- glm(total~ pH , data = dat_t0_insitu,subset = (time == "t2"), family = gaussian)
-## tab_model(best.2022,mod.dredge.2022, file="mod.abun_nu_2022.html", dv.labels = c("Best model", "Inclusive model (2022)"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2022]")
-## htmltools::includeHTML("mod.abun_nu_2022.html")
+# mod.dredge.2022 <- glm(total ~ N + P + C + CEC + pH, 
+#                        data = dat_t0_insitu,
+#                        subset = (time == "t2"),
+#                        family = gaussian, 
+#                        na.action = "na.fail")
+# dredge_2022 <- dredge(mod.dredge.2022, extra = "adjR^2") # candidate model including all nutrient elements are fairly good compared to the best fitting model
+# avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
+# avg_2022_full <- as.data.frame(avg_2022$coefmat.full)
+# print(sw(model.avg(dredge_2022, cumsum(weight) <= .95))) # relative importance, sum of Akaike Weigths for each variable across all models including that variable
 
 # only 2021 #
-mod.dredge.2021 <- glm(total~ N+ P + C + CEC + pH,
-                       data = dat_t0_insitu, 
-                       subset = (time == "t1"), 
-                       family = gaussian,
-                       na.action = "na.fail")
-
-# vif(mod.dredge.2021) # no collinearity
-dredge_2021 <- dredge(mod.dredge.2021, extra = "adjR^2")
-avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
-avg_2021_full <- as.data.frame(avg_2021$coefmat.full)
-print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
-# tab_model(best.2021,mod.dredge.2021, file="mod.abun_nu_2021.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2021]")
-# htmltools::includeHTML("mod.abun_nu_2021.html")
+# mod.dredge.2021 <- glm(total~ N+ P + C + CEC + pH,
+#                       data = dat_t0_insitu, 
+#                       subset = (time == "t1"), 
+#                       family = gaussian,
+#                       na.action = "na.fail")
+# dredge_2021 <- dredge(mod.dredge.2021, extra = "adjR^2")
+# avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
+# print(as.data.frame(avg_2021$coefmat.full))
+# print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
 
 # only 2020 #
-mod.dredge.2020 <- glm(total~ N+ P + C + CEC + pH, 
-                       data = dat_t0_insitu, 
-                       subset = (time == "t0"), 
-                       family = gaussian,
-                       na.action = "na.fail")
-# vif(mod.dredge.2020) # no collinearity
-dredge_2020 <- dredge(mod.dredge.2020, extra = "adjR^2")
-avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
-avg_2020_full <- as.data.frame(avg_2020$coefmat.full)
-print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
-# tab_model(best.2020, mod.dredge.2020, file="mod.abun_nu_2020.html", dv.labels = c("Best model", "Inclusive model"), transform = NULL, show.est = TRUE, show.se = TRUE, title = "Abundance ~ soil nutrient [2020]")
-# htmltools::includeHTML("mod.abun_nu_2020.html")
+# mod.dredge.2020 <- glm(total~ N+ P + C + CEC + pH, 
+#                       data = dat_t0_insitu, 
+#                       subset = (time == "t0"), 
+#                       family = gaussian,
+#                       na.action = "na.fail")
+#dredge_2020 <- dredge(mod.dredge.2020, extra = "adjR^2")
+#avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
+#print(as.data.frame(avg_2020$coefmat.full))
+#print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
 ```
 
 ##### Diversity ~ nutrient composition
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8,echo=FALSE}
+[2020-2022 composite data] An averaged model is created by averaging a set of models that have a cumulative sum of Akaike Information Criterion (AIC) weights equal to 0.95. Each element's total weight is the sum of its weights in all models containing it.
+
+```{r, include=TRUE, results='hold', warning=FALSE, message=FALSE,echo=FALSE}
 require(vegan)
 require(dplyr)
 require(tidyr)
@@ -2052,70 +1675,57 @@ nutrient_join <- nutrient[,c(1,3,7:8, 10, 12,17)]
 nutrient_join$P <- log10(nutrient_join$P)
 dat <- inner_join(dat, nutrient_join, by = c("init", "block"))
 
-# distribution of data is pretty normal
-# hist(dat$diversity)
-
-## We used a hurdle model since the data is zero-inflated
-## separate into zero and non-zero observations
-## dat$non_zero <- ifelse(dat$diversity > 0, 1, 0)
-
-# Non-zero data is an approximal Gaussian distribution
-# hist(dat$diversity[dat$non_zero ==1], xlab = "Shannon diversity index (non-zero)", main = "Histogram of Shannon diversity index (non-zero, all years, transect level)") # visually it resembles a lot like a Gaussian distribution 
-
-## Gaussian distribution produced the best-fitting ggplot
-## dat_nonzerodat <- dat[dat$non_zero == 1, ]
-## ggplot(dat_nonzerodat, aes(sample = diversity)) + geom_qq(distribution = qnorm) + geom_qq_line(distribution = qnorm) + ggtitle("normal")
-
 # 2020-2022 #
-# di.mod.2022 <- glmmTMB(diversity ~ init+(1|block), data=subset(dat, time == "t2"), ziformula=~1, family = gaussian)
-# di.mod.t012 <- glmmTMB(diversity ~ N + P + K + C + CEC + (1|time), data=dat, ziformula=~1, family = gaussian, na.action = "na.fail")
-# dredge_allyear <- dredge(di.mod.t012)
-# best.allyear <- glmmTMB(diversity~ N + P + K + (1|time), data=dat, ziformula=~1, family = gaussian)
-# tab_model(best.allyear, file="mod.diver_nu_allyear.html", dv.labels = c("Best model"), title="Shannon diversity index ~ soil nutrient[2020-2022]")
-# htmltools::includeHTML("mod.diver_nu_allyear.html")
+set.seed(825)
 di.mod.allyear <- lmer(diversity ~ N + P + C + CEC + pH + (1|time),
                     data =dat, 
                     na.action= "na.fail")
 dredge_allyear <- dredge(di.mod.allyear, extra = "adjR^2")
 avg_allyear<- summary(model.avg(dredge_allyear, cumsum(weight) <= .95))
-print(as.data.frame(avg_allyear$coefmat.full))
-print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
+# print(sw(model.avg(dredge_allyear, cumsum(weight) <= .95)))
+avg_allyear_full <- as.data.frame(avg_allyear$coefmat.full)
+avg_allyear_full <- rownames_to_column(avg_allyear_full, "Variable")
+sum_weights_df <- data.frame(
+  Variable = c("P", "pH", "C", "CEC"),
+  `Sum of weights` = c(0.309, 0.089, 0.085, 0.018)
+)
 
+avg_allyear_full <- merge(avg_allyear_full, sum_weights_df, by = "Variable", all.x = TRUE)
+
+avg_allyear_full <- avg_allyear_full %>% 
+  slice(1) %>%
+  bind_rows(avg_allyear_full %>% slice(-1) %>% arrange(desc(Sum.of.weights)))
+
+knitr::kable(avg_allyear_full, "simple")
 # 2020 #
-di.mod.2020 <- lm(diversity ~ N + P + C + CEC + pH,
-                    data =dat, 
-                    subset = (time == "t0"),
-                    na.action= "na.fail")
-dredge_2020 <- dredge(di.mod.2020, extra = "adjR^2")
-avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
-print(as.data.frame(avg_2020$coefmat.full))
-print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
-## tab_model(best.t0, file="mod.diver_nu_2020.html", dv.labels = "Best model", title="[2020]glmmTMB(diversity ~ CEC + K + N, data =dat_t0, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
-## htmltools::includeHTML("mod.diver_nu_2020.html") 
+# di.mod.2020 <- lm(diversity ~ N + P + C + CEC + pH,
+#                    data =dat, 
+#                    subset = (time == "t0"),
+#                    na.action= "na.fail")
+#dredge_2020 <- dredge(di.mod.2020, extra = "adjR^2")
+#avg_2020<- summary(model.avg(dredge_2020, cumsum(weight) <= .95))
+#print(as.data.frame(avg_2020$coefmat.full))
+#print(sw(model.avg(dredge_2020, cumsum(weight) <= .95)))
 
 # 2021 #
-di.mod.2021 <- lm(diversity ~ N + P + C + CEC + pH,
-                    data =dat, 
-                    subset = (time == "t1"),
-                    na.action= "na.fail")
-dredge_2021 <- dredge(di.mod.2021, extra = "adjR^2")
-avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
-print(as.data.frame(avg_2021$coefmat.full))
-print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
-## tab_model(best.t1, file="mod.diver_nu_2021.html", dv.labels = "Best model", title="[2021]glmmTMB(diversity ~ CEC + P, data =dat_t1, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
-## htmltools::includeHTML("mod.diver_nu_2021.html")
+# di.mod.2021 <- lm(diversity ~ N + P + C + CEC + pH,
+#                    data =dat, 
+#                    subset = (time == "t1"),
+#                    na.action= "na.fail")
+#dredge_2021 <- dredge(di.mod.2021, extra = "adjR^2")
+#avg_2021<- summary(model.avg(dredge_2021, cumsum(weight) <= .95))
+#print(as.data.frame(avg_2021$coefmat.full))
+#print(sw(model.avg(dredge_2021, cumsum(weight) <= .95)))
 
 # 2022 #
-di.mod.2022 <- lm(diversity ~ N + P + C + CEC + pH,
-                    data =dat, 
-                    subset = (time == "t2"),
-                    na.action= "na.fail")
-dredge_2022 <- dredge(di.mod.2022, extra = "adjR^2")
-avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
-print(as.data.frame(avg_2022$coefmat.full))
-print(sw(model.avg(dredge_2022, cumsum(weight) <= .95)))
-## tab_model(best.t2, file="mod.diver_nu_2022.html", dv.labels = "Best model", title=" [2022]glmmTMB(diversity ~ N + P + K, data =dat_t2, ziformula=~1, family = gaussian)", transform = NULL, show.est = TRUE, show.se = TRUE)
-## htmltools::includeHTML("mod.diver_nu_2022.html")
+#di.mod.2022 <- lm(diversity ~ N + P + C + CEC + pH,
+#                    data =dat, 
+#                    subset = (time == "t2"),
+#                    na.action= "na.fail")
+#dredge_2022 <- dredge(di.mod.2022, extra = "adjR^2")
+#avg_2022<- summary(model.avg(dredge_2022, cumsum(weight) <= .95))
+#print(as.data.frame(avg_2022$coefmat.full))
+#print(sw(model.avg(dredge_2022, cumsum(weight) <= .95)))
 ```
 
 ##### Composition ~ nutrient composition
@@ -2143,7 +1753,7 @@ library(patchwork)
 
 *2020*
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
+```{r 2020 composition and nutrient, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2250,46 +1860,24 @@ sc_si$treatment<-group_init # grouping factor 1
 sc_si$block<-group_block # grouping factor 2 
 sc_si$treatment <- as.factor(sc_si$treatment)
 
-plot(trt_tot_2,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
-
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
-
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
-
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] -0.05, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = rownames(sc_bp), 
-     col = "black", 
-     cex = 1, 
-     font = 2)
+# Plot the scores
+ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
+  geom_text(data = sc_sp, aes(label = rownames(sc_sp)), color = "grey70", fontface = 2, size = 3) +
+  geom_point(data = sc_si, aes(color = treatment, shape = factor(block)), size = 5) +
+  geom_segment(data = sc_bp, aes(x = 0, y = 0, xend = sc_bp[,1], yend = sc_bp[,2]), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp, aes(x = sc_bp[,1]*1.2, y = sc_bp[,2]*1.2, label = rownames(sc_bp)), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "RDA biplot [2020]") +
+  scale_color_manual(values = c("#63A088","#56638A"),name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),  
+        panel.grid.major.x = element_blank(),  
+        panel.grid.major.y = element_blank())
 
 # Using varpart to look at contributions of initial treatment and block
 # var.mod2<-varpart(ass.rel.t0, init, block) # run model on standardized data
@@ -2316,7 +1904,7 @@ open<-mds_scores_t0[mds_scores_t0$treatment == "open", ][chull(mds_scores_t0[mds
                                                                "open", c("NMDS1", "NMDS2")]), ]
 
 hulldat<-rbind(log,open)
-
+options(ggrepel.max.overlaps = 6)
 nmds.plot.sp <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
@@ -2362,7 +1950,7 @@ print(en.nutrient) ########## it is basically saying most of the nutrient does n
 
 *2021*
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results='markup', fig.width=12, fig.height=6,echo=FALSE}
+```{r 2021 composition and nutrient, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 # Data wrangling
 # This data set does not include unidentified species.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2468,58 +2056,24 @@ sc_si$treatment<-group_init # grouping factor 1
 sc_si$block<-group_block # grouping factor 2 
 sc_si$treatment <- as.factor(sc_si$treatment)
 
-plot(trt_tot_2,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
-
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
-
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
-
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = rownames(sc_bp), 
-     col = "black", 
-     cex = 1, 
-     font = 2)
-
-# can model using varpart to look at contributions of initial treatment and block
-# var.mod2<-varpart(ass.rel.t1, init, block) # run model on standardized data
-# plot(var.mod2, bg=c("hotpink","skyblue"))
-# mtext("X1= Treatment; X2=Block", side=3)
-
-## can test for significance of contribution of the fraction of initial treatment
-# do this with partial redundancy analysis
-# trt_Frac<-rda(ass.rel.t1, init, block) # partial rda model
-# summary(trt_Frac) 
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# Plot the scores
+ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
+  geom_text(data = sc_sp, aes(label = rownames(sc_sp)), color = "grey70", fontface = 2, size = 3) +
+  geom_point(data = sc_si, aes(color = treatment, shape = factor(block)), size = 5) +
+  geom_segment(data = sc_bp, aes(x = 0, y = 0, xend = sc_bp[,1], yend = sc_bp[,2]), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp, aes(x = sc_bp[,1]*1.2, y = sc_bp[,2]*1.2, label = rownames(sc_bp)), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "RDA biplot [2021]") +
+  scale_color_manual(values = c("#63A088","#56638A"),name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),  
+        panel.grid.major.x = element_blank(),  
+        panel.grid.major.y = element_blank())
 
 ### extracting species scores and plotting 
 # species scores
@@ -2534,7 +2088,7 @@ open<-mds_scores_t1[mds_scores_t1$treatment == "open", ][chull(mds_scores_t1[mds
                                                                "open", c("NMDS1", "NMDS2")]), ]
 
 hulldat<-rbind(log,open)
-
+options(ggrepel.max.overlaps = 6)
 nmds.plot.sp <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
@@ -2573,12 +2127,12 @@ nmds.plot.nutrient <- ggplot()+
   labs(title=paste0("Stress: ", round(ass.rel.t1_NMS$stress,3)))
 
 print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
-(nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
+(nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2021')
 ```
 
 *2022*
 
-```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
+```{r 2022 composition and nutrient, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2688,58 +2242,24 @@ sc_si$treatment<-group_init # grouping factor 1
 sc_si$block<-group_block # grouping factor 2 
 sc_si$treatment <- as.factor(sc_si$treatment)
 
-plot(trt_tot_2,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
-
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
-
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
-
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = rownames(sc_bp), 
-     col = "black", 
-     cex = 1, 
-     font = 2)
-
-# can model using varpart to look at contributions of initial treatment and block
-# var.mod2<-varpart(ass.rel.t2, init, block) # run model on standardized data
-# plot(var.mod2, bg=c("hotpink","skyblue"))
-# mtext("X1= initial treatment; X2=Block", side=3)
-
-## can test for significance of contribution of the fraction of initial treatment
-# do this with partial redundancy analysis
-# trt_Frac<-rda(ass.rel.t2, init, block) # partial rda model
-# summary(trt_Frac) 
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-#anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# Plot the scores
+ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
+  geom_text(data = sc_sp, aes(label = rownames(sc_sp)), color = "grey70", fontface = 2, size = 3) +
+  geom_point(data = sc_si, aes(color = treatment, shape = factor(block)), size = 5) +
+  geom_segment(data = sc_bp, aes(x = 0, y = 0, xend = sc_bp[,1], yend = sc_bp[,2]), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp, aes(x = sc_bp[,1]*1.2, y = sc_bp[,2]*1.2, label = rownames(sc_bp)), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "RDA biplot [2022]") +
+  scale_color_manual(values = c("#63A088","#56638A"),name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(),  
+        panel.grid.major.x = element_blank(),  
+        panel.grid.major.y = element_blank())
 
 ### extracting species scores and plotting 
 # species scores
@@ -2754,7 +2274,7 @@ open<-mds_scores_t2[mds_scores_t2$treatment == "open", ][chull(mds_scores_t2[mds
                                                                "open", c("NMDS1", "NMDS2")]), ]
 
 hulldat<-rbind(log,open)
-
+options(ggrepel.max.overlaps = 6)
 nmds.plot.sp <- ggplot()+
   theme_bw()+
   theme(panel.background = element_blank(),
@@ -2795,7 +2315,7 @@ print(en.nutrient) ########## it is basically saying most of the nutrient does n
 ```
 
 *2020-2022*
-```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results=FALSE,fig.width=12, fig.height=6,echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=TRUE, paged.print=TRUE, results=TRUE,fig.width=12, fig.height=6,echo=FALSE}
 # Data wrangling
 # This data set does not include unknown data.
 comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
@@ -2850,7 +2370,7 @@ nublock$sumgrp<-apply(mat3[c(88,89, 91)], 1, paste, collapse=":")
 blocksum<-rowsum(nublock[,c(1:87)], group=nublock$sumgrp)
 blocksum$grps<-rownames(blocksum)
 rownames(blocksum)<-NULL # remove rownames
-nrow(blocksum) # it is 42 rows as expected 
+# nrow(blocksum) # it is 42 rows as expected 
 
 ##  expand again
 blocksum<-separate(blocksum, 88, c("time", "block", "init"), ":")
@@ -2873,7 +2393,7 @@ ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 2, trace = FALS
 en.nutrient = envfit(ass.rel.t012_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t012_NMS) 
 # plot(en.nutrient)
-print(en.nutrient) ########## it is basically saying most of the nutrient does not affect the composition of plants.
+print(en.nutrient) # it is saying most of the nutrient does not affect the composition of plants.
 
 # scores
 mds_scores_t012<-as.data.frame(vegan::scores(ass.rel.t012_NMS)$sites) # extract scores
@@ -2889,8 +2409,9 @@ init<-as.factor(group_init) # grouping factor 1- convert to factor
 block<-as.factor(group_block) # grouping factor 2- convert to factor
 time<-as.factor(group_time)
 
-#### rda model analysis & results #### 
-trt_tot_2<-rda(ass.rel.t012 ~ ., data = blocksum[,c(91:94,96)]) # run model using standardized data 
+#### partial rda model analysis & results #### 
+trt_tot_2<-rda(ass.rel.t012 ~ N+P+C+pH+CEC + 
+                Condition(time), data = blocksum) # run model using standardized data 
 # summary(trt_tot_2)
 anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
 
@@ -2906,58 +2427,67 @@ sc_si$treatment<-group_init # grouping factor 1
 sc_si$block<-group_block # grouping factor 2 
 sc_si$treatment <- as.factor(sc_si$treatment)
 
-plot(trt_tot_2,
-     scaling = 1, # set scaling type 
-     type = "none", # this excludes the plotting of any points from the results
-     frame = FALSE,
-     # set axis limits
-     xlim = c(-.3,.3), 
-     ylim = c(-.5,.5),
-     # label the plot (title, and axes)
-     main = "Triplot RDA - scaling 1",
-     xlab = paste0("RDA1 (", perc[1], "%)"), 
-     ylab = paste0("RDA2 (", perc[2], "%)") 
-) 
-text(sc_sp, # adjust text coordinates to avoid overlap with points 
-     labels = rownames(sc_sp), 
-     col = "grey40", 
-     font = 2, # bold
-     cex = 0.6)
+blk1<-sc_si[sc_si$block == 1, ][chull(sc_si[sc_si$block == 1, c("RDA1", "RDA2")]), ]
+blk2<-sc_si[sc_si$block == 2, ][chull(sc_si[sc_si$block == 2, c("RDA1", "RDA2")]), ]
+blk3<-sc_si[sc_si$block == 3, ][chull(sc_si[sc_si$block == 3, c("RDA1", "RDA2")]), ]
+blk4<-sc_si[sc_si$block == 4, ][chull(sc_si[sc_si$block == 4, c("RDA1", "RDA2")]), ]
+blk5<-sc_si[sc_si$block == 5, ][chull(sc_si[sc_si$block == 5, c("RDA1", "RDA2")]), ]
+blk6<-sc_si[sc_si$block == 6, ][chull(sc_si[sc_si$block == 6, c("RDA1", "RDA2")]), ]
+blk7<-sc_si[sc_si$block == 7, ][chull(sc_si[sc_si$block == 7, c("RDA1", "RDA2")]), ]
 
-points (sc_si, col = sc_si$treatment[c("#63A088","#56638A")], pch = 21 , cex=2, bg=c("#63A088","#56638A"))
+hulldat_all<-rbind(blk1,blk2, blk3, blk4, blk5, blk6, blk7)
 
-text(sc_si, # adjust text coordinates to avoid overlap with points 
-     labels = sc_si$block, 
-     col = "white", 
-     font = 2, # bold
-     cex = 0.6)
+rda_log <- sc_si[sc_si$treatment == "log", ][chull(sc_si[sc_si$treatment == "log", c("RDA1", "RDA2")]), ]
+rda_open <- sc_si[sc_si$treatment == "open", ][chull(sc_si[sc_si$treatment == "open", c("RDA1", "RDA2")]), ]
+hulldat_logopen <- rbind(rda_log, rda_open)
 
-legend("topleft",  legend=c("log", "open"),
-       col=c("#63A088","#56638A") ,pch=21, cex=0.8, inset = 0.01, box.lty=1)
-# add arrows for effects of the expanatory variables
-arrows(0,0, # start them from (0,0)
-       sc_bp[,1], sc_bp[,2], # end them at the score value
-       col = "black", 
-       lwd = 2)
-# add text labels for arrows
-text(x = sc_bp[,1] +0.05, # adjust text coordinate to avoid overlap with arrow tip
-     y = sc_bp[,2] , 
-     labels = rownames(sc_bp), 
-     col = "black", 
-     cex = 1, 
-     font = 2)
+# Plot the scores
+ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
+  geom_text(data = sc_sp, aes(label = rownames(sc_sp)), color = "grey70", fontface = 2, size = 3) +
+  geom_point(data = sc_si %>% filter(treatment == "log"), aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_point(data = sc_si %>% filter(treatment != "log"), aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_polygon(data = hulldat_logopen, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  geom_segment(data = sc_bp, aes(x = 0, y = 0, xend = sc_bp[,1]*1.5, yend = sc_bp[,2]*1.5), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp, aes(x = sc_bp[,1]*1.7, y = sc_bp[,2]*1.7, label = rownames(sc_bp)), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "Partial RDA biplot [2020-2022]") +
+  scale_color_manual(values = c("#63A088","#56638A"),guide = FALSE) +
+  scale_fill_manual(values = c("#63A088","#56638A"), name = "Block") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Treatment") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(), 
+        panel.grid.major.x = element_blank(), 
+        panel.grid.major.y = element_blank())+
+     xlim(-.5, .5) +  
+     ylim(-.5, .5)   
 
-# can model using varpart to look at contributions of initial treatment and block
-# var.mod2<-varpart(ass.rel.t012, init, block, time) # run model on standardized data
-# plot(var.mod2, bg=c("hotpink","skyblue","lightyellow"))
-# mtext("X1= Treatment; X2=Block; X3=time", side=3)
-
-## can test for significance of contribution of the fraction of initial treatment
-# do this with partial redundancy analysis
-# trt_Frac<-rda(ass.rel.t012~ init +Condition(block + time)) # partial rda model
-# summary(trt_Frac) 
-# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
-# anova.cca(trt_Frac) ## this tells us if first condition, init, significantly contributes to overall variance explanation. 
+# Plot the scores
+ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
+  geom_text(data = sc_sp, aes(label = rownames(sc_sp)), color = "grey70", fontface = 2, size = 3) +
+  geom_point(data = sc_si %>% filter(treatment == "log"), aes(color = block, shape = "log"), size = 3) +  # Use a hollow shape for 'log' treatment
+  geom_point(data = sc_si %>% filter(treatment == "open"), aes(color = block, shape = "open"), size = 3) +  # Use a filled shape for 'open' treatment
+  geom_polygon(data = hulldat_all, aes(fill = block, group = block), alpha = 0.3) +
+  geom_segment(data = sc_bp, aes(x = 0, y = 0, xend = sc_bp[,1]*1.5, yend = sc_bp[,2]*1.5), 
+               arrow = arrow(length = unit(0.3, "cm")), color = "black") +
+  geom_text(data = sc_bp, aes(x = sc_bp[,1]*1.7, y = sc_bp[,2]*1.7, label = rownames(sc_bp)), 
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "Partial RDA biplot [2020-2022]") +
+  scale_color_manual(values = c("brown2", "chocolate1", "gold2", "palegreen3", "aquamarine4", "royalblue1", "orchid1"),guide = FALSE) +
+  scale_fill_manual(values = c("brown2", "chocolate1", "gold2", "palegreen3", "aquamarine4", "royalblue1", "orchid1"), name = "Block") +
+  scale_shape_manual(values = c("log" = 1, "open" = 16), name = "Treatment") +  # Set shapes for treatments
+  theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(), 
+        panel.grid.major.x = element_blank(),  
+        panel.grid.major.y = element_blank()) +
+  xlim(-0.5, 0.5) +  
+  ylim(-0.5, 0.5)    
 
 ### extracting species scores and plotting 
 # species scores
@@ -2973,7 +2503,7 @@ open<-mds_scores_t012[mds_scores_t012$treatment == "open", ][chull(mds_scores_t0
 
 hulldat<-rbind(log,open)
 
-options(ggrepel.max.overlaps = Inf)
+options(ggrepel.max.overlaps = 6)
 
 nmds.plot.sp <- ggplot()+
   theme_bw()+
@@ -3010,7 +2540,7 @@ nmds.plot.nutrient <- ggplot()+
        fontface = "bold", label = row.names(en_coord_cont))+
   labs(title=paste0("Stress: ", round(ass.rel.t012_NMS$stress,3)))
   
-(nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020')
+(nmds.plot.sp + theme(legend.position = "none")) + nmds.plot.nutrient + plot_layout(guides = "collect") + plot_annotation(title = 'Plant composition: 2020-2022')
 ```
 
 #### *Interpretation* 
