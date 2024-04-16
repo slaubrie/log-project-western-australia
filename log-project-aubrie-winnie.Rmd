@@ -2393,7 +2393,7 @@ ass.rel.t012_NMS <- metaMDS(ass.rel.t012, distance = 'bray', k = 2, trace = FALS
 en.nutrient = envfit(ass.rel.t012_NMS, group_nutrient, permutations = 999, na.rm = TRUE)
 # plot(ass.rel.t012_NMS) 
 # plot(en.nutrient)
-print(en.nutrient) # it is saying most of the nutrient does not affect the composition of plants.
+#print(en.nutrient) # it is saying most of the nutrient does not affect the composition of plants.
 
 # scores
 mds_scores_t012<-as.data.frame(vegan::scores(ass.rel.t012_NMS)$sites) # extract scores
@@ -2453,8 +2453,8 @@ ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
             color = "black", fontface = 2, size = 4) +
   labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "Partial RDA biplot [2020-2022]") +
   scale_color_manual(values = c("#63A088","#56638A"),guide = FALSE) +
-  scale_fill_manual(values = c("#63A088","#56638A"), name = "Block") +
-  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Treatment") +
+  scale_fill_manual(values = c("#63A088","#56638A"), name = "Treatment") +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Block") +
   theme_bw()+
   geom_hline(yintercept = 0, linetype = "dotted") +  
   geom_vline(xintercept = 0, linetype = "dotted") +
