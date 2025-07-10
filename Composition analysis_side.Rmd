@@ -1,0 +1,180 @@
+---
+title: "Composition analysis_side"
+author: "Winnie Siu"
+date: "2024-12-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Composition ~ physical + soil conditioning 2021
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8, echo=FALSE}
+# Run this chunk before running any year specific chunk below packages
+library(tidyverse)
+require(vegan)
+require(dplyr)
+require(tidyr)
+require(labdsv)
+require(stringr)
+require(ggplot2)
+require(ggrepel)
+require(lme4)
+require(emmeans)
+require(lmerTest)
+require(performance)
+require(ggpubr)
+require(patchwork)
+
+# Data wrangling
+# This dataset does not include data where the plant identity is unknown.
+comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# Make a group name for each row
+comm$grp<-apply(comm[c(1,3,6,7)], 1, paste, collapse=":") # timepoint, block, initial state
+
+# Need to make each row a community using matrify.
+commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable
+mat<-separate(commtry, 88, c("time","block","init","treatment"), ":")
+names(mat) #check
+
+mat <- mat %>%
+  mutate(physical = ifelse(treatment %in% c("insitu_log", "insitu_pvc", "open_with_log", "open_with_pvc"), 1, 0))
+
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat1 <- mat[which(mat$time=="t1"),]
+mat1$grp<-apply(mat1[c(89, 90,92)], 1, paste, collapse=":") # block, init, physical as grouping
+# names(mat1) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat1[,c(1:87, 93)]
+df1 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df1)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df1, 88, c("block", "init","physical"), ":") # just looking at time, block & initial treatment
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t1<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+group_physical<-nublock$physical
+
+# MDS 
+ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+physical<-as.factor(group_physical) # grouping factor 2- convert to factor
+
+# redundancy analysis
+trt_Frac<-rda(ass.rel.t1~init+block+physical) # run model using standardized data 
+summary(trt_Frac)
+anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+anova.cca(trt_Frac)
+RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+````
+
+#### Composition ~ physical + soil conditioning 2022
+```{r, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE, results='markup', fig.width =8, fig.height=8, echo=FALSE}
+# Run this chunk before running any year specific chunk below packages
+library(tidyverse)
+require(vegan)
+require(dplyr)
+require(tidyr)
+require(labdsv)
+require(stringr)
+require(ggplot2)
+require(ggrepel)
+require(lme4)
+require(emmeans)
+require(lmerTest)
+require(performance)
+require(ggpubr)
+require(patchwork)
+
+# Data wrangling
+# This dataset does not include data where the plant identity is unknown.
+comm <- read.csv("20-22_species_composition_data_no_unk.csv", header = T)
+
+# Remove the locations surveyed in 2021 and 2022 that were not surveyed in 2020 - aka, cm=0, cm=21, cm = 22, cm = 29.
+comm<-comm[which(comm$cm_location!=21 & comm$cm_location!=0 & comm$cm_location!=22 & comm$cm_location!=29),]
+
+# Make a group name for each row
+comm$grp<-apply(comm[c(1,3,6,7)], 1, paste, collapse=":") # timepoint, block, initial state
+
+# Need to make each row a community using matrify.
+commsub<-comm[,c(15,10,13)] # group, species_code, and count of each species for each transect. transects are rows.
+commsub <-as.data.frame(commsub)
+commtry<-matrify(commsub) # make it an expanded species matrix 
+commtry$x[which(is.na(commtry$x))] <- 1 # "x" means that there were no individuals in the transect, but we are going to keep track of this as if it were a species
+ncol(commtry) # how many species are we working with in our community matrix
+
+# Store grouping row names as a column, then remove rownames.
+commtry$grps<-rownames(commtry)
+rownames(commtry)<-NULL
+names(commtry)
+
+# Split group info into columns for each variable
+mat<-separate(commtry, 88, c("time","block","init","treatment"), ":")
+names(mat) #check
+
+mat <- mat %>%
+  mutate(physical = ifelse(treatment %in% c("insitu_log", "insitu_pvc", "open_with_log", "open_with_pvc"), 1, 0))
+
+# subset data where all t0 communities, insitu log and insitu open communities at t1 and t2 are included.
+mat2 <- mat[which(mat$time=="t2"),]
+mat2$grp<-apply(mat2[c(89, 90,92)], 1, paste, collapse=":") # block, init, physical as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init","physical"), ":") # just looking at time, block & initial treatment
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t2<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+group_physical<-nublock$physical
+
+# MDS 
+ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+physical<-as.factor(group_physical) # grouping factor 2- convert to factor
+
+# redundancy analysis
+trt_Frac2<-rda(ass.rel.t2~init+block+physical) # run model using standardized data 
+summary(trt_Frac2)
+anova.cca(trt_Frac2, step=1000, by="term") ## test for model significance
+anova.cca(trt_Frac2)
+RsquareAdj(trt_Frac2)$adj.r.squared #explanatory power
+````
