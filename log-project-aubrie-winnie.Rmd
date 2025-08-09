@@ -1265,6 +1265,12 @@ abun.mod <- bind_rows(em.0, em.1, em.2) %>%
 
 abun.emmeans.plot <- ggplot(abun.mod,aes(init, emmean, group=time))+
   scale_color_manual(values=mimiscols)+
+  geom_jitter(data=dat_t0_insitu,
+             aes(x=init, y=total), 
+             color = "darkgrey",
+             height=0,
+             width=0.2,
+             alpha=0.7) +
   geom_point(aes(col=init), size=4, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=init), position=position_dodge(width=0.5))+
  # geom_line(position=position_dodge(width=0.5))+
@@ -1276,13 +1282,7 @@ abun.emmeans.plot <- ggplot(abun.mod,aes(init, emmean, group=time))+
   theme(legend.position="none",panel.grid = element_blank())+
   xlab("Treatment")+
   ylab("Abundance")+
-  labs(color = "Initial Plot Treatment") +
-  geom_jitter(data=dat_t0_insitu,
-             aes(x=init, y=total), 
-             color = "darkgrey",
-             height=0,
-             width=0.2,
-             alpha=0.7) #+ stat_pvalue_manual(abun.mod, size = 3.5, linetype = 1, y.position = 15)
+  labs(color = "Initial Plot Treatment")  #+ stat_pvalue_manual(abun.mod, size = 3.5, linetype = 1, y.position = 15)
 
 print(abun.emmeans.plot)
 ```
@@ -1356,6 +1356,12 @@ mimiscols<-c("#ee7733","#0077BB")
 
 div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   scale_color_manual(values=mimiscols)+
+  geom_jitter(data=dat,
+             aes(x=init, y=diversity), 
+             color ="darkgrey",
+             height=0,
+             width=0.25,
+             alpha=0.7)+
   geom_point(aes(col=init), size=4, position=position_dodge(width=0.5))+
   geom_linerange(aes(ymin=lower.CL, ymax=upper.CL, col=init), position=position_dodge(width=0.5))+
   #geom_line(position=position_dodge(width=0.5))+
@@ -1371,13 +1377,7 @@ div.emmeans.plot <- ggplot(div.mod,aes(init, emmean, group=time))+
   theme(legend.position="none",panel.grid = element_blank())+
   xlab("Treatment")+
   ylab("Shannon Diversity Index")+
-  labs(color = "Treatment")+
-  geom_jitter(data=dat,
-             aes(x=init, y=diversity), 
-             color ="darkgrey",
-             height=0,
-             width=0.25,
-             alpha=0.7) #+ stat_pvalue_manual(div.mod, size = 3.5, linetype = 1, y.position = 2.8)
+  labs(color = "Treatment") #+ stat_pvalue_manual(div.mod, size = 3.5, linetype = 1, y.position = 2.8)
 
 print(div.emmeans.plot)
 ```

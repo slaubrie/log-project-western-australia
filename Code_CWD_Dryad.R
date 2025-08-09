@@ -1,0 +1,1096 @@
+## ----package, message=FALSE, warning=FALSE----------------------------------------------------------------------------------------------------------------------
+require(lme4)
+require(emmeans)
+require(pscl)
+require(glmmTMB)
+require(tidyr)
+require(DHARMa)
+require(ggplot2)
+require(AICcmodavg)
+require(ggpubr)
+require(dplyr)
+require(labdsv)
+require(vegan)
+require(patchwork)
+
+### Performance data
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+countdat2021<-read.csv('germinant_countdata_2021.csv', header=T) # Germinant counts from 2021 performance experiment
+countdat2022<-read.csv('germinant_countdata_2022.csv', header=T) # Germinant counts from 2022 performance experiment
+pcwtdat2021<-read.csv('pcwtdata_2021.csv', header=T) # log(Per capita biomass) from 2021 performance experiment
+pcwtdat2022<-read.csv('pcwtdata_2022.csv', header=T) # log(Per capita biomass) from 2022 performance experiment
+
+### Inter-specific germination response
+
+#### 2021: Germination (absent/present) from 2021 performance experiment
+## ----2021-selected-model----------------------------------------------------------------------------------------------------------------------------------------
+zerofit_add <- glmmTMB(presence ~ name*physical_barrier + # Response variable: 0/1 of germinant; Predictor1: species name x physical barrier (0/1) 
+                         name*initial + # Predictor2: species name x soil conditioning (cwd/open)
+                         (1 | block), # replicate block as random variable
+                       family=binomial, 
+                       data=countdat2021, 
+                       REML=FALSE)
+summary(zerofit_add) # model summary
+
+# Species-specific germination response to soil conditioning effect in 2021.
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+soil.2021 <- pairs(emmeans(zerofit_add, ~ initial | name)) # Pairwise contrasts of soil conditioning effect (cwd vs. open) for each species
+print(soil.2021) # p value tells you if the contrast between log (i.e. CWD) and open is significantly different to 0
+
+soil.2021.ci <- confint(soil.2021) # Extract confidence intervals for the contrasts
+soil.2021.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1)) # Annotate the result with species names
+soil.2021.ci$year <-c(rep("2021", 3))
+#print(soil.2021.ci)
+
+soil.int.2021 <- as.data.frame(contrast(emmeans(zerofit_add, ~initial|name), interaction = c("pairwise"), by = NULL)) # Check interaction-level contrast: do species differ in their response the soil conditioning effect of CWD?
+
+soil.int.2021$name_pairwise<-c(rep("GORO - TRCY", 1), 
+                               rep("GORO - TROR",1), 
+                               rep("TRCY - TROR",1))
+soil.int.2021$year <-c(rep("2021", 3))
+print(soil.int.2021) 
+
+# Species-specific germination response to physical barrier effect in 2021.
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+phy.2021 <- pairs(emmeans(zerofit_add, ~physical_barrier|name)) # Pairwise contrasts of physical barrier effect (cwd vs. open) for each species
+print(phy.2021)
+
+phy.2021.ci <- confint(phy.2021) # Extract confidence intervals for the contrasts
+phy.2021.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1)) # Annotate the result with species names
+phy.2021.ci$year <-c(rep("2021", 3))
+#print(phy.2021.ci)
+
+phy.int.2021 <- as.data.frame(contrast(emmeans(zerofit_add, ~ physical_barrier|name), interaction = c("pairwise"), by = NULL)) # Check interaction-level contrast: do species differ in their response the physical barrier effect of CWD?
+phy.int.2021$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1))
+phy.int.2021$year <-c(rep("2021", 3))
+print(phy.int.2021)
+
+#### 2022: Germination (absent/present) from 2022 performance experiment
+## ----2022-selected model----------------------------------------------------------------------------------------------------------------------------------------
+zerofit_add<-glmmTMB(presence ~ name*physical_barrier + # Response: 0/1 of germinants 
+                       # Predictor1: species name x physical barrier (0/1)
+                       name*initial + #Predictor2: species name x soil conditioning (cwd/open)
+                       (1 | block), # Random variable: block
+                     family=binomial,
+                     data=countdat2022,
+                     REML=F)
+summary(zerofit_add)
+
+# Species-specific germination response to soil conditioning effect in 2022.
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+soil.2022 <- pairs(emmeans(zerofit_add, ~initial|name))# Pairwise contrasts of soil conditioning effect (cwd vs. open) for each species
+print(soil.2022) # p value tells you if the contrast between log (i.e. CWD) and open is significantly different to 0
+
+soil.2022.ci <- confint(soil.2022) # Extract confidence intervals for the contrasts
+soil.2022.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1)) # Annotate the result with species names and year
+soil.2022.ci$year <-c(rep("2022", 3)) 
+#print(soil.2022.ci)
+
+soil.int.2022 <- as.data.frame(contrast(emmeans(zerofit_add, ~initial|name), interaction = c("pairwise"), by = NULL)) # Check interaction-level contrast: do species differ in their response the soil conditioning effect of CWD?
+soil.int.2022$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1))
+soil.int.2022$year <-c(rep("2022", 3))
+print(soil.int.2022)
+
+# Species-specific germination response to physical barrier effect in 2022.
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+phy.2022 <- pairs(emmeans(zerofit_add, ~physical_barrier|name)) # Pairwise contrasts of physical barrier effect (cwd vs. open) for each species
+print(phy.2022) # p value tells you if the contrast between log (i.e. CWD) and open is significantly different to 0
+
+phy.2022.ci <- confint(phy.2022) # Extract confidence intervals for the contrasts
+phy.2022.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1))
+phy.2022.ci$year <-c(rep("2022", 3)) # Annotate the result with species names and year
+#print(phy.2022.ci)
+
+phy.int.2022 <- as.data.frame(contrast(emmeans(zerofit_add, ~physical_barrier|name), interaction = c("pairwise"), by = NULL)) # Check interaction-level contrast: do species differ in their response the physical barrier effect of CWD?
+phy.int.2022$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1))
+phy.int.2022$year <-c(rep("2022", 3))
+print(phy.int.2022)
+
+#### Figure 4a & 4b: Species-specific germination response to CWD
+## ------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Combine results of soil conditioning effect from 2021 and 2022
+germ.soil <- rbind(soil.2021.ci, soil.2022.ci)
+
+# Ensure 'year' is a factor with consistent ordering
+germ.soil <- germ.soil %>%
+  mutate(year = factor(year, levels = c("2021", "2022")))
+germ.soil.sigint <- rbind(soil.int.2021, soil.int.2022) # Species pairs with statistically significant contrast
+
+# ----
+# Figure 4a: Plot species-specific germination response to soil conditioning effect
+# ----
+p1 <- ggplot(germ.soil, aes(x = name, y = estimate, shape = year, group = year)) +
+  geom_point(size = 4, position = position_dodge(width = -0.4)) + # Mean estimate point
+  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0, position = position_dodge(width = -0.4)) +  # CI bars
+  theme_bw() +
+  theme(strip.text.x = element_text(size = 10),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.position = "top",
+        panel.grid = element_blank()) +
+  coord_flip() +
+  labs(x=NULL,y = "Soil conditioning effect on germination", shape = "Year") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  ylim(-2.2, 2.5)
+
+# Combine results for physical barrier effects from 2021 and 2022
+germ.phy <- rbind(phy.2021.ci, phy.2022.ci)
+
+# Ensure 'year' is a factor with consistent ordering
+germ.phy <- germ.phy %>%
+  mutate(year = factor(year, levels = c("2021", "2022")))
+germ.phy.sigint <- rbind(phy.int.2021, phy.int.2022) # Species pairs with statistically significant contrast
+
+# ----
+# Figure 4b: Plot species-specific germination response to physical barrier effect
+# ----
+p2 <- ggplot(germ.phy, aes(x = name, y = estimate, shape = year, group = year)) +
+  geom_point(size = 4, position = position_dodge(width = -0.4)) +
+  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0, position = position_dodge(width = -0.4)) +  # CI bars
+  theme_bw() +
+  theme(strip.text.x = element_text(size = 10),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.position = "top",
+        panel.grid = element_blank()) +
+  coord_flip() +
+  labs(x=NULL,y = "Physical barrier effect on germination", shape = "Year") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  ylim(-2.2, 2.5) 
+
+# Print both plots
+print(p1)
+print(p2)
+
+#### Contrast between years: species-specific germination
+## ----between-year-----------------------------------------------------------------------------------------------------------------------------------------------
+# ----- soil conditioning - germination -----
+
+# Prepare data for comparison: reshape estimates and SEs by year
+yc_soil <- germ.soil %>%
+  select(name, year, estimate, SE) %>%
+  tidyr::pivot_wider(names_from = year, values_from = c(estimate, SE))
+
+# Calculate difference in estimates between years and associated p-values
+yc_soil <- yc_soil %>%
+  mutate(
+    diff = estimate_2022 - estimate_2021,           # difference in effect size
+    SE_diff = sqrt(SE_2021^2 + SE_2022^2),           # standard error of the difference 
+    z = diff / SE_diff,                              # z-score for the difference
+    p_value = 2 * (1 - pnorm(abs(z)))                # two-tailed p-value from z-score
+  )
+
+print(yc_soil)
+
+# ----- physical barrier - germination -----
+
+# Prepare data for comparison: reshape estimates and SEs by year
+yc_phy <- germ.phy %>%
+  select(name, year, estimate, SE) %>%
+  tidyr::pivot_wider(names_from = year, values_from = c(estimate, SE))
+
+
+# Calculate difference in estimates between years and associated p-values
+yc_phy <- yc_phy %>%
+  mutate(
+    diff = estimate_2022 - estimate_2021,           # difference in effect size
+    SE_diff = sqrt(SE_2021^2 + SE_2022^2),           # standard error of the difference 
+    z = diff / SE_diff,                              # z-score for the difference
+    p_value = 2 * (1 - pnorm(abs(z)))                # two-tailed p-value from z-score
+  )
+
+print(yc_phy)
+
+### Inter-specific biomass response
+
+#### 2021: log(Per capita biomass) from 2021 performance experiment
+## ---2021-selected-model------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Linear mixed-effects model:
+# Response: log-transformed per capita biomass (log_wt)
+# Fixed effects:
+# - Interaction between species identity (name) and physical barrier effect (physical_barrier)
+# - Interaction between species identity (name) and soil conditioning effect (initial)
+# Random effects:
+# - Random intercept for experimental block
+pcwtmod_add <- lmer(
+  log_wt ~ name * physical_barrier +   # species-specific response to physical barrier
+           name * initial +            # species-specific response to soil microsite
+           (1 | block),                # random intercept for block
+  data = pcwtdat2021, 
+  REML = FALSE                         # use maximum likelihood for model comparison
+)
+# Uncomment below to inspect model summary 
+# summary(pcwtmod_add)
+
+# Species-specific biomass response to soil conditioning effect in 2021
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Pairwise comparisons of estimated marginal means (EMMs) species specific biomass response to soil conditioning effect of CWD
+soil.biomass.2021 <- pairs(emmeans(pcwtmod_add, ~initial|name))
+print(soil.biomass.2021)
+
+soil.biomass.2021.ci <- confint(soil.biomass.2021) # Extract confidence intervals for the pairwise comparisons
+soil.biomass.2021.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1))
+soil.biomass.2021.ci$year <-c(rep("2021", 3))
+# Optional: view the confidence interval data with the added 'name' and 'year' columns
+# print(soil.biomass.2021.ci)
+
+# Perform pairwise contrasts between species for the soil conditioning effect
+# This tests whether species differ from each other in how they respond to soil conditioning effect
+soilbio.int.2021 <- as.data.frame(contrast(emmeans(pcwtmod_add, ~initial|name), interaction = c("pairwise"), by = NULL))
+soilbio.int.2021$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1)) # Manually label the species comparisons for interpretability
+soilbio.int.2021$year <-c(rep("2021", 3))
+
+# Clean up and format the contrast table for further use:
+soilbio.int.2021 <- soilbio.int.2021 %>%
+  mutate(name_pairwise = as.character(name_pairwise),  # Convert factor to character
+         group1 = sub(" - .*", "", name_pairwise),  # Extract first species
+         group2 = sub(".* - ", "", name_pairwise),  # Extract second species
+         label = paste0("p = ", signif(p.value, 3)))  %>%  # Format p-value label
+  filter(p.value < 0.05) # Keep only statistically significant results (p < 0.05)
+
+# Result: soilbio.int.2021 will be empty if no between-species differences are significant
+
+# Species-specific biomass response to physical barrier effect in 2021
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Pairwise comparisons of estimated marginal means (EMMs) species specific biomass response to physical barrier effect of CWD
+phy.biomass.2021 <- pairs(emmeans(pcwtmod_add, ~physical_barrier|name))
+print(phy.biomass.2021)
+
+phy.biomass.2021.ci <- confint(phy.biomass.2021) # Extract confidence intervals for the pairwise comparisons
+phy.biomass.2021.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1))
+phy.biomass.2021.ci$year <-c(rep("2021", 3))
+# Optional: view the confidence interval data with the added 'name' and 'year' columns
+# print(phy.biomass.2021.ci)
+
+# Perform pairwise contrasts between species for physical barrier effect of CWD
+# This tests whether species differ from each other in how they respond to physical barrier effect of CWD
+phybio.int.2021 <- as.data.frame(contrast(emmeans(pcwtmod_add, ~physical_barrier|name), interaction = c("pairwise"), by = NULL))
+phybio.int.2021$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1)) # Manually label the species comparisons for interpretability
+phybio.int.2021$year <-c(rep("2021", 3))
+
+# Clean up and format the contrast table for further use:
+phybio.int.2021 <- phybio.int.2021 %>%
+  mutate(name_pairwise = as.character(name_pairwise),  # Convert factor to character
+         group1 = sub(" - .*", "", name_pairwise),  # Extract first species
+         group2 = sub(".* - ", "", name_pairwise),  # Extract second species
+         label = paste0("p = ", signif(p.value, 3)))  %>%  # Format p-value label
+  filter(p.value < 0.05) # Keep only statistically significant results (p < 0.05)
+
+# Result: soilbio.int.2021 will be empty if no between-species differences are significant
+print(phybio.int.2021)
+
+#### 2022: log(Per capita biomass) from 2022 performance experiment
+## --2022-selected-model-------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Linear mixed-effects model:
+# Response: log-transformed per capita biomass (log_wt)
+# Fixed effects:
+# - Interaction between species identity (name) and physical barrier effect (physical_barrier)
+# - Interaction between species identity (name) and soil conditioning effect (initial)
+# Random effects:
+# - Random intercept for experimental block
+pcwtmod_add<-lm(log_wt ~ name * physical_barrier +
+                  name * initial, 
+                data=pcwtdat2022) 
+
+# Display the summary of the fitted model, showing coefficients, statistics, and diagnostics
+summary(pcwtmod_add)
+
+# Species-specific biomass response to soil conditioning effect in 2022
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Pairwise comparisons of estimated marginal means (EMMs) species specific biomass response to soil conditioning effect of CWD
+soil.biomass.2022 <- pairs(emmeans(pcwtmod_add, ~initial|name)) # Extract confidence intervals for the pairwise comparisons
+print(soil.biomass.2022)
+
+soil.biomass.2022.ci <- confint(soil.biomass.2022) # Extract confidence intervals for the pairwise comparisons
+soil.biomass.2022.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1))
+soil.biomass.2022.ci$year <-c(rep("2022", 3))
+# Optional: view the confidence interval data with the added 'name' and 'year' columns
+# print(soil.biomass.2022.ci)
+
+# Perform pairwise contrasts between species for the soil conditioning effect
+# This tests whether species differ from each other in how they respond to soil conditioning effect
+soilbio.int.2022 <- as.data.frame(contrast(emmeans(pcwtmod_add, ~initial|name), interaction = c("pairwise"), by = NULL))
+soilbio.int.2022$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1))
+soilbio.int.2022$year <-c(rep("2022", 3))
+soilbio.int.2022 <- soilbio.int.2022 %>%
+  mutate(name_pairwise = as.character(name_pairwise),  # Convert factor to character
+         group1 = sub(" - .*", "", name_pairwise),  # Extract first species
+         group2 = sub(".* - ", "", name_pairwise),  # Extract second species
+         label = paste0("p = ", signif(p.value, 3)))  %>%  # Format p-value label
+  filter(p.value < 0.05) # Keep only statistically significant results (p < 0.05)
+
+# Result: soilbio.int.2022 will be empty if no between-species differences are significant
+print(soilbio.int.2022)
+
+# Species-specific biomass response to physical barrier effect in 2022
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Pairwise comparisons of estimated marginal means (EMMs) species specific biomass response to physical barrier effect of CWD
+phy.biomass.2022 <- pairs(emmeans(pcwtmod_add, ~physical_barrier|name))
+print(phy.biomass.2022)
+
+phy.biomass.2022.ci <- confint(phy.biomass.2022) # Extract confidence intervals for the pairwise comparisons
+phy.biomass.2022.ci$name<-c(rep("GORO", 1), rep("TRCY",1), rep("TROR",1))
+phy.biomass.2022.ci$year <-c(rep("2022", 3))
+# Optional: view the confidence interval data with the added 'name' and 'year' columns
+# print(phy.biomass.2022.ci)
+
+phybio.int.2022 <- as.data.frame(contrast(emmeans(pcwtmod_add, ~physical_barrier|name), interaction = c("pairwise"), by = NULL))
+phybio.int.2022$name_pairwise<-c(rep("GORO - TRCY", 1), rep("GORO - TROR",1), rep("TRCY - TROR",1)) # Manually label the species comparisons for interpretability
+phybio.int.2022$year <-c(rep("2022", 3))
+
+# Clean up and format the contrast table for further use:
+phybio.int.2022 <- phybio.int.2022 %>%
+  mutate(name_pairwise = as.character(name_pairwise),  # Convert factor to character
+         group1 = sub(" - .*", "", name_pairwise),  # Extract first species
+         group2 = sub(".* - ", "", name_pairwise),  # Extract second species
+         label = paste0("p = ", signif(p.value, 3)))  %>%  # Format p-value label
+  filter(p.value < 0.05) # Keep only statistically significant results (p < 0.05)
+
+# Result: soilbio.int.2021 will be empty if no between-species
+print(phybio.int.2022) # 0 row
+
+#### Figure 4c & 4d: species-specific log(per capita biomass) response to CWD
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Combine results of soil conditioning effect from both years
+bio.soil <- rbind(soil.biomass.2021.ci, soil.biomass.2022.ci)
+# Convert 'year' column to a factor with levels ordered 2021, then 2022
+bio.soil <- bio.soil %>% 
+  mutate(year = factor(year, levels = c("2021", "2022")))
+bio.soil.sigint <- rbind(soilbio.int.2021, soilbio.int.2022) # significant species pairs
+
+# ----
+# Figure 4c: Plot species-specific biomass response to soil conditioning effect
+# ----
+p3 <- ggplot(bio.soil, aes(x = name, y = estimate, shape = year, group = year)) +
+  geom_point(size = 4, position = position_dodge(width = -0.4)) +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0, position = position_dodge(width = -0.4)) +  # CI bars
+  theme_bw() +
+  theme(strip.text.x = element_text(size = 10),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.position = "top",
+        panel.grid = element_blank()) +
+  coord_flip() +
+  labs(x=NULL,y = "Soil conditioning effect on log(per capita biomass)", shape = "Year") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  ylim(-2.2, 2.5) 
+
+bio.phy <- rbind(phy.biomass.2021.ci, phy.biomass.2022.ci)
+bio.phy <- bio.phy %>%
+  mutate(year = factor(year, levels = c("2021", "2022")))
+bio.phy.sigint <- rbind(phybio.int.2021, phybio.int.2022)
+
+# ----
+# Figure 4d: Plot species-specific biomass response to physical barrier effect
+# ----
+p4 <- ggplot(bio.phy, aes(x = name, y = estimate, shape = year, group = year)) +
+  geom_point(size = 4, position = position_dodge(width = -0.4)) +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0, position = position_dodge(width = -0.4)) +  # CI bars
+  theme_bw() +
+  theme(strip.text.x = element_text(size = 10),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.position = "top",
+        panel.grid = element_blank()) +
+  coord_flip() +
+  labs(x=NULL,y = "Physical barrier effect on log(per capita biomass)", shape = "Year",
+       title = "4d") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  ylim(-2.2, 2.5) 
+
+print(p3)
+print(p4)
+
+#### Contrast between year: species-specific biomass
+## ----biomass-between-year---------------------------------------------------------------------------------------------------------------------------------------
+# ----- soil conditioning - biomass -----
+
+# Prepare data for comparison: reshape estimates and SEs by year
+yc_soil_biomass <- bio.soil %>%
+  select(name, year, estimate, SE) %>%
+  tidyr::pivot_wider(names_from = year, values_from = c(estimate, SE))
+
+# Calculate difference in estimates between years and associated p-values
+yc_soil_biomass <- yc_soil_biomass %>%
+  mutate(
+    diff = estimate_2022 - estimate_2021,   # difference in effect size
+    SE_diff = sqrt(SE_2021^2 + SE_2022^2),  # standard error of the difference 
+    z = diff / SE_diff,                     # z-score for the difference
+    p_value = 2 * (1 - pnorm(abs(z)))       # two-tailed p-value from z-score
+  )
+print(yc_soil_biomass)
+
+# ----- physical barrier - biomass -----
+
+# Prepare data for comparison: reshape estimates and SEs by year
+yc_phy_biomass <- bio.phy %>%
+  select(name, year, estimate, SE) %>%
+  tidyr::pivot_wider(names_from = year, values_from = c(estimate, SE))
+
+# Calculate difference in estimates between years and associated p-values
+yc_phy_biomass <- yc_phy_biomass %>%
+  mutate(
+    diff = estimate_2022 - estimate_2021,
+    SE_diff = sqrt(SE_2021^2 + SE_2022^2),
+    z = diff / SE_diff,
+    p_value = 2 * (1 - pnorm(abs(z)))
+  )
+print(yc_phy_biomass)
+
+### Combined species-specific performance plot \[Figure 4 used in MS\]
+## ------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Adjust plot margins to add space around the individual plots
+# Format: margin(top, right, bottom, left) in points
+p1 <- p1 + theme(plot.margin = margin(20, 20, 10, 20)) # Top, Right, Bottom, Left
+p2 <- p2 + theme(plot.margin = margin(20, 20, 10, 20))  
+p3 <- p3 + theme(plot.margin = margin(10, 20, 20, 20))  
+p4 <- p4 + theme(plot.margin = margin(10, 20, 20, 20))  
+
+# Combine the four plots into a 2x2 grid with common legend and aligned panels
+p_combined <- ggarrange(p1, p2, 
+          p3, p4,
+          ncol=2, nrow = 2,
+          common.legend = T,
+          labels = c("(a)", "(b)", "(c)","(d)"),
+          align = "hv",
+          font.label = list(size = 12, color = "black", face="plain"))
+
+# Add a left-side label (y-axis label for the whole figure)
+annotate_figure(p_combined, 
+                left = text_grob("Species", rot = 90, vjust = 1, size = 14))
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## CWD effects on local plant community composition
+### Community data: CWD and Open community groupings
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# This dataset does not include data where the plant identity is unknown.
+# Each row is a plant assemablge
+# Columns are the count of each species in each plant assemblage
+# t0 = 2020; t1 = 2021; t2 =2022
+mat <- read.csv("plant_comm_composition_20-21.csv", header = T, row.names =1)
+
+### 2020: CWD effects on local plant composition
+# Redundancy analysis (RDA)
+## ----RDA2020---------------------------------------------------------------------------------------------------------------------------------------------------
+# subset data 
+mat2 <- mat[which(mat$time=="t0"),]
+mat2$grp<-apply(mat2[c(89,90)], 1, paste, collapse=":") # block, init as grouping
+
+# another df where the grouping variables are block and initial state
+# each row is a plant assemblage 
+df<-mat2[,c(1:87, 91)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") 
+
+# species matrix
+assemblies_t0<-nublock[,c(1:87)]
+
+# Hellinger-transformed species matrix 
+ass.rel.t0<-decostand(assemblies_t0, method='hel') #standardize assemblies 
+
+# 2. group - treatment variables fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+set.seed(1)
+# Redundancy analysis
+trt_Frac<-rda(ass.rel.t0~init+block) # run model using standardized data 
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# RsquareAdj(trt_Frac) #explanatory power
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp_2020 <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp_2020 <- as.data.frame(sc_bp_2020)
+sc_bp_2020 <- sc_bp_2020[1,1:2]
+sc_sp_2020 <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+
+#####
+# site
+sc_si_2020 <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si_2020<-as.data.frame(sc_si_2020) # extract scores
+sc_si_2020$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si_2020$treatment<-group_init # grouping factor 1 
+sc_si_2020$block<-group_block # grouping factor 2 
+sc_si_2020$treatment <- as.factor(sc_si_2020$treatment)
+
+sc_si_2020$treatment <- as.factor(sc_si_2020$treatment)
+
+log<-sc_si_2020[sc_si_2020$treatment == "log", ][chull(sc_si_2020
+                                                       [sc_si_2020$treatment == 
+                                                          "log", c("RDA1", "RDA2")]), ]
+
+open<-sc_si_2020[sc_si_2020$treatment == "open", ][chull(sc_si_2020
+                                                         [sc_si_2020$treatment == 
+                                                               "open", c("RDA1", "RDA2")]), ]
+
+hulldat_2020<-rbind(log,open)
+
+# Plot the scores
+biplot_2020 <- ggplot(sc_sp_2020, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si_2020, aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_polygon(data = hulldat_2020, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "2020") +
+  scale_color_manual(values = c("#ee7733","#0077BB"),guide = FALSE) +
+  scale_fill_manual(values = c("#ee7733","#0077BB"), name = "Grouping",
+                    labels = c("log" = "CWD", "open" = "Open")) +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si_2020$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  # Add horizontal dotted line at y = 0
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.grid.major.x = element_blank(),  # Add dotted grid lines for x-axis
+        panel.grid.major.y = element_blank())
+biplot_2020
+
+# 2020RDA:Venn diagram Appendix S1: Figure S1 (a)
+## ----Venn20-----------------------------------------------------------------------------------------------------------------------------------------------------
+# Using varpart to look at contributions of initial treatment and block
+var.mod.t0 <-varpart(ass.rel.t0, init, block)
+plot(var.mod.t0, #bg=c("hotpink","skyblue"), 
+      Xnames = NULL,
+      cex=1.2)
+ 
+# Add custom labels inside the circles
+ text(x = c(0, 1), y = c(0.2, 0.2),  # Adjust x and y values based on your plot
+      labels = c("CWD", "Block"), 
+      col = "black", cex = 1.2)  # Adjust cex for size
+ 
+ # Add custom labels inside the circles
+ text(x = c(0, 1), y = c(-0.2, -0.2),  # Adjust x and y values based on your plot
+      labels = c("(8.33%)", "(69.0%)"), 
+      col = "black", cex = 1.2)  # Adjust cex for size
+
+### 2021: CWD effects on local plant composition
+# RDA Analysis
+## ----RDA21------------------------------------------------------------------------------------------------------------------------------------------------------
+# subset data t1 = 2021
+mat2 <- mat[which(mat$time=="t1"),]
+mat2$grp<-apply(mat2[c(89,90)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 91)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":") 
+
+# 1. species matrix
+assemblies_t1<-nublock[,c(1:87)]
+
+# Hellinger-transformed species matrix  
+ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+
+# 2. group - treatment variables fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+set.seed(2)
+# redundancy analysis
+trt_Frac<-rda(ass.rel.t1~init+block) # run model using standardized data 
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp_2021 <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp_2021 <- as.data.frame(sc_bp_2021)
+sc_bp_2021 <- sc_bp_2021[1,1:2]
+sc_sp_2021 <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si_2021 <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si_2021<-as.data.frame(sc_si_2021) # extract scores
+sc_si_2021$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si_2021$treatment<-group_init # grouping factor 1 
+sc_si_2021$block<-group_block # grouping factor 2 
+sc_si_2021$treatment <- as.factor(sc_si_2021$treatment)
+
+sc_si_2021$treatment <- as.factor(sc_si_2021$treatment)
+
+log<-sc_si_2021[sc_si_2021$treatment == "log", ][chull(sc_si_2021[sc_si_2021$treatment == 
+                                                          "log", c("RDA1", "RDA2")]), ]
+
+open<-sc_si_2021[sc_si_2021$treatment == "open", ][chull(sc_si_2021[sc_si_2021$treatment == 
+                                                               "open", c("RDA1", "RDA2")]), ]
+
+hulldat_2021<-rbind(log,open)
+
+# Plot the scores
+biplot_2021 <- ggplot(sc_sp_2021, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si_2021, aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_polygon(data = hulldat_2021, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "2021") +
+  scale_color_manual(values = c("#ee7733","#0077BB"),guide = FALSE) +
+  scale_fill_manual(values = c("#ee7733","#0077BB"), name = "Grouping",
+                    labels = c("log" = "CWD", "open" = "Open")) +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si_2021$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  # Add horizontal dotted line at y = 0
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.grid.major.x = element_blank(),  # Add dotted grid lines for x-axis
+        panel.grid.major.y = element_blank())
+
+biplot_2021
+
+# 2021 RDA:Venn diagram Appendix S1: Figure S1 (b)
+## ----Venn21-----------------------------------------------------------------------------------------------------------------------------------------------------
+# can model using varpart to look at contributions of initial treatment and block
+var.mod.t1<-varpart(ass.rel.t1, init, block)
+plot(var.mod.t1, #bg=c("hotpink","skyblue"), 
+      Xnames = NULL,
+      cex=1.2)
+ 
+# Add custom labels inside the circles
+ text(x = c(0, 1), y = c(0.2, 0.2),  # Adjust x and y values based on your plot
+      labels = c("CWD", "Block"), 
+      col = "black", cex = 1.2)  # Adjust cex for size
+ 
+ # Add custom labels inside the circles
+ text(x = c(0, 1), y = c(-0.2, -0.2),  # Adjust x and y values based on your plot
+      labels = c("(12.1%)", "(53.7%)"), 
+      col = "black", cex = 1.2)  # Adjust cex for size
+
+### 2022: CWD effects on local plant composition
+# Redundancy Analysis
+## ----RDA22------------------------------------------------------------------------------------------------------------------------------------------------------
+# subset data t2 = 2022
+mat2 <- mat[which(mat$time=="t2"),]
+mat2$grp<-apply(mat2[c(89,90)], 1, paste, collapse=":") # block, init as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are block and initial state
+# each row is a platn assemblage.
+df<-mat2[,c(1:87, 91)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init"), ":")
+
+# 1. species matrix
+assemblies_t2<-nublock[,c(1:87)]
+
+# Hellinger-transformed species matrix 
+ass.rel.t2<-decostand(assemblies_t2, method='hel')
+
+# 2. group - treatment variables fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+
+set.seed(3)
+# redundancy analysis
+trt_Frac<-rda(ass.rel.t2~init+ block) # run model using standardized data 
+# summary(trt_Frac)
+# anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+# anova.cca(trt_Frac)
+# RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+
+# Plotting rda
+perc <- round(100*(summary(trt_Frac)$cont$importance[2, 1:2]), 1)
+sc_bp_2022 <- vegan::scores(trt_Frac, display="bp", choices=c(1, 2), scaling=1)
+sc_bp_2022 <- as.data.frame(sc_bp_2022)
+sc_bp_2022 <- sc_bp_2022[1,1:2]
+sc_sp_2022 <-vegan::scores(trt_Frac, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si_2022 <- vegan::scores(trt_Frac, display="sites", choices=c(1,2), scaling=1)
+sc_si_2022<-as.data.frame(sc_si_2022) # extract scores
+sc_si_2022$site<-rownames(vegan::scores(trt_Frac)$sites) # extract names 
+sc_si_2022$treatment<-group_init # grouping factor 1 
+sc_si_2022$block<-group_block # grouping factor 2 
+sc_si_2022$treatment <- as.factor(sc_si_2022$treatment)
+
+sc_si_2022$treatment <- as.factor(sc_si_2022$treatment)
+
+log<-sc_si_2022[sc_si_2022$treatment 
+                == "log", ][chull(sc_si_2022
+                                  [sc_si_2022$treatment 
+                                    =="log", c("RDA1", "RDA2")]), ]
+
+open<-sc_si_2022[sc_si_2022$treatment 
+                 == "open", ][chull(sc_si_2022
+                                    [sc_si_2022$treatment 
+                                      == "open", c("RDA1", "RDA2")]), ]
+hulldat_2022<-rbind(log,open)
+
+# Plot the scores
+biplot_2022 <- ggplot(sc_sp_2022, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si_2022, aes(color = treatment, shape = factor(block)), size = 3) +
+  geom_polygon(data = hulldat_2022, aes(fill = treatment, group = treatment), alpha = 0.3) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), y = paste0("RDA2 (", perc[2], "%)"), title = "2022") +
+  scale_color_manual(values = c("#ee7733","#0077BB"),guide = FALSE) +
+  scale_fill_manual(values = c("#ee7733","#0077BB"), name = "Grouping",
+                    labels = c("log" = "CWD", "open" = "Open")) +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si_2022$block))), name = "Block") +
+  theme_bw()+
+  geom_hline(yintercept = 0, linetype = "dotted") +  # Add horizontal dotted line at y = 0
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank(),  # Remove minor grid lines
+        panel.grid.major.x = element_blank(),  # Add dotted grid lines for x-axis
+        panel.grid.major.y = element_blank()) 
+
+biplot_2022
+
+# 2022 RDA:Venn diagram Appendix S1: Figure S1 (c)
+## ----Venn22-----------------------------------------------------------------------------------------------------------------------------------------------------
+# can model using varpart to look at contributions of initial treatment and block
+var.mod.t2 <-varpart(ass.rel.t2, init, block) # run model on standardized data
+plot(var.mod.t2, #bg=c("hotpink","skyblue"), 
+      Xnames = NULL,
+      cex=1.2)
+ 
+# Add custom labels inside the circles
+ text(x = c(0, 1), y = c(0.2, 0.2),  # Adjust x and y values based on your plot
+      labels = c("CWD", "Block"), 
+      col = "black", cex = 1.2)  # Adjust cex for size
+ 
+ # Add custom labels inside the circles
+ text(x = c(0, 1), y = c(-0.2, -0.2),  # Adjust x and y values based on your plot
+      labels = c("(11.4%)", "(55.7%)"), 
+      col = "black", cex = 1.2)  # Adjust cex for size
+
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+### Combined RDA plot \[Figure 5 in MS\]
+## ----rda plots ,message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE, results=TRUE,echo=FALSE,fig.width=18, fig.height=6-------------------------------
+(biplot_2020 + biplot_2021 + biplot_2022 ) + 
+  plot_layout(guides ="collect") + plot_annotation(tag_levels = "a")
+
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+## Local-scale mechanisms driving variation in community composition
+ 
+### Community data from all experimental treatments
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# This dataset does not include data where the plant identity is unknown.
+# Each row is a plant assemablge of a experimental treatment in each block
+# Columns are the count of each species in each plant assemblage
+# If init = "log", soil condiitoning = 1 (present), vice versa
+# If treatment = "insitu_log", "open_with_log", "open_with_pvc", "insitu_pvc", physical barrier effect = 1 (present).
+# t0 = 2020; t1 = 2021; t2 =2022
+mat <- read.csv("exper_plant_comm_composition_20-21.csv", header = T, row.names =1)
+
+### 2021: local-scale mechanism driving variation in plant community composition
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# subset data t1 = 2021
+mat1 <- mat[which(mat$time=="t1"),]
+mat1$grp<-apply(mat1[c(89, 90,92)], 1, paste, collapse=":") # block, init, physical as grouping
+# names(mat1) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat1[,c(1:87, 93)]
+df1 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df1)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df1, 88, c("block", "init","physical"), ":") # just looking at time, block & initial treatment
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t1<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+group_physical<-nublock$physical
+
+# MDS 
+ass.rel.t1<-decostand(assemblies_t1, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+physical<-as.factor(group_physical) # grouping factor 2- convert to factor
+
+# redundancy analysis
+trt_Frac<-rda(ass.rel.t1~init+physical+Condition(block)) # run model using standardized data 
+#summary(trt_Frac)
+anova.cca(trt_Frac, step=1000, by="term") ## test for model significance
+#anova.cca(trt_Frac)
+#RsquareAdj(trt_Frac)$adj.r.squared #explanatory power
+
+### 2022: local-scale mechanism driving variation in plant community composition
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# subset data t2 = 2022
+mat2 <- mat[which(mat$time=="t2"),]
+mat2$grp<-apply(mat2[c(89, 90,92)], 1, paste, collapse=":") # block, init, physical as grouping
+# names(mat2) #check
+
+# another df where the grouping variables are time, block and initial state
+# each row is a transect in a certain year.
+df<-mat2[,c(1:87, 93)]
+df2 = df %>% mutate(across(.cols=1:87,.fns=as.numeric)) # make everything numeric
+rownames(df2)<-NULL # remove rownames
+
+## new with group vars
+nublock<-separate(df2, 88, c("block", "init","physical"), ":") # just looking at time, block & initial treatment
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t2<-nublock[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-nublock$init
+group_block<-nublock$block
+group_physical<-nublock$physical
+
+# MDS 
+ass.rel.t2<-decostand(assemblies_t2, method='hel') #standardize assemblies 
+
+# explaining factors
+init<-as.factor(group_init) # grouping factor 1- convert to factor
+block<-as.factor(group_block) # grouping factor 2- convert to factor
+physical<-as.factor(group_physical) # grouping factor 2- convert to factor
+
+# redundancy analysis
+trt_Frac2<-rda(ass.rel.t2~init+physical+Condition(block)) # run model using standardized data 
+#summary(trt_Frac2)
+anova.cca(trt_Frac2, step=1000, by="term") ## test for model significance
+#anova.cca(trt_Frac2)
+#RsquareAdj(trt_Frac2)$adj.r.squared #explanatory power
+
+## Large-scale (i.e., block) mechanisms driving variation in local plant community composition
+
+### Community data and soil nutrient data
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Split group info into columns for each variable
+mat<-read.csv("plant_comm_composition_20-21.csv", header = T, row.names =1)
+# names(mat) #check
+
+# Read soil nutrient data 
+nutrient <- read.csv("soil_nutrient.csv", header = T, row.names=1)
+
+### Partial RDA and Figure 6 used in MS
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+nutrient_join <- nutrient[,c(1:5,7:9)]
+nutrient_join$block <- as.integer(nutrient_join$block)
+blocksum <- inner_join(mat, nutrient_join, by = c("init", "block"))
+
+# at the moment this includes where there were no plants ("x" column in matrix)
+assemblies_t012<-blocksum[,c(1:87)]
+
+# group - these are the treatment variables that need to be separately fed into the MDS analaysis from the community analysis.
+group_init<-blocksum$init
+group_block<-blocksum$block
+group_time<-blocksum$time
+group_nutrient<-blocksum[,c(91:94,96)]
+
+# 
+ass.rel.t012<-decostand(assemblies_t012, method='hel') #standardize assemblies 
+#### partial rda model analysis & results #### 
+trt_tot_2<-rda(ass.rel.t012 ~ N+P+C+pH+CEC + # + block + init+
+                Condition(time), data = blocksum) # run model using standardized data 
+# summary(trt_tot_2)
+anova.cca(trt_tot_2, step=1000, by="term") ## test for model significance
+
+
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----
+# Fig. 6 in MS
+#-----
+
+# Plotting rda
+perc <- round(100*(summary(trt_tot_2)$cont$importance[2, 1:2]), 1)
+sc_bp <- vegan::scores(trt_tot_2, display="bp", choices=c(1, 2), scaling=1)
+sc_sp <-vegan::scores(trt_tot_2, display="species", choices=c(1,2), scaling=1)
+# site
+sc_si <- vegan::scores(trt_tot_2, display="sites", choices=c(1,2), scaling=1)
+sc_si<-as.data.frame(sc_si) # extract scores
+sc_si$site<-rownames(vegan::scores(trt_tot_2)$sites) # extract names 
+sc_si$treatment<-group_init # grouping factor 1 
+sc_si$block<-group_block # grouping factor 2 
+sc_si$treatment <- as.factor(sc_si$treatment)
+
+blk1_log<-sc_si[sc_si$block == 1 & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 1& sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk1_open<-sc_si[sc_si$block == 1 & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 1& sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+blk2_log<-sc_si[sc_si$block == 2 & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 2 & sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk2_open<-sc_si[sc_si$block == 2 & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 2 & sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+blk3_log<-sc_si[sc_si$block == 3  & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 3 & sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk3_open<-sc_si[sc_si$block == 3  & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 3 & sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+blk4_log<-sc_si[sc_si$block == 4 & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 4 & sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk4_open<-sc_si[sc_si$block == 4 & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 4 & sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+blk5_log<-sc_si[sc_si$block == 5 & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 5 & sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk5_open<-sc_si[sc_si$block == 5 & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 5 & sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+blk6_log<-sc_si[sc_si$block == 6 & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 6 & sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk6_open<-sc_si[sc_si$block == 6 & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 6 & sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+blk7_log<-sc_si[sc_si$block == 7 & sc_si$treatment=="log", ][chull(sc_si[sc_si$block == 7 & sc_si$treatment=="log", c("RDA1", "RDA2")]), ]
+blk7_open<-sc_si[sc_si$block == 7 & sc_si$treatment=="open", ][chull(sc_si[sc_si$block == 7 & sc_si$treatment=="open", c("RDA1", "RDA2")]), ]
+
+hulldat_all<-rbind(blk1_log, blk1_open, blk2_log, blk2_open, blk3_log, blk3_open, 
+                   blk4_log, blk4_open, blk5_log, blk5_open, blk6_log, blk6_open,
+                   blk7_log, blk7_open)
+
+rda_log <- sc_si[sc_si$treatment == "log", ][chull(sc_si[sc_si$treatment == "log", c("RDA1", "RDA2")]), ]
+rda_open <- sc_si[sc_si$treatment == "open", ][chull(sc_si[sc_si$treatment == "open", c("RDA1", "RDA2")]), ]
+hulldat_logopen <- rbind(rda_log, rda_open)
+
+# fig. 6 partial RDA biplot for 42 plant communities
+ggplot(sc_sp, aes(x = RDA1, y = RDA2)) +
+  geom_point(data = sc_si, aes(color = treatment, shape = factor(block)), size = 3) +  # Ensure shape aligns with blocks
+  geom_polygon(data = hulldat_all, 
+               aes(fill = treatment, group = interaction(block, treatment)), 
+               alpha = 0.3) +
+  geom_segment(data = sc_bp, 
+               aes(x = 0, y = 0, xend = sc_bp[,1]*1.5, 
+                   yend = sc_bp[,2]*1.5), 
+               arrow = arrow(length = unit(0.3, "cm")), 
+               color = "black") +
+  geom_text(data = sc_bp, aes(x = sc_bp[,1]*1.55, y = sc_bp[,2]*1.7, 
+                              label = rownames(sc_bp)),
+            color = "black", fontface = 2, size = 4) +
+  labs(x = paste0("RDA1 (", perc[1], "%)"), 
+       y = paste0("RDA2 (", perc[2], "%)"), 
+       title = NULL) +
+  scale_color_manual(
+  values = c("log" = "#ee7733", "open" = "#0077BB"),
+  guide = NULL,
+  labels = c("log" = "CWD", "open" = "open")) +
+  scale_fill_manual(
+  values = c("log" = "#ee7733", "open" = "#0077BB"),
+  name = "Grouping",
+  labels = c("log" = "CWD", "open" = "open")) +
+  scale_shape_manual(values = unique(as.numeric(factor(sc_si$block))), name = "Block") +  
+  theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme(panel.grid.major = element_blank(),  
+        panel.grid.minor = element_blank(), 
+        panel.grid.major.x = element_blank(),  
+        panel.grid.major.y = element_blank()) +
+  xlim(-0.3, 0.3) +  
+  ylim(-0.3, 0.3)
+
+### Soil nutrient data and Figure 3 in MS
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Read the data and preprocess
+nutrient <- read.csv("soil_nutrient.csv", header = T, row.names = 1)
+
+# Define nutrient elements to analyze
+Nu <- c("N", "P", "K", "C", "pH", "CEC") # Soil elements of interest
+
+# Prepare for paired t-tests comparing nutrient levels between treatments
+nutrient$init <- as.factor(nutrient$init) # Ensure treatment variable is a factor
+# Initialize an empty dataframe to store t-test results
+t_test_results <- data.frame(
+  element = character(),           # Name of the nutrient
+  t_statistic = numeric(),         # t-statistic from the test
+  p_value = numeric(),             # p-value from the test
+  stringsAsFactors = FALSE
+)
+
+# Loop through each nutrient and perform a paired t-test between CWD & Open treatments
+for (element in Nu) {
+  result <- t.test(get(element) ~ init, data = nutrient, paired = TRUE)  # Paired t-test for this element
+  t_test_results <- rbind(t_test_results, 
+                          data.frame(
+                            element = element,
+                            t_statistic = result$statistic, # Extract t-statistic
+                            p_value = result$p.value, # Extract p-value
+                            stringsAsFactors = FALSE,
+                            row.names = NULL
+                          ))
+}
+# Print summary of all t-test results
+print(t_test_results)
+
+# -------------------------------
+# Plotting: Means and Confidence Intervals
+# -------------------------------
+
+plots_list <- list()  # Initialize list to store ggplot objects for each nutrient
+
+for (element in Nu) {
+  # Summarize the data: calculate mean, SD, SE, and 95% CI for each treatment group
+  summary_data <- nutrient %>%
+    group_by(init) %>%
+    summarize(
+      mean = mean(get(element), na.rm = TRUE),     # Mean nutrient value
+      sd = sd(get(element), na.rm = TRUE),         # Standard deviation
+      n = n(),                                     # Sample size
+      se = sd / sqrt(n),                           # Standard error
+      ci_upper = mean + qt(0.975, df = n - 1) * se,  # Upper 95% CI
+      ci_lower = mean - qt(0.975, df = n - 1) * se   # Lower 95% CI
+    )
+  
+  # Create ggplot for this element showing mean and 95% CI
+  plot <- ggplot(summary_data, aes(x = init, y = mean)) +
+    geom_point(size = 3) +  # Plot the mean
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +  # Error bars for CI
+    theme_bw() +
+    labs(
+      x = NULL,
+      y = paste(element, ifelse(element %in% c("C", "N"), "(%)", " (mg/kg)"), sep = "")
+    ) +  # Label y-axis with units depending on the element
+    scale_x_discrete(labels = c('CWD', 'Control')) +  # Rename treatment levels for plot
+    theme(
+      plot.background = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.border = element_blank(),
+      axis.line = element_line(color = 'black')  # Clean up plot appearance
+    )
+  
+  plots_list[[element]] <- plot  # Store plot in list
+}
+
+# Optionally print or save individual plots
+# for (element in names(plots_list)) {
+#  print(plots_list[[element]])
+#}
+
+# -------------------------------
+# Combine all plots into one figure
+# -------------------------------
+
+# Arrange plots into a 3x2 grid, share a legend, add subplot labels
+all.bp <- ggarrange(
+  plotlist = plots_list,
+  ncol = 3, nrow = 2,                     # Layout: 3 columns, 2 rows
+  common.legend = TRUE, legend = "bottom",  # Shared legend at the bottom
+  align = "v",                              # Align vertically
+  labels = c("(a)", "(b)", "(c)", "(e)", "(f)", "(g)"),  # Custom subplot labels
+  font.label = list(size = 10, color = "black", face = "plain")  # Label styling
+)
+
+# Add a common x-axis label for the entire figure
+all.bp <- annotate_figure(all.bp, bottom = text_grob("Soil origin", size = 12))
+
+# Display the final arranged figure
+print(all.bp)
+
